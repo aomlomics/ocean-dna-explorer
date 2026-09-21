@@ -10,13 +10,18 @@ export default function DocsPage() {
 		<div>
 			<header className="mb-8">
 				<h1 className="text-5xl sm:text-6xl md:text-6xl lg:text-7xl font-normal leading-[0.95] text-primary">
-					Ocean DNA Explorer Documentation
+					ODE Documentation
 				</h1>
 			</header>
 
 			<HelpQuickNav />
 
-			<Link className="btn btn-success" href={`/docs/${firstPage}/${Object.keys(DocsSections[firstPage])[0]}`}>
+			<p className="mb-6 max-w-2xl text-base leading-relaxed">
+				The docs are split into two sections: Help is about the website itself, and API is strictly for API reference. Click Get Started,
+				or use the table of contents to open a specific section.
+			</p>
+
+			<Link className="btn btn-primary" href={`/docs/${firstPage}/${Object.keys(DocsSections[firstPage])[0]}`}>
 				Get Started
 			</Link>
 		</div>

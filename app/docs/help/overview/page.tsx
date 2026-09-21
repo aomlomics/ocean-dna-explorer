@@ -18,7 +18,7 @@ export default function HelpOverviewPage() {
 				<>
 					<p className="mb-4">
 						The Ocean DNA Explorer is a data portal and visualization platform for uploading and exploring marine eDNA
-						data. This help documentation will guide you through the features of the site.
+						data.
 					</p>
 					<p className="mb-4">
 						Our goal is to make marine eDNA data more findable, accessible, interoperable, and reusable for researchers,
@@ -32,7 +32,6 @@ export default function HelpOverviewPage() {
 					title: "Features Overview",
 					content: (
 						<>
-							<p className="mb-4">ODE&apos;s custom features are built specifically for eDNA data:</p>
 							<ul className="list-disc ml-6 mb-4">
 								<li>
 									{" "}
@@ -128,8 +127,7 @@ export default function HelpOverviewPage() {
 								Manage Account ❯ Security ❯ Delete Account.
 							</p>
 							<p className="mb-4">
-								The roles available on ODE are listed below. Please note, Contributor is required to submit data. Other
-								roles are mostly for internal use by the ODE team:
+								Contributor is required to submit data. The other roles are mostly for internal use by the ODE team:
 							</p>
 							<ul className="list-disc ml-6 mb-4">
 								<li>Admin: Full access to the platform, including managing other user&apos;s roles</li>
@@ -176,10 +174,6 @@ export default function HelpOverviewPage() {
 					title: "Contact Us, Report a Bug, Request a Feature",
 					content: (
 						<>
-							<p className="mb-4">
-								We welcome your feedback to improve the Ocean DNA Explorer. If you encounter any issues or have
-								suggestions for new features, please let us know.
-							</p>
 							<p className="mb-4">
 								You can submit bug reports, feature requests, or general feedback through our GitHub issues page:
 							</p>

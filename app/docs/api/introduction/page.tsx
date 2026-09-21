@@ -29,23 +29,20 @@ export default async function ApiIntroductionPage() {
 			header={
 				<div className="space-y-4">
 					<p className="text-base-content/90">
-						You can build complex queries using the{" "}
+						You can build a query on the{" "}
 						<Link href="/search" className="link link-primary">
 							Search
 						</Link>{" "}
-						page user interface, then copy the URL to use as an API call in your code. This is a great way to get
-						started quickly.
+						page, then copy that URL and use it as an API call in your own code.
 					</p>
+					<p>The API is how a script or another program fetches the marine eDNA data.</p>
 					<p>
-						The Ocean DNA Explorer API provides programmatic access to marine eDNA data.
-					</p>
-					<p>
-						All you need is a web browser or a simple script to start fetching data. No authentication is required.
-						Requests are rate limited. See{" "}
+						A browser is enough to try a URL, and a short script is enough to fetch the data. No account or API key is
+						required. Requests are rate limited. See{" "}
 						<Link href="#rate-limits" className="link link-primary">
 							Rate Limits
 						</Link>
-						. Reach out to the ODE team for large data retrieval requests.
+						. For a large download, contact the ODE team.
 					</p>
 				</div>
 			}
@@ -61,7 +58,7 @@ export default async function ApiIntroductionPage() {
 								<div className="min-w-0">
 								<h4 className="!mt-0 mb-2 !text-xl !font-semibold">Find the Data You Need</h4>
 									<p>
-										Before you can ask for data, you need to know what&apos;s available. The best place to start is our{" "}
+										The best place to start is our{" "}
 										<Link href="/docs/api/schema" className="link link-primary">
 											Database Schema
 										</Link>
@@ -266,7 +263,6 @@ export default async function ApiIntroductionPage() {
 					title: "Quick Start Code Examples",
 					content: (
 						<>
-							<p className="mb-4">Here are some examples of how to get data in various programming environments:</p>
 							<div className="ml-4">
 								<div className="mb-4 mt-4 text-lg font-medium">Python example:</div>
 								<CodeBlock
@@ -433,7 +429,6 @@ if (http_status(response)$category == "Success") {
 
 							<div>
 								<h4 className="mb-2">Combining tables with relations</h4>
-								<p className="mb-3">Here are some examples:</p>
 								<ul className="list-disc ml-6 space-y-3">
 									<li>
 										Getting all DNA sequences found in a specific sample. You want to query the feature table, but also

@@ -35,8 +35,7 @@ export default async function HelpSearchPage() {
 						<Link className="link link-primary font-semibold" href="/search">
 							Search
 						</Link>{" "}
-						page allows you to make complex queries across multiple tables using an intuitive search interface. This is
-						different from the{" "}
+						page queries across multiple tables. This is different from the{" "}
 						<Link className="link link-primary font-semibold" href="#explore">
 							Explore
 						</Link>{" "}
@@ -54,15 +53,6 @@ export default async function HelpSearchPage() {
 					title: "How to Use the Search Page",
 					content: (
 						<>
-							<p className="mb-4">
-								The{" "}
-								<Link className="link link-primary font-semibold" href="/search">
-									Search
-								</Link>{" "}
-								page provides an intuitive query builder that lets you construct complex filters across different data
-								tables.
-							</p>
-
 							<p className="mb-4">To use the Search page:</p>
 							<ol className="list-decimal ml-6 mb-4">
 								<li>Select which table you want to search</li>
@@ -89,7 +79,6 @@ export default async function HelpSearchPage() {
 					title: "Search vs Explore",
 					content: (
 						<>
-							<p className="mb-4">What&apos;s the difference between the Search and Explore pages?</p>
 							<div className="mb-4">
 								<h4>
 									Use{" "}
@@ -128,7 +117,7 @@ export default async function HelpSearchPage() {
 					content: (
 						<>
 							<p className="mb-4">
-								Unsure where to start? Click the cards below to open the Search page with a pre-filled query builder:
+								Click a card to open Search with that query filled in:
 							</p>
 
 							<div className="flex gap-8">

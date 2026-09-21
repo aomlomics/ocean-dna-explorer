@@ -19,9 +19,8 @@ export default function ApiSchemaPage() {
 			header={
 				<>
 					<p className="mb-4">
-						This is a simplified database diagram which shows the relationships between tables in the database. The
-						fields available for each table are listed in the Table Definitions section beneath the diagram. This will
-						help you effectively{" "}
+						A simplified diagram of how the tables connect. Field names for each table are in Table Definitions below.
+						Use it to{" "}
 						<Link href="/docs/api/queryParameters#relations" className="text-primary">
 							query relations across tables
 						</Link>{" "}
@@ -39,8 +38,6 @@ export default function ApiSchemaPage() {
 					title: "Entity Relationship Diagram",
 					content: (
 						<>
-							<p className="mb-4">The following diagram shows the relationships between tables in the database:</p>
-
 							<div className="p-4 rounded-md mb-4 bg-base-200">
 								<div className="relative w-full h-200">
 									<Image fill src="/images/ERD.svg" alt="Database entity relationship diagram" />
@@ -62,10 +59,6 @@ export default function ApiSchemaPage() {
 					title: "Table Definitions",
 					content: (
 						<>
-							<p className="mb-4">
-								The dropdown menus below show the fields available for each table. You can use this information in your
-								API requests to query and filter on specific fields.
-							</p>
 							<SchemaDisplay />
 						</>
 					)

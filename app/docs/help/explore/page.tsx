@@ -46,16 +46,12 @@ export default function HelpExplorePage() {
 					title: "Searching on Explore Pages",
 					content: (
 						<>
-							<p className="mb-4">The Explore page has two search methods, controlled by two sets of controls:</p>
-							<div className="mb-4">
-								<h4>Search methods:</h4>
-								<ul className="list-disc ml-6 mb-4">
+							<ul className="list-disc ml-6 mb-4">
 									<li>Global search: Use the top search box to search across all columns in the current table.</li>
 									<li>
 										Column-specific search: Use the column header search input boxes to search within a specific field.
 									</li>
 								</ul>
-							</div>
 						</>
 					)
 				},
@@ -110,7 +106,6 @@ export default function HelpExplorePage() {
 								Analyses are bioinformatic processing runs that convert raw sequence data into occurrences (counts) of
 								features (species), documenting all parameters and methods used.
 							</p>
-							<p className="mb-4">Important information about analyses:</p>
 							<ul className="list-disc ml-6 mb-4">
 								<li>Analyses are linked to projects</li>
 								<li>You can add analyses to projects you did not submit</li>
@@ -141,9 +136,6 @@ export default function HelpExplorePage() {
 								<li>Consensus taxonomic classification</li>
 								<li>Prevalence across samples</li>
 							</ul>
-							<p className="mb-4">
-								Features provide the foundation for taxonomic classification and biodiversity assessment.
-							</p>
 						</>
 					)
 				},
