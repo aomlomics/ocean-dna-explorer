@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import deleteTagAction from "@/app/actions/tag/deleteTag";
 import type { AnalysisModel, TagModel } from "@/app/generated/prisma/models";
 import Link from "next/link";
-import { exploreUrl } from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 import Modal from "../../Modal";
 import AnalysisTag from "../../tags/AnalysisTag";
 

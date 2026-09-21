@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { MasonryPhotoAlbum, type Photo, type RenderImageContext, type RenderImageProps } from "react-photo-album";
 import "react-photo-album/masonry.css";
 import ImagePreviewModal from "../ImagePreviewModal";
-import { exploreUrl } from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 
 export type FeaturedOrganismGroup =
 	| "Fish"

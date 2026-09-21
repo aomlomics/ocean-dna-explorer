@@ -16,7 +16,7 @@ import {
 import type { TaxonomicRank } from "@/types/globals";
 import TaxonomySunburst from "../custom/TaxonomySunburst";
 import Link from "next/link";
-import { exploreUrl } from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 import ChartCopyButton from "../ChartCopyButton";
 
 ChartJS.register(LineElement, PointElement, LinearScale, Tooltip, Filler);

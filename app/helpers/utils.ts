@@ -12,6 +12,18 @@ import type {
 import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import { DeadValueEnum } from "@/types/enums";
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
+import type {
+	AnalysisModel,
+	AssayModel,
+	AssayPrepModel,
+	AssignmentModel,
+	FeatureModel,
+	LibraryModel,
+	OccurrenceModel,
+	ProjectModel,
+	SampleModel,
+	TaxonomyModel
+} from "@/app/generated/prisma/models";
 
 export async function fetcher(url: string): Promise<NetworkPacket> {
 	const res = await fetch(url);
@@ -423,4 +435,49 @@ export function getLastModifiedDate(submission: {
 
 export async function decodeRouteParams<T extends Record<string, string>>(params: Promise<T>): Promise<T> {
 	return Object.entries(await params).reduce((acc, [k, v]) => ({ ...acc, [k]: decodeURIComponent(v) }), {} as T);
+}
+
+export function exploreUrl(
+	args: { params?: Record<string, string> | URLSearchParams; hash?: string } & (
+		| { table: "project"; project_id: ProjectModel["project_id"] }
+		| { table: "sample"; project_id: SampleModel["project_id"]; samp_name: SampleModel["samp_name"] }
+		| { table: "assay"; assay_name: AssayModel["assay_name"] }
+		| { table: "assayPrep"; project_id: AssayPrepModel["project_id"]; assay_name: AssayPrepModel["assay_name"] }
+		| { table: "library"; project_id: LibraryModel["project_id"]; lib_id: LibraryModel["lib_id"] }
+		| {
+				table: "analysis";
+				project_id: AnalysisModel["project_id"];
+				analysis_run_name: AnalysisModel["analysis_run_name"];
+		  }
+		| {
+				table: "occurrence";
+				project_id: OccurrenceModel["project_id"];
+				analysis_run_name: OccurrenceModel["analysis_run_name"];
+				lib_id: OccurrenceModel["lib_id"];
+				featureid: OccurrenceModel["featureid"];
+		  }
+		| {
+				table: "assignment";
+				project_id: AssignmentModel["project_id"];
+				analysis_run_name: AssignmentModel["analysis_run_name"];
+				featureid: AssignmentModel["featureid"];
+		  }
+		| { table: "feature"; featureid: FeatureModel["featureid"] }
+		| { table: "taxonomy"; taxonomy: TaxonomyModel["taxonomy"] }
+	)
+) {
+	const { table, params, hash, ...titleFieldObj } = args;
+	let extra = "";
+	if (params) extra += "?" + new URLSearchParams(params);
+	if (hash) extra += "#" + hash;
+
+	if (typeof TableMetadata[table].titleField === "string") {
+		return `/explore/${table}/${encodeURIComponent(
+			titleFieldObj[TableMetadata[table].titleField as keyof typeof titleFieldObj]
+		)}${extra}`;
+	} else {
+		return `/explore/${table}/${TableMetadata[table].titleField
+			.map((f) => encodeURIComponent(titleFieldObj[f as keyof typeof titleFieldObj]))
+			.join("/")}${extra}`;
+	}
 }

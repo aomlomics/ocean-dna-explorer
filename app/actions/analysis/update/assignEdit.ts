@@ -203,6 +203,7 @@ async function doEdit(
 					{} as Record<OccurrenceModel["lib_id"], Set<AssignmentModel["taxonomy"]>>
 				);
 
+				//connect new Sample -> Taxonomy relationships
 				await connectTaxaToSamples(tx, project_id, taxaByLibId);
 
 				await stream.message("Existing entries successfully updated in database.", 90);
@@ -220,7 +221,7 @@ async function doEdit(
 					}
 				});
 
-				const assignsToDelete = currAssigns.reduce((acc, assign) => {
+				const assignIdsToDelete = currAssigns.reduce((acc, assign) => {
 					if (!featureids.has(assign.featureid)) {
 						acc.push(assign.id);
 					}
@@ -232,7 +233,7 @@ async function doEdit(
 						project_id,
 						analysis_run_name,
 						id: {
-							in: assignsToDelete
+							in: assignIdsToDelete
 						}
 					}
 				});

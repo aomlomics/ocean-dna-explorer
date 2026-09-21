@@ -660,6 +660,7 @@ export type FeatureOptionalDefaults = z.infer<typeof FeatureOptionalDefaultsSche
 
 export type FeatureRelations = {
   Analyses: AnalysisWithRelations[];
+  Samples: SampleWithRelations[];
   Occurrences: OccurrenceWithRelations[];
   Assignments: AssignmentWithRelations[];
   BlastQueryResults: BlastQueryResultWithRelations[];
@@ -669,6 +670,7 @@ export type FeatureWithRelations = z.infer<typeof FeatureSchema> & FeatureRelati
 
 export const FeatureWithRelationsSchema: z.ZodType<FeatureWithRelations> = FeatureSchema.merge(z.object({
   Analyses: z.lazy(() => AnalysisWithRelationsSchema).array(),
+  Samples: z.lazy(() => SampleWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrenceWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentWithRelationsSchema).array(),
   BlastQueryResults: z.lazy(() => BlastQueryResultWithRelationsSchema).array(),
@@ -679,6 +681,7 @@ export const FeatureWithRelationsSchema: z.ZodType<FeatureWithRelations> = Featu
 
 export type FeatureOptionalDefaultsRelations = {
   Analyses: AnalysisOptionalDefaultsWithRelations[];
+  Samples: SampleOptionalDefaultsWithRelations[];
   Occurrences: OccurrenceOptionalDefaultsWithRelations[];
   Assignments: AssignmentOptionalDefaultsWithRelations[];
   BlastQueryResults: BlastQueryResultOptionalDefaultsWithRelations[];
@@ -688,6 +691,7 @@ export type FeatureOptionalDefaultsWithRelations = z.infer<typeof FeatureOptiona
 
 export const FeatureOptionalDefaultsWithRelationsSchema: z.ZodType<FeatureOptionalDefaultsWithRelations> = FeatureOptionalDefaultsSchema.merge(z.object({
   Analyses: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema).array(),
+  Samples: z.lazy(() => SampleOptionalDefaultsWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrenceOptionalDefaultsWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentOptionalDefaultsWithRelationsSchema).array(),
   BlastQueryResults: z.lazy(() => BlastQueryResultOptionalDefaultsWithRelationsSchema).array(),
@@ -698,6 +702,7 @@ export const FeatureOptionalDefaultsWithRelationsSchema: z.ZodType<FeatureOption
 
 export type FeaturePartialRelations = {
   Analyses?: AnalysisPartialWithRelations[];
+  Samples?: SamplePartialWithRelations[];
   Occurrences?: OccurrencePartialWithRelations[];
   Assignments?: AssignmentPartialWithRelations[];
   BlastQueryResults?: BlastQueryResultPartialWithRelations[];
@@ -707,6 +712,7 @@ export type FeaturePartialWithRelations = z.infer<typeof FeaturePartialSchema> &
 
 export const FeaturePartialWithRelationsSchema: z.ZodType<FeaturePartialWithRelations> = FeaturePartialSchema.merge(z.object({
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
+  Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
   BlastQueryResults: z.lazy(() => BlastQueryResultPartialWithRelationsSchema).array(),
@@ -716,6 +722,7 @@ export type FeatureOptionalDefaultsWithPartialRelations = z.infer<typeof Feature
 
 export const FeatureOptionalDefaultsWithPartialRelationsSchema: z.ZodType<FeatureOptionalDefaultsWithPartialRelations> = FeatureOptionalDefaultsSchema.merge(z.object({
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
+  Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
   BlastQueryResults: z.lazy(() => BlastQueryResultPartialWithRelationsSchema).array(),
@@ -725,6 +732,7 @@ export type FeatureWithPartialRelations = z.infer<typeof FeatureSchema> & Featur
 
 export const FeatureWithPartialRelationsSchema: z.ZodType<FeatureWithPartialRelations> = FeatureSchema.merge(z.object({
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
+  Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
   BlastQueryResults: z.lazy(() => BlastQueryResultPartialWithRelationsSchema).array(),
@@ -1857,6 +1865,7 @@ export type SampleOptionalDefaults = z.infer<typeof SampleOptionalDefaultsSchema
 export type SampleRelations = {
   Project: ProjectWithRelations;
   Libraries: LibraryWithRelations[];
+  Features: FeatureWithRelations[];
   Taxonomies: TaxonomyWithRelations[];
 };
 
@@ -1867,6 +1876,7 @@ export type SampleWithRelations = Omit<z.infer<typeof SampleSchema>, "userDefine
 export const SampleWithRelationsSchema: z.ZodType<SampleWithRelations> = SampleSchema.merge(z.object({
   Project: z.lazy(() => ProjectWithRelationsSchema),
   Libraries: z.lazy(() => LibraryWithRelationsSchema).array(),
+  Features: z.lazy(() => FeatureWithRelationsSchema).array(),
   Taxonomies: z.lazy(() => TaxonomyWithRelationsSchema).array(),
 }))
 
@@ -1876,6 +1886,7 @@ export const SampleWithRelationsSchema: z.ZodType<SampleWithRelations> = SampleS
 export type SampleOptionalDefaultsRelations = {
   Project: ProjectOptionalDefaultsWithRelations;
   Libraries: LibraryOptionalDefaultsWithRelations[];
+  Features: FeatureOptionalDefaultsWithRelations[];
   Taxonomies: TaxonomyOptionalDefaultsWithRelations[];
 };
 
@@ -1886,6 +1897,7 @@ export type SampleOptionalDefaultsWithRelations = Omit<z.infer<typeof SampleOpti
 export const SampleOptionalDefaultsWithRelationsSchema: z.ZodType<SampleOptionalDefaultsWithRelations> = SampleOptionalDefaultsSchema.merge(z.object({
   Project: z.lazy(() => ProjectOptionalDefaultsWithRelationsSchema),
   Libraries: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema).array(),
+  Features: z.lazy(() => FeatureOptionalDefaultsWithRelationsSchema).array(),
   Taxonomies: z.lazy(() => TaxonomyOptionalDefaultsWithRelationsSchema).array(),
 }))
 
@@ -1895,6 +1907,7 @@ export const SampleOptionalDefaultsWithRelationsSchema: z.ZodType<SampleOptional
 export type SamplePartialRelations = {
   Project?: ProjectPartialWithRelations;
   Libraries?: LibraryPartialWithRelations[];
+  Features?: FeaturePartialWithRelations[];
   Taxonomies?: TaxonomyPartialWithRelations[];
 };
 
@@ -1905,6 +1918,7 @@ export type SamplePartialWithRelations = Omit<z.infer<typeof SamplePartialSchema
 export const SamplePartialWithRelationsSchema: z.ZodType<SamplePartialWithRelations> = SamplePartialSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
+  Features: z.lazy(() => FeaturePartialWithRelationsSchema).array(),
   Taxonomies: z.lazy(() => TaxonomyPartialWithRelationsSchema).array(),
 })).partial()
 
@@ -1915,6 +1929,7 @@ export type SampleOptionalDefaultsWithPartialRelations = Omit<z.infer<typeof Sam
 export const SampleOptionalDefaultsWithPartialRelationsSchema: z.ZodType<SampleOptionalDefaultsWithPartialRelations> = SampleOptionalDefaultsSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
+  Features: z.lazy(() => FeaturePartialWithRelationsSchema).array(),
   Taxonomies: z.lazy(() => TaxonomyPartialWithRelationsSchema).array(),
 }).partial())
 
@@ -1925,6 +1940,7 @@ export type SampleWithPartialRelations = Omit<z.infer<typeof SampleSchema>, "use
 export const SampleWithPartialRelationsSchema: z.ZodType<SampleWithPartialRelations> = SampleSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
+  Features: z.lazy(() => FeaturePartialWithRelationsSchema).array(),
   Taxonomies: z.lazy(() => TaxonomyPartialWithRelationsSchema).array(),
 }).partial())
 

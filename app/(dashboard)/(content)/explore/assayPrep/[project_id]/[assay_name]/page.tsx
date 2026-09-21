@@ -1,5 +1,6 @@
 import Link from "next/link";
-import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
+import TableMetadata from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 import DataDisplay from "@/app/components/explore/DataDisplay";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import { ProjectIcon } from "@/app/components/icons";

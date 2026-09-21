@@ -1,5 +1,6 @@
 import Link from "next/link";
-import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
+import TableMetadata from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import GcDonut from "@/app/components/charts/GcDonut";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";

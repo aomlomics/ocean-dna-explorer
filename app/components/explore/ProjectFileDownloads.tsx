@@ -5,7 +5,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import { createPortal } from "react-dom";
 import InfoButton from "@/app/components/InfoButton";
 import { AnalysisIcon } from "@/app/components/icons";
-import { exploreUrl } from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 import type { AnalysisModel } from "@/app/generated/prisma/models/Analysis";
 
 export type DownloadFile = {

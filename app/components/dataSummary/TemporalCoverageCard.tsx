@@ -1,7 +1,7 @@
 import { trustedPrisma } from "@/app/helpers/prisma";
 import DashCard from "@/app/components/dataSummary/DashCard";
 import type { SampleModel } from "@/app/generated/prisma/models/Sample";
-import { exploreUrl } from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 
 /**
  * Floor for what counts as a "real" sample collection date.

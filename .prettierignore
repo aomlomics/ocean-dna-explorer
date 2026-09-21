@@ -7,6 +7,7 @@ public
 app/generated
 prisma/generated
 prismaImages/generated
+types/tableMetadata.ts
 
 # TypeScript
 *.tsbuildinfo

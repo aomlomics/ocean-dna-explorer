@@ -4,7 +4,7 @@ import type { AnalysisModel, AssignmentModel, OccurrenceModel, TagModel } from "
 import { parseAnalysisFiles } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
 import { type Channel, createProgressStream } from "@/app/helpers/progress";
-import { connectTaxaToSamples, handlePrismaError } from "@/app/helpers/queries";
+import { connectFeatsToSamples, connectTaxaToSamples, handlePrismaError } from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
@@ -230,6 +230,8 @@ async function doSubmit(
 						}
 					}
 				});
+
+				await connectFeatsToSamples(tx, analysis.project_id, occurrences);
 
 				await connectTaxaToSamples(tx, analysis.project_id, taxaByLibId);
 

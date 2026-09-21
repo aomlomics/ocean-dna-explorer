@@ -6,7 +6,9 @@ import { parseOccurrencesFile } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
 import {
+	connectFeatsToSamples,
 	connectTaxaToSamples,
+	disconnectFeatsFromSamples,
 	disconnectTaxaFromSamples,
 	handlePrismaError,
 	updateManyRaw
@@ -225,6 +227,9 @@ async function doEdit(
 					{} as Record<OccurrenceModel["lib_id"], Set<string>>
 				);
 
+				//connect new Sample -> Feature relationships
+				await connectFeatsToSamples(tx, project_id, occurrences);
+
 				//connect new Sample -> Taxonomy relationships
 				await connectTaxaToSamples(tx, project_id, taxaByLibId);
 
@@ -245,19 +250,22 @@ async function doEdit(
 
 				const libIdSet = new Set(libIds);
 				const featureidSet = new Set(featureids);
-				const occToDelete = currOccs.reduce((acc, occ) => {
+
+				const occsToDelete = [] as typeof currOccs;
+				const occIdsToDelete = [] as number[];
+				for (const occ of currOccs) {
 					if (!libIdSet.has(occ.lib_id) || !featureidSet.has(occ.featureid)) {
-						acc.push(occ.id);
+						occsToDelete.push(occ);
+						occIdsToDelete.push(occ.id);
 					}
-					return acc;
-				}, [] as number[]);
+				}
 
 				await tx.occurrence.deleteMany({
 					where: {
 						project_id,
 						analysis_run_name,
 						id: {
-							in: occToDelete
+							in: occIdsToDelete
 						}
 					}
 				});
@@ -276,6 +284,9 @@ async function doEdit(
 					},
 					{} as Record<OccurrenceModel["lib_id"], Set<string>>
 				);
+
+				//remove Sample -> Feature relationships that don't exist in any analyses
+				await disconnectFeatsFromSamples(tx, project_id, analysis_run_name, occsToDelete);
 
 				//remove Sample -> Taxonomy relationships that don't exist in any analyses
 				await disconnectTaxaFromSamples(tx, project_id, analysis_run_name, removedTaxaByLibId);

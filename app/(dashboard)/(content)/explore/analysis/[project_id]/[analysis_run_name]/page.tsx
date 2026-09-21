@@ -22,7 +22,7 @@ import { AnalysisFileDownloads, type DownloadFile } from "@/app/components/explo
 import { notFound, redirect } from "next/navigation";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { getBlobSizes } from "@/app/helpers/getBlobSizes";
-import { exploreUrl } from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 import type { Metadata } from "next";
 import type { TaxonomicRank } from "@/types/globals";
 import { FIRST_TAXONOMY_VISUALIZE_TAB, TAXONOMY_VISUALIZE_TABS } from "@/app/components/charts/taxonomy/tabs";

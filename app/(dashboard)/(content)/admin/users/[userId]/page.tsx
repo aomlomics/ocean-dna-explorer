@@ -10,7 +10,7 @@ import projectDeleteAction from "@/app/actions/project/delete/projectDelete";
 import SubmissionDeleteButton from "@/app/components/mySubmissions/SubmissionDeleteButton";
 import WarningButton from "@/app/components/admin/WarningButton";
 import { prisma } from "@/app/helpers/prisma";
-import { exploreUrl } from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 import type { Role, UserMetadata } from "@/types/globals";
 import { RoleHeirarchy } from "@/types/objects";
 import { auth, clerkClient } from "@clerk/nextjs/server";

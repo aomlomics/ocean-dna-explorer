@@ -15,7 +15,7 @@ import type { DbType } from "@/types/globals";
 import distinctColors from "distinct-colors";
 import Checklist from "@/app/components/Checklist";
 import InfoButton from "@/app/components/InfoButton";
-import { exploreUrl } from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 
 const METRIC_SEP = " | ";
 const DEFAULT_MAX_HUES = 20;
