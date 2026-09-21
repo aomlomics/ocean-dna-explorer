@@ -64,7 +64,7 @@ export default function DocsPageSection<P extends DocsPage>({
 				<></>
 			)}
 
-			<div className="flex justify-center gap-50 w-full mt-10 pt-7 border-t border-base-content/20 text-base-content/50">
+			<div className="flex justify-center gap-50 w-full mt-10 pt-7 text-base-content/50">
 				{prev ? (
 					<Link
 						className="grid grid-cols-[auto_1fr] grid-rows-[1fr_auto] items-center hover:text-base-content transition-colors"

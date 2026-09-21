@@ -15,13 +15,9 @@ export default function ApiFaqPage() {
 			header={
 				<>
 					<div className="space-y-6">
-						<p className="mb-4">Frequently asked questions about using the Ocean DNA Explorer API.</p>
-
 						<div>
-							<h4 className="font-medium mb-2">Q: Do I need an API key to use the Ocean DNA Explorer API?</h4>
-							<p>
-								A: No, the Ocean DNA Explorer API is currently open and does not require authentication or API keys.
-							</p>
+							<h4 className="font-medium mb-2">Q: Do I need an API key?</h4>
+							<p>A: No. The API is open and does not require authentication or an API key.</p>
 						</div>
 
 						<div>
@@ -43,7 +39,7 @@ export default function ApiFaqPage() {
 								To use our API, you&apos;ll need to make HTTP requests to our endpoints. The simplest way to start is by
 								following our{" "}
 								<Link className="link link-primary font-semibold" href="/docs/api/introduction#how-to-use-api">
-									4-Step Guide
+									Making Your First API Query
 								</Link>
 								, then copying one of the{" "}
 								<Link className="link link-primary font-semibold" href="/docs/api/recipes">

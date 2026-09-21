@@ -2,24 +2,25 @@
 
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { useState } from "react";
-import useDaisyTheme from "@/app/hooks/useDaisyTheme";
+import { useState, type CSSProperties } from "react";
 
 interface CodeBlockProps {
 	language: string;
 	code: string;
 }
 
-export default function CodeBlock({ language, code }: CodeBlockProps) {
-	const { theme } = useDaisyTheme();
-	const [copied, setCopied] = useState(false);
-
-	const handleCopy = async () => {
-		await navigator.clipboard.writeText(code);
-		setCopied(true);
-		setTimeout(() => setCopied(false), 2000);
-	};
-
+//both themes are in the HTML so server and client markup match; CSS picks the visible one
+export function ThemedSyntaxHighlighter({
+	language,
+	code,
+	customStyle,
+	wrapLongLines
+}: {
+	language: string;
+	code: string;
+	customStyle?: CSSProperties;
+	wrapLongLines?: boolean;
+}) {
 	// Need to override theme / background color of the library I useds
 	const darkTheme = {
 		...oneDark,
@@ -43,6 +44,29 @@ export default function CodeBlock({ language, code }: CodeBlockProps) {
 			...oneLight['code[class*="language-"]'],
 			background: "transparent"
 		}
+	};
+
+	const highlighter = (style: typeof lightTheme) => (
+		<SyntaxHighlighter language={language} style={style} customStyle={customStyle} wrapLongLines={wrapLongLines}>
+			{code}
+		</SyntaxHighlighter>
+	);
+
+	return (
+		<>
+			<div className="[html[data-theme='dark']_&]:hidden">{highlighter(lightTheme)}</div>
+			<div className="hidden [html[data-theme='dark']_&]:block">{highlighter(darkTheme)}</div>
+		</>
+	);
+}
+
+export default function CodeBlock({ language, code }: CodeBlockProps) {
+	const [copied, setCopied] = useState(false);
+
+	const handleCopy = async () => {
+		await navigator.clipboard.writeText(code);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2000);
 	};
 
 	// Determine width class based on content
@@ -103,17 +127,15 @@ export default function CodeBlock({ language, code }: CodeBlockProps) {
 					</svg>
 				)}
 			</button>
-			<SyntaxHighlighter
+			<ThemedSyntaxHighlighter
 				language={language}
-				style={theme === "dark" ? darkTheme : lightTheme}
+				code={code}
 				customStyle={{
 					margin: 0,
 					padding: "1rem"
 				}}
 				wrapLongLines={true}
-			>
-				{code}
-			</SyntaxHighlighter>
+			/>
 		</div>
 	);
 }

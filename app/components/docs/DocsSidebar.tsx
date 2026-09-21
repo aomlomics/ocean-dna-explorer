@@ -132,7 +132,7 @@ export default function DocsSidebar() {
 		>
 			{Object.entries(DocsSections).map(([page, sections]) => (
 				<div key={page} className="flex flex-col gap-2.5">
-					<div className="font-bold border-b border-primary pb-1">{DocsPageTitles[page]}</div>
+					<div className="text-lg font-normal">{DocsPageTitles[page]}</div>
 
 					<div className="pl-3 flex flex-col gap-4">
 						{Object.entries(sections).map(([id, sect]: [string, DocsSection]) => (

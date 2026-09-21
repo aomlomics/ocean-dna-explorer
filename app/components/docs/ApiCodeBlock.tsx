@@ -1,14 +1,11 @@
 "use client";
 
 import { fetcher } from "@/app/helpers/utils";
-import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import { useState } from "react";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import useSWRImmutable from "swr/immutable";
+import { ThemedSyntaxHighlighter } from "./CodeBlock";
 
 export default function ApiCodeBlock({ language, url }: { language: string; url: string }) {
-	const { theme } = useDaisyTheme();
 	const [copied, setCopied] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
 
@@ -30,31 +27,6 @@ export default function ApiCodeBlock({ language, url }: { language: string; url:
 		await navigator.clipboard.writeText(code);
 		setCopied(true);
 		setTimeout(() => setCopied(false), 2000);
-	};
-
-	// Need to override theme / background color of the library I useds
-	const darkTheme = {
-		...oneDark,
-		'pre[class*="language-"]': {
-			...oneDark['pre[class*="language-"]'],
-			background: "transparent"
-		},
-		'code[class*="language-"]': {
-			...oneDark['code[class*="language-"]'],
-			background: "transparent"
-		}
-	};
-
-	const lightTheme = {
-		...oneLight,
-		'pre[class*="language-"]': {
-			...oneLight['pre[class*="language-"]'],
-			background: "transparent"
-		},
-		'code[class*="language-"]': {
-			...oneLight['code[class*="language-"]'],
-			background: "transparent"
-		}
 	};
 
 	const lines = code.split("\n");
@@ -142,22 +114,20 @@ export default function ApiCodeBlock({ language, url }: { language: string; url:
 				</div>
 			</div>
 			{isOpen ? (
-				<SyntaxHighlighter
+				<ThemedSyntaxHighlighter
 					language={language}
-					style={theme === "dark" ? darkTheme : lightTheme}
+					code={code}
 					customStyle={{
 						margin: 0,
 						padding: "1rem",
 						paddingTop: 0
 					}}
 					wrapLongLines={true}
-				>
-					{code}
-				</SyntaxHighlighter>
+				/>
 			) : (
-				<SyntaxHighlighter
+				<ThemedSyntaxHighlighter
 					language={language}
-					style={theme === "dark" ? darkTheme : lightTheme}
+					code={previewCode}
 					customStyle={{
 						margin: 0,
 						padding: "1rem",
@@ -165,9 +135,7 @@ export default function ApiCodeBlock({ language, url }: { language: string; url:
 						...(clipPreview ? { height: "100px", overflow: "hidden" } : {})
 					}}
 					wrapLongLines={false}
-				>
-					{previewCode}
-				</SyntaxHighlighter>
+				/>
 			)}
 		</div>
 	);

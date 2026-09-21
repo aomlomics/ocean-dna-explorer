@@ -37,8 +37,7 @@ export default async function ApiIntroductionPage() {
 						started quickly.
 					</p>
 					<p>
-						The Ocean DNA Explorer API provides programmatic access to marine eDNA data. This documentation will help
-						you understand how to use the API to query and retrieve data from the Ocean DNA Explorer.
+						The Ocean DNA Explorer API provides programmatic access to marine eDNA data.
 					</p>
 					<p>
 						All you need is a web browser or a simple script to start fetching data. No authentication is required.
@@ -67,7 +66,12 @@ export default async function ApiIntroductionPage() {
 											Database Schema
 										</Link>
 										. The Entity Relationship Diagram (ERD) is a map of the database that shows you what tables are
-										available and how they are linked together.
+										available and how they are linked together. The{" "}
+										<Link href="/learn" className="link link-primary">
+											Learn
+										</Link>{" "}
+										page also shows what each table is, in a more visual way. It explains the tables themselves, not how
+										they connect.
 									</p>
 									<p className="mt-2">
 										Once you know which table you&apos;re interested in (e.g., Project), look at the{" "}
@@ -393,10 +397,6 @@ if (http_status(response)$category == "Success") {
 					title: "Essential API Information",
 					content: (
 						<div className="space-y-8">
-							<p>
-								Before diving into the API, here is some essential information that will help you use it effectively:
-							</p>
-
 							<div>
 								<h4 className="mb-2">Ways to access data</h4>
 								<p className="mb-3">There are multiple ways to access and explore data:</p>
