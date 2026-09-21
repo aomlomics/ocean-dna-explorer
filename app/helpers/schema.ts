@@ -133,17 +133,19 @@ export function getZodType(
 	field: string,
 	error?: string
 ): { type: DbType; optional?: boolean; values?: string[] } {
-	const result = getTypeRecursive(TableMetadata[table].schema.shape[field]);
-
-	if (!result.type) {
-		if (error) {
-			throw new Error(error);
-		} else {
-			throw new Error(`Could not find type of "${field}" on table named ${table}.`);
+	const found = TableMetadata[table].enumSchema.options.find((f) => f.toLowerCase() === field.toLowerCase());
+	if (found) {
+		const result = getTypeRecursive(TableMetadata[table].schema.shape[found]);
+		if (result.type) {
+			return result;
 		}
 	}
 
-	return result;
+	if (error) {
+		throw new Error(error);
+	}
+
+	throw new Error(`Could not find type of "${field}" on table named ${table}.`);
 }
 
 //parse a field value into a given object only if it exists in the schema
