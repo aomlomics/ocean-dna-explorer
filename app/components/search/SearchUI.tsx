@@ -504,7 +504,7 @@ export default function SearchUI({ noTable, ignoreParams }: { noTable?: true; ig
 		if (!noTable) keepParams.push("table=" + searchTable);
 		if (ignoreParams) ignoreParams.forEach((param) => keepParams.push(param + "=" + searchParams.get(param)));
 
-		router.push(pathname + keepParams.length ? "?" + keepParams.join("&") : "");
+		router.push(pathname + (keepParams.length ? "?" + keepParams.join("&") : ""));
 	}
 
 	function search() {
@@ -515,6 +515,8 @@ export default function SearchUI({ noTable, ignoreParams }: { noTable?: true; ig
 
 		buildParams(searchParams, newParams);
 
+		// I drop the previous advanced so Search uses the builder as it is now, even when it's empty
+		newParams.delete("advanced");
 		const advanced = getParamsArrayFromTree(searchTree);
 		if (advanced && advanced.length) {
 			newParams.set("advanced", JSON.stringify(advanced));
@@ -541,29 +543,17 @@ export default function SearchUI({ noTable, ignoreParams }: { noTable?: true; ig
 
 		const baseUrl = typeof window !== "undefined" ? window.location.origin : process.env.NEXT_PUBLIC_URL;
 
-		const newParams = new URLSearchParams();
+		// I copy the live URL instead of listing options, so BLAST and shapes all come along
+		const newParams = new URLSearchParams(searchParams);
+		newParams.delete("table"); //the table is the endpoint, not an option
 
 		newParams.set("trusted", trusted ? "true" : "false");
 
+		newParams.delete("advanced");
 		const advanced = getParamsArrayFromTree(searchTree);
 		if (advanced && advanced.length) {
 			newParams.set("advanced", JSON.stringify(advanced));
 		}
-
-		//maintain BLAST
-		searchParams.getAll("blastQuery").forEach((q) => newParams.set("blastQuery", q));
-		const blastDatabase = searchParams.get("blastDatabase");
-		if (blastDatabase) {
-			newParams.set("blastDatabase", blastDatabase);
-		}
-		const blastSave = searchParams.get("blastSave");
-		if (blastSave) {
-			newParams.set("blastSave", blastSave);
-		}
-
-		//maintain shapes
-		searchParams.getAll("polygon").forEach((poly) => newParams.set("polygon", poly));
-		searchParams.getAll("circle").forEach((cir) => newParams.set("circle", cir));
 
 		let fieldsForTable = undefined as string[] | undefined;
 		if (customFields === null) {
@@ -612,7 +602,6 @@ export default function SearchUI({ noTable, ignoreParams }: { noTable?: true; ig
 	);
 	const allFieldsSelected = availableApiFields.length > 0 && fieldSelectionDraft.length === availableApiFields.length;
 	const shownQueryDescription = searchTree.children.length === 0 ? "" : queryDescription;
-	const hasActiveConditions = shownQueryDescription.trim().length > 0;
 
 	const rootFooter = (
 		<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-4">
@@ -724,9 +713,7 @@ export default function SearchUI({ noTable, ignoreParams }: { noTable?: true; ig
 				)}
 				<button
 					type="button"
-					className={`btn btn-md gap-2 ${
-						hasActiveConditions ? "btn-error" : "bg-base-200 text-base-content hover:bg-base-300 border-base-300"
-					}`}
+					className="btn btn-md gap-2 bg-base-200 text-base-content hover:bg-base-300 border-base-300"
 					onClick={reset}
 				>
 					<svg
@@ -741,12 +728,7 @@ export default function SearchUI({ noTable, ignoreParams }: { noTable?: true; ig
 					</svg>
 					Clear
 				</button>
-				<button
-					type="submit"
-					className={`btn btn-md gap-2 ${
-						hasActiveConditions ? "btn-primary" : "bg-base-200 text-base-content hover:bg-base-300 border-base-300"
-					}`}
-				>
+				<button type="button" className="btn btn-md gap-2 btn-primary" onClick={search}>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						fill="none"
@@ -771,8 +753,8 @@ export default function SearchUI({ noTable, ignoreParams }: { noTable?: true; ig
 
 	return (
 		<>
-			<div className="collapse collapse-arrow overflow-visible relative z-raised min-w-0 rounded-xl border border-base-300 bg-base-200/30 shadow-sm">
-				<input defaultChecked type="checkbox" />
+			<div className="collapse collapse-arrow relative z-raised min-w-0 overflow-hidden rounded-xl border border-base-300 bg-base-200/30 shadow-sm has-[>input:checked]:overflow-visible">
+				<input defaultChecked type="checkbox" className="peer" />
 				<div className="collapse-title py-2.5 px-4 text-base font-medium text-base-content">
 					<div className="flex items-center gap-2">
 						<svg
@@ -792,10 +774,10 @@ export default function SearchUI({ noTable, ignoreParams }: { noTable?: true; ig
 						<span>Query Builder</span>
 					</div>
 				</div>
-				<div className="collapse-content overflow-visible px-2 md:px-4">
+				<div className="collapse-content overflow-hidden px-2 md:px-4 peer-checked:overflow-visible">
 					<form
 						ref={formRef}
-						className="search-focus-border relative overflow-visible bg-transparent pb-4"
+						className="search-focus-border relative bg-transparent pb-4"
 						onSubmit={(e) => {
 							e.preventDefault();
 							search();
