@@ -36,6 +36,7 @@ type Props = {
 	extraParams?: Record<string, string>;
 	setExtraResults?: (args: ExtraResults) => void;
 	className?: string;
+	onClear?: () => void;
 };
 
 export const DEFAULT_ORDER_BY = { field: "id", order: "desc" } as { field: string; order: Prisma.SortOrder };
@@ -53,7 +54,8 @@ function ActualTable({
 	ignoreParams,
 	extraParams,
 	setExtraResults,
-	className
+	className,
+	onClear
 }: Props) {
 	const combinedOmit = [...omit, ...GlobalOmit, "id"];
 	const {
@@ -191,6 +193,7 @@ function ActualTable({
 				kind="error"
 				title="Could not load results"
 				detail={error instanceof Error ? error.message : String(error)}
+				onClear={onClear}
 			/>
 		);
 	}
@@ -200,6 +203,7 @@ function ActualTable({
 				kind="error"
 				title="Could not load results"
 				detail={countError instanceof Error ? countError.message : String(countError)}
+				onClear={onClear}
 			/>
 		);
 	}
@@ -208,7 +212,12 @@ function ActualTable({
 		return <LoadingTable take={take} page={page} hideFilters={hideFilters} />;
 	if (data.statusMessage === "error") {
 		return (
-			<TableStatusState kind="error" title="Could not load results" detail={String(data.error ?? "Unknown error")} />
+			<TableStatusState
+				kind="error"
+				title="Could not load results"
+				detail={String(data.error ?? "Unknown error")}
+				onClear={onClear}
+			/>
 		);
 	}
 	if (countData.statusMessage === "error") {
@@ -217,6 +226,7 @@ function ActualTable({
 				kind="error"
 				title="Could not load results"
 				detail={String(countData.error ?? "Unknown error")}
+				onClear={onClear}
 			/>
 		);
 	}

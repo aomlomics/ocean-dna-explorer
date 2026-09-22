@@ -1464,6 +1464,16 @@ function InValuesField({
 	);
 }
 
+function dateInputValue(iso: string | undefined) {
+	return iso?.split("T")[0] ?? "";
+}
+
+// type="time" only displays HH:MM. Seconds or a timezone suffix make the box look empty.
+function timeInputValue(iso: string | undefined) {
+	const time = iso?.split("T")[1];
+	return time ? time.slice(0, 5) : "";
+}
+
 function InputElement({
 	nameSuffix,
 	table,
@@ -1478,8 +1488,6 @@ function InputElement({
 	defaultValue: string;
 }) {
 	const [defaultGte, defaultLte] = defaultValue.split(",");
-	const [gteDateSelected, setGteDateSelected] = useState(!!defaultGte);
-	const [lteDateSelected, setLteDateSelected] = useState(!!defaultLte);
 
 	const type = getZodType(table, field).type;
 
@@ -1648,37 +1656,35 @@ function InputElement({
 						))}
 					</select>
 				) : mode === "range" ? (
-					<div className="grid min-w-0 flex-1 grid-cols-1 items-center gap-1 md:grid-cols-[1fr_auto_1fr]">
-						<div className="input w-full min-w-0">
+					<div className="grid min-w-0 flex-1 grid-cols-1 items-center gap-2 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+						<div className="flex min-w-0 flex-col gap-1">
 							<input
 								name={`filter_${nameSuffix}_gte_date`}
-								className={`w-5 ${gteDateSelected ? "text-success" : "text-error"}`}
-								defaultValue={defaultLte?.split("T")[0] ?? ""}
-								onChange={(e) => setGteDateSelected(!!e.target.value)}
+								className="input w-full min-w-0 text-base-content"
+								defaultValue={dateInputValue(defaultGte)}
 								type="date"
 								required
 							/>
 							<input
 								type="time"
-								className="text-center"
-								defaultValue={defaultLte?.split("T")[1] ?? ""}
+								className="input w-full min-w-0"
+								defaultValue={timeInputValue(defaultGte)}
 								name={`filter_${nameSuffix}_gte_time`}
 							/>
 						</div>
 						<span className="px-1 text-xl leading-none text-base-content/40">–</span>
-						<div className="input w-full min-w-0">
+						<div className="flex min-w-0 flex-col gap-1">
 							<input
 								name={`filter_${nameSuffix}_lte_date`}
-								className={`w-5 ${lteDateSelected ? "text-success" : "text-error"}`}
-								defaultValue={defaultGte?.split("T")[0] ?? ""}
-								onChange={(e) => setLteDateSelected(!!e.target.value)}
+								className="input w-full min-w-0 text-base-content"
+								defaultValue={dateInputValue(defaultLte)}
 								type="date"
 								required
 							/>
 							<input
 								type="time"
-								className="text-center"
-								defaultValue={defaultGte?.split("T")[1] ?? ""}
+								className="input w-full min-w-0"
+								defaultValue={timeInputValue(defaultLte)}
 								name={`filter_${nameSuffix}_lte_time`}
 							/>
 						</div>

@@ -15,6 +15,19 @@ function IconWrap({ children }: { children: ReactNode }) {
 	return <span className="flex h-5 w-5 shrink-0 items-center justify-center [&_svg]:h-5 [&_svg]:w-5">{children}</span>;
 }
 
+export function ClearAllButton({ onClear }: { onClear: () => void }) {
+	return (
+		<button type="button" onClick={onClear} className={`${segBase} ${segOff}`}>
+			<IconWrap>
+				<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" aria-hidden>
+					<path d="M18 6L6 18M6 6l12 12" />
+				</svg>
+			</IconWrap>
+			Clear all
+		</button>
+	);
+}
+
 export default function ActionBar({
 	activePanel,
 	onPanelChange,
@@ -82,18 +95,7 @@ export default function ActionBar({
 				Filters
 			</button>
 
-			<button
-				type="button"
-				onClick={onClear}
-				className={`${segBase} ${segOff} disabled:pointer-events-none disabled:opacity-35`}
-			>
-				<IconWrap>
-					<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" aria-hidden>
-						<path d="M18 6L6 18M6 6l12 12" />
-					</svg>
-				</IconWrap>
-				Clear all
-			</button>
+			<ClearAllButton onClear={onClear} />
 		</div>
 	);
 }

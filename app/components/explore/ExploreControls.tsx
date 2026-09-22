@@ -208,7 +208,13 @@ function ControlsBody({
 				</div>
 			</div>
 
-			<TableDisplay table={table} tableWhere={tableWhere} displayMode={displayMode} toggle={toggle} />
+			<TableDisplay
+				table={table}
+				tableWhere={tableWhere}
+				displayMode={displayMode}
+				toggle={toggle}
+				onClear={clearSearchAndFilters}
+			/>
 		</div>
 	);
 }

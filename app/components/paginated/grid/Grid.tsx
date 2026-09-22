@@ -26,6 +26,7 @@ type Props = {
 	/** When false, grid grows with the page (document scroll) instead of a fixed viewport + inner scroll. */
 	fillViewport?: boolean;
 	take?: number;
+	onClear?: () => void;
 };
 
 const defaultItemsGridClass = "grid grid-cols-2 lg:grid-cols-5 gap-4";
@@ -40,7 +41,8 @@ function ActualGrid({
 	childProps,
 	itemsGridClassName = defaultItemsGridClass,
 	fillViewport = true,
-	take = 25
+	take = 25,
+	onClear
 }: Props) {
 	const searchParams = useSearchParams();
 	const { trusted } = useTrusted();
@@ -122,6 +124,7 @@ function ActualGrid({
 				kind="error"
 				title="Could not load results"
 				detail={error instanceof Error ? error.message : String(error)}
+				onClear={onClear}
 			/>
 		);
 	}
@@ -131,6 +134,7 @@ function ActualGrid({
 				kind="error"
 				title="Could not load results"
 				detail={countError instanceof Error ? countError.message : String(countError)}
+				onClear={onClear}
 			/>
 		);
 	}
@@ -161,7 +165,12 @@ function ActualGrid({
 
 	if (data.statusMessage === "error" || !data.result || !Array.isArray(data.result)) {
 		return (
-			<TableStatusState kind="error" title="Could not load results" detail={String(data.error ?? "Unknown error")} />
+			<TableStatusState
+				kind="error"
+				title="Could not load results"
+				detail={String(data.error ?? "Unknown error")}
+				onClear={onClear}
+			/>
 		);
 	}
 	if (countData.statusMessage === "error" || countData.result == null) {
@@ -170,6 +179,7 @@ function ActualGrid({
 				kind="error"
 				title="Could not load results"
 				detail={String(countData.error ?? "Unknown error")}
+				onClear={onClear}
 			/>
 		);
 	}
@@ -180,6 +190,7 @@ function ActualGrid({
 				kind="empty"
 				title="No results found"
 				detail="Try broadening your search or removing one or more filters."
+				onClear={onClear}
 			/>
 		);
 	}

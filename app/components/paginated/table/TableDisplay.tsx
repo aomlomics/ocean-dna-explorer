@@ -22,7 +22,8 @@ export default function TableDisplay({
 	ignoreParams,
 	extraParams,
 	setExtraResults,
-	hideFilters
+	hideFilters,
+	onClear
 }: {
 	table: Uncapitalize<ModelName>;
 	tableWhere?: Record<string, any> | undefined;
@@ -36,6 +37,7 @@ export default function TableDisplay({
 		samples: SampleModel[] | undefined;
 	}) => void;
 	hideFilters?: boolean;
+	onClear?: () => void;
 }) {
 	const [size, setSize] = useState<"lg" | "sm">("lg");
 	const [showCommonNames, setShowCommonNames] = useState(true);
@@ -89,9 +91,10 @@ export default function TableDisplay({
 					setExtraResults={setExtraResults}
 					hideEmptyAtStart={table === "taxonomy"}
 					hideFilters={hideFilters}
+					onClear={onClear}
 				/>
 			) : (
-				<Pagination key={table} table={table} ignoreParams={effectiveIgnoreParams} />
+				<Pagination key={table} table={table} ignoreParams={effectiveIgnoreParams} onClear={onClear} />
 			)
 		) : table === "project" ? (
 			<Grid
@@ -102,6 +105,7 @@ export default function TableDisplay({
 				extraQueryParams={{ relations: "AssayPreps", relationsFields: "assayPreps,assay_name" }}
 				fillViewport={false}
 				itemsGridClassName="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5"
+				onClear={onClear}
 			/>
 		) : table === "taxonomy" ? (
 			<Grid
@@ -113,6 +117,7 @@ export default function TableDisplay({
 				fillViewport={false}
 				take={30}
 				itemsGridClassName="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 lg:gap-4"
+				onClear={onClear}
 			/>
 		) : (
 			<>Invalid</>

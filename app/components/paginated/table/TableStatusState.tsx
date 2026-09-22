@@ -1,11 +1,17 @@
+"use client";
+
+import { ClearAllButton } from "../../explore/ActionBar";
+
 export default function TableStatusState({
 	kind,
 	title,
-	detail
+	detail,
+	onClear
 }: {
 	kind: "loading" | "error" | "empty";
 	title: string;
 	detail?: string;
+	onClear?: () => void;
 }) {
 	const icon =
 		kind === "loading" ? (
@@ -26,6 +32,11 @@ export default function TableStatusState({
 				{icon}
 				<h3 className="text-lg font-semibold text-base-content">{title}</h3>
 				{detail ? <p className="max-w-xl text-sm text-base-content/70">{detail}</p> : null}
+				{onClear && kind !== "loading" ? (
+					<div className="mt-1">
+						<ClearAllButton onClear={onClear} />
+					</div>
+				) : null}
 				{kind === "loading" ? (
 					<div className="mt-3 flex w-full max-w-md flex-col gap-2">
 						<div className="h-3 w-full animate-pulse rounded-full bg-base-300/80" />
