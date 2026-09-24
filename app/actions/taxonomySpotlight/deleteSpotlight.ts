@@ -54,7 +54,7 @@ export default async function deleteSpotlightAction(
 			};
 		}
 
-		const [_, existingSpotlights] = await prisma.$transaction([
+		const [, existingSpotlights] = await prisma.$transaction([
 			prisma.taxonomySpotlight.delete({
 				where: {
 					project_id_taxonomy: {

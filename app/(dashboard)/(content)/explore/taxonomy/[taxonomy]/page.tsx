@@ -16,7 +16,6 @@ import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { TaxonomicRank } from "@/types/globals";
-import { auth } from "@clerk/nextjs/server";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import type { ImageWithRelations } from "@/prismaImages/generated/zod";
 import type { TaxonomySpotlightModel } from "@/app/generated/prisma/models";
@@ -180,8 +179,6 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 		const raw = dbTaxonomy[rank]?.toString().trim();
 		return Boolean(raw);
 	});
-
-	const { userId } = await auth();
 
 	return (
 		<div id="taxonomy" className="container mx-auto py-6 space-y-6 max-w-full pb-8">
