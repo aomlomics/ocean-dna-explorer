@@ -19,6 +19,7 @@ export const PRISMA_PARAM_LIMIT = 30000;
 
 export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): ErrorPacket | undefined {
 	if (err.constructor?.name === Prisma.PrismaClientKnownRequestError.name) {
+		console.error(JSON.stringify(err, undefined, 2));
 		try {
 			if (err.code === "P2002") {
 				const meta = TableMetadata[err.meta!.modelName as ModelName];
@@ -37,7 +38,6 @@ export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): Er
 			}
 		} catch {}
 
-		console.error(err);
 		return { statusMessage: "error", error: "An unknown database error occurred." };
 	}
 }

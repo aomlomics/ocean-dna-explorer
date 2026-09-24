@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, type MouseEvent, useState } from "react";
-import Modal from "../Modal";
+import Modal from "../../Modal";
 import fixDeletedSamplesAction from "@/app/actions/project/delete/fixDeletedSamples";
 import { useRouter } from "next/navigation";
 

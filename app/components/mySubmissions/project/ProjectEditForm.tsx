@@ -2,8 +2,8 @@
 
 import type { ProjectModel } from "@/app/generated/prisma/models/Project";
 import { useRef, useState } from "react";
-import Modal from "../Modal";
-import ProgressBar from "../ProgressBar";
+import Modal from "../../Modal";
+import ProgressBar from "../../ProgressBar";
 import type { NetworkProgressPacket } from "@/types/globals";
 import projectEditAction from "@/app/actions/project/update/projectEdit";
 import { doProgressActionManyGlobal } from "@/app/helpers/progress";
@@ -12,8 +12,8 @@ import Link from "next/link";
 import { getSubmissionFileName } from "@/app/helpers/utils";
 import { useRouter } from "next/navigation";
 import projectUpdateImageAction from "@/app/actions/project/update/projectUpdateImage";
-import AddImageButton from "../AddImageButton";
-import ProjectCoverPhotoPreview from "../explore/ProjectCoverPhotoPreview";
+import AddImageButton from "../../AddImageButton";
+import ProjectCoverPhotoPreview from "../../explore/ProjectCoverPhotoPreview";
 
 export default function ProjectEditForm({
 	project_id,

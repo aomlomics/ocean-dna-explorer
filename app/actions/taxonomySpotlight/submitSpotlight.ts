@@ -1,5 +1,6 @@
 "use server";
 
+import type { TaxonomySpotlightModel } from "@/app/generated/prisma/models";
 import type { AttributionModel, ImageModel } from "@/app/generated/prismaImages/models";
 import { prisma } from "@/app/helpers/prisma";
 import { prismaImages } from "@/app/helpers/prismaImages";
@@ -19,6 +20,7 @@ import type { PrismaPromise } from "@prisma/client/runtime/client";
 import { del } from "@vercel/blob";
 
 export default async function submitSpotlightAction(
+	project_id: TaxonomySpotlightModel["project_id"],
 	spotlight: TaxonomySpotlightPartial,
 	image?: ImagePartial,
 	attribution?: AttributionPartial
@@ -60,10 +62,10 @@ export default async function submitSpotlightAction(
 		const parsedImage = image && ImageOptionalDefaultsSchema.parse({ ...image, userId, homePage: false });
 		const parsedAttribution = attribution && AttributionOptionalDefaultsSchema.parse(attribution);
 
-		const [dbProject, dbSpotlight] = await prisma.$transaction([
+		const [dbProject, otherSpotlight, existingSpotlight] = await prisma.$transaction([
 			prisma.project.findUnique({
 				where: {
-					project_id: spotlight.project_id
+					project_id
 				},
 				select: {
 					userIds: true
@@ -73,6 +75,17 @@ export default async function submitSpotlightAction(
 				where: {
 					project_id_taxonomy: {
 						project_id: parsedSpotlight.project_id,
+						taxonomy: parsedSpotlight.taxonomy
+					}
+				},
+				select: {
+					id: true
+				}
+			}),
+			prisma.taxonomySpotlight.findUnique({
+				where: {
+					project_id_taxonomy: {
+						project_id,
 						taxonomy: parsedSpotlight.taxonomy
 					}
 				},
@@ -102,11 +115,11 @@ export default async function submitSpotlightAction(
 
 			deleteImageOnError = true;
 
-			if (dbSpotlight) {
+			if (existingSpotlight) {
 				await handleImageDelete();
 				return {
 					statusMessage: "error",
-					error: `A Taxonomy Spotlight for the taxonomy "${parsedSpotlight.taxonomy}" already exists for the project "${parsedSpotlight.project_id}".`
+					error: `A Taxonomy Spotlight for the taxonomy "${parsedSpotlight.taxonomy}" already exists for the project "${project_id}".`
 				};
 			}
 
@@ -122,7 +135,7 @@ export default async function submitSpotlightAction(
 			}
 
 			deleteDbImageOnError = true;
-		} else if (!dbSpotlight) {
+		} else if (!otherSpotlight) {
 			return {
 				statusMessage: "error",
 				error: `Selected pre-existing Taxonomy Spotlight with project_id of "${parsedSpotlight.project_id}" and taxonomy of "${parsedSpotlight.taxonomy}" does not exist.`
@@ -130,7 +143,7 @@ export default async function submitSpotlightAction(
 		}
 
 		await prisma.taxonomySpotlight.create({
-			data: parsedSpotlight
+			data: { ...parsedSpotlight, project_id }
 		});
 
 		return { statusMessage: "success" };

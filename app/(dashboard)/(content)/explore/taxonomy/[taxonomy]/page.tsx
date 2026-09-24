@@ -19,7 +19,7 @@ import type { TaxonomicRank } from "@/types/globals";
 import { auth } from "@clerk/nextjs/server";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import type { ImageWithRelations } from "@/prismaImages/generated/zod";
-import type { ProjectModel, TaxonomySpotlightModel } from "@/app/generated/prisma/models";
+import type { TaxonomySpotlightModel } from "@/app/generated/prisma/models";
 
 export async function generateMetadata({ params }: { params: Promise<{ taxonomy: string }> }): Promise<Metadata> {
 	const { taxonomy } = await decodeRouteParams(params);
@@ -143,12 +143,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 			Analyses: {
 				distinct: ["project_id"],
 				select: {
-					project_id: true,
-					Project: {
-						select: {
-							userIds: true
-						}
-					}
+					project_id: true
 				}
 			},
 			TaxonomySpotlights: true
@@ -220,22 +215,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						databaseRankLabel={databaseRankLabel}
 						databaseScientificName={databaseScientificName}
 						commonName={pageGbif?.commonName ?? null}
-						allowedToSpotlight={!!userId && dbTaxonomy.Analyses.some((a) => a.Project.userIds.includes(userId))}
 						taxonomySpotlights={spotlightsWithImages}
-						availableProjects={
-							userId
-								? dbTaxonomy.Analyses.reduce(
-										(acc, a) => {
-											if (a.Project.userIds.includes(userId)) {
-												acc.push(a.project_id);
-											}
-
-											return acc;
-										},
-										[] as ProjectModel["project_id"][]
-									)
-								: []
-						}
 					>
 						<div className="flex flex-col items-start gap-3">
 							<CopyButton taxonomy={taxonomy} variant="button" label="Copy Taxonomy" />

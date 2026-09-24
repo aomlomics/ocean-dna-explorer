@@ -2,7 +2,7 @@
 
 import type { AnalysisModel, TagModel } from "@/app/generated/prisma/models";
 import { type ReactNode, useRef, useState } from "react";
-import Modal from "../Modal";
+import Modal from "../../Modal";
 import type { NetworkProgressPacket } from "@/types/globals";
 import { upload } from "@vercel/blob/client";
 import { doProgressAction } from "@/app/helpers/progress";
@@ -10,11 +10,11 @@ import occEditAction from "@/app/actions/analysis/update/occEdit";
 import { v4 as uuidv4 } from "uuid";
 import analysisEditAction from "@/app/actions/analysis/update/analysisEdit";
 import assignEditAction from "@/app/actions/analysis/update/assignEdit";
-import ProgressBar from "../ProgressBar";
+import ProgressBar from "../../ProgressBar";
 import { getSubmissionFileName } from "@/app/helpers/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import AnalysisTag from "../tags/AnalysisTag";
+import AnalysisTag from "../../tags/AnalysisTag";
 
 export default function AnalysisEditForm({
 	analysis: {

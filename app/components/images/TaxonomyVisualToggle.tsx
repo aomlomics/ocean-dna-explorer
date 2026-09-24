@@ -11,9 +11,8 @@ import GbifImage from "./GbifImage";
 import PhyloPicClient from "./PhyloPicClient";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 import type { TaxonomicRank } from "@/types/globals";
-import type { ProjectModel, TaxonomySpotlightModel } from "@/app/generated/prisma/models";
+import type { TaxonomySpotlightModel } from "@/app/generated/prisma/models";
 import type { ImageWithRelations } from "@/prismaImages/generated/zod";
-import SpotlightSubmitButton from "../SpotlightSubmitButton";
 import Image from "next/image";
 import Modal from "../Modal";
 
@@ -46,9 +45,7 @@ type TaxonomyVisualToggleProps = {
 	compact?: boolean;
 	/** Optional content rendered to the right of the image (e.g. taxonomic ranks). */
 	children?: ReactNode;
-	allowedToSpotlight?: boolean;
 	taxonomySpotlights: (TaxonomySpotlightModel & { Image: ImageWithRelations })[];
-	availableProjects: ProjectModel["project_id"][];
 };
 
 export default function TaxonomyVisualToggle({
@@ -65,9 +62,7 @@ export default function TaxonomyVisualToggle({
 	hideNamePanels = false,
 	compact = false,
 	children,
-	allowedToSpotlight,
-	taxonomySpotlights,
-	availableProjects
+	taxonomySpotlights
 }: TaxonomyVisualToggleProps) {
 	const [mode, setMode] = useState("phylopic" as "phylopic" | "gbif" | "spotlight");
 	const [spotlightIndex, setSpotlightIndex] = useState(0);
@@ -161,7 +156,7 @@ export default function TaxonomyVisualToggle({
 									GBIF photo
 								</button>
 
-								{taxonomySpotlights?.length || allowedToSpotlight ? (
+								{taxonomySpotlights?.length ? (
 									<button
 										className={`join-item btn btn-xs rounded-btn sm:btn-sm ${mode === "spotlight" ? "btn-primary" : "btn-ghost"}`}
 										onClick={() => setMode("spotlight")}
@@ -254,12 +249,7 @@ export default function TaxonomyVisualToggle({
 									</button>
 								</div>
 							) : (
-								// TODO: Add button even when spotlights exist for this taxonomy
-								<SpotlightSubmitButton
-									taxonomy={taxonomy.taxonomy}
-									spotlights={taxonomySpotlights}
-									availableProjects={availableProjects}
-								/>
+								<></>
 							)}
 						</div>
 					</div>

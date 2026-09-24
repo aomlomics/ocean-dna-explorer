@@ -1,6 +1,6 @@
 import analysisDeleteAction from "@/app/actions/analysis/delete/analysisDelete";
 import InfoButton from "@/app/components/InfoButton";
-import AnalysisEditForm from "@/app/components/mySubmissions/AnalysisEditForm";
+import AnalysisEditForm from "@/app/components/mySubmissions/analysis/AnalysisEditForm";
 import SubmissionDeleteButton from "@/app/components/mySubmissions/SubmissionDeleteButton";
 import { prisma } from "@/app/helpers/prisma";
 import { exploreUrl } from "@/app/helpers/utils";
