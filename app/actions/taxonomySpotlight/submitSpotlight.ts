@@ -32,7 +32,7 @@ export default async function submitSpotlightAction(
 		return { statusMessage: "error", error: "Must be logged in." };
 	}
 
-	if (!role || !RolePermissions[role].includes("manageDatabase")) {
+	if (!role || !RolePermissions[role].includes("contribute")) {
 		return { statusMessage: "error", error: "Invalid role." };
 	}
 
@@ -96,11 +96,11 @@ export default async function submitSpotlightAction(
 		]);
 
 		if (!dbProject) {
-			return { statusMessage: "error", error: `Project with project_id of ${spotlight.project_id} does not exist.` };
+			return { statusMessage: "error", error: `Project with project_id of "${spotlight.project_id}" does not exist.` };
 		} else if (!dbProject.userIds.includes(userId)) {
 			return {
 				statusMessage: "error",
-				error: `Permission denied for adding Taxonomy Spotlight to Project with project_id of ${spotlight.project_id}. Please contact submission owner with a request to be added to the Project.`
+				error: `Permission denied for adding Taxonomy Spotlight to Project with project_id of "${spotlight.project_id}". Please contact submission owner with a request to be added to the Project.`
 			};
 		}
 
