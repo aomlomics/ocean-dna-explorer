@@ -31,7 +31,7 @@ export default function FixDeletedSamplesButton({ project_id }: { project_id: st
 
 	return (
 		<>
-			<button className="btn bg-error btn-sm" onClick={handleFix}>
+			<button className="btn bg-error" onClick={handleFix}>
 				Fix
 			</button>
 			<Modal ref={modalRef}>{errorMessage}</Modal>

@@ -14,7 +14,6 @@ model Analysis {
     Libraries        Library[]
     Occurrences      Occurrence[]
     Assignments      Assignment[]
-    Features         Feature[]
     Taxonomies       Taxonomy[]
     Tags             Tag[]
     AlphaDiversities AlphaDiversity[]
@@ -160,7 +159,6 @@ model Feature {
     featureid String @unique
 
     // Relations
-    Analyses          Analysis[]
     Samples           Sample[]
     Occurrences       Occurrence[]
     Assignments       Assignment[]

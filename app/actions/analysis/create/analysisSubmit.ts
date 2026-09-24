@@ -4,7 +4,12 @@ import type { AnalysisModel, AssignmentModel, OccurrenceModel, TagModel } from "
 import { parseAnalysisFiles } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
 import { type Channel, createProgressStream } from "@/app/helpers/progress";
-import { connectFeatsToSamples, connectTaxaToSamples, handlePrismaError } from "@/app/helpers/queries";
+import {
+	connectFeatsToSamples,
+	connectTaxaToSamples,
+	handlePrismaError,
+	PRISMA_PARAM_LIMIT
+} from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
@@ -59,64 +64,73 @@ async function doSubmit(
 		);
 
 		//error checks
-		const [dbProject, dbAssay, dbLibraries, dbTags, dbOccs] = await prisma.$transaction([
-			prisma.project.findUnique({
-				where: {
-					project_id: analysis.project_id
-				},
-				select: {
-					userIds: true
-				}
-			}),
-			prisma.assay.findUnique({
-				where: {
-					assay_name: analysis.assay_name
-				},
-				select: {
-					assay_name: true
-				}
-			}),
-			prisma.library.findMany({
-				where: {
-					project_id: analysis.project_id,
-					assay_name: analysis.assay_name,
-					lib_id: {
-						in: Array.from(libIds)
-					}
-				},
-				select: {
-					lib_id: true
-				}
-			}),
-			prisma.tag.findMany({
-				where: {
-					tagName: {
-						in: tagNames
-					}
-				},
-				select: {
-					tagName: true
-				}
-			}),
-			prisma.occurrence.findMany({
-				where: {
-					project_id: analysis.project_id,
-					lib_id: {
-						in: Array.from(libIds)
+		const { dbProject, dbAssay, dbLibraries, dbTags, dbOccs } = await prisma.$transaction(
+			async (tx) => {
+				const dbProject = await tx.project.findUnique({
+					where: {
+						project_id: analysis.project_id
 					},
-					featureid: {
-						in: features.map((f) => f.featureid)
-					},
-					Analysis: {
-						trusted: true
+					select: {
+						userIds: true
 					}
-				},
-				distinct: ["analysis_run_name"],
-				select: {
-					analysis_run_name: true
-				}
-			})
-		]);
+				});
+
+				const dbAssay = await tx.assay.findUnique({
+					where: {
+						assay_name: analysis.assay_name
+					},
+					select: {
+						assay_name: true
+					}
+				});
+
+				const dbLibraries = await tx.library.findMany({
+					where: {
+						project_id: analysis.project_id,
+						assay_name: analysis.assay_name,
+						lib_id: {
+							in: Array.from(libIds)
+						}
+					},
+					select: {
+						lib_id: true
+					}
+				});
+
+				const dbTags = await tx.tag.findMany({
+					where: {
+						tagName: {
+							in: tagNames
+						}
+					},
+					select: {
+						tagName: true
+					}
+				});
+
+				const dbOccs = await tx.occurrence.findMany({
+					where: {
+						project_id: analysis.project_id,
+						lib_id: {
+							in: Array.from(libIds)
+						},
+						featureid: {
+							in: features.map((f) => f.featureid)
+						},
+						Analysis: {
+							trusted: true
+						}
+					},
+					distinct: ["analysis_run_name"],
+					select: {
+						analysis_run_name: true
+					}
+				});
+
+				return { dbProject, dbAssay, dbLibraries, dbTags, dbOccs };
+			},
+			{ timeout: 0.5 * 60 * 1000 }
+		);
 
 		if (!dbProject) {
 			await analysisChannel.stream.error(`Project with project_id of ${analysis.project_id} does not exist.`);
@@ -185,10 +199,10 @@ async function doSubmit(
 		const trustedWithSharedFeatures = new Set(dbOccs.map((occ) => occ.analysis_run_name));
 
 		//map taxonomies to the lib_id (sample) they were found in
-		const taxaByFeat = assignments.reduce(
-			(acc, assign) => ({ ...acc, [assign.featureid]: assign.taxonomy }),
-			{} as Record<AssignmentModel["featureid"], AssignmentModel["taxonomy"]>
-		);
+		const taxaByFeat = {} as Record<AssignmentModel["featureid"], AssignmentModel["taxonomy"]>;
+		for (const a of assignments) {
+			taxaByFeat[a.featureid] = a.taxonomy;
+		}
 		const taxaByLibId = occurrences.reduce(
 			(acc, occ) => {
 				(acc[occ.lib_id] ??= new Set()).add(taxaByFeat[occ.featureid]!);
@@ -218,18 +232,47 @@ async function doSubmit(
 						...analysis,
 						Tags: {
 							connect: dbTags
-						},
-						Libraries: {
-							connect: libIds.map((lib_id) => ({ project_id_lib_id: { project_id: analysis.project_id, lib_id } }))
-						},
-						Features: {
-							connect: features.map((feat) => ({ featureid: feat.featureid }))
-						},
-						Taxonomies: {
-							connect: taxaNames.map((taxonomy) => ({ taxonomy }))
 						}
 					}
 				});
+
+				//connect libraries in chunks
+				const connectLibs = libIds.map((lib_id) => ({
+					project_id_lib_id: { project_id: analysis.project_id, lib_id }
+				}));
+				for (let i = 0; i < connectLibs.length; i += PRISMA_PARAM_LIMIT / 2) {
+					await tx.analysis.update({
+						where: {
+							project_id_analysis_run_name: {
+								project_id: analysis.project_id,
+								analysis_run_name: analysis.analysis_run_name
+							}
+						},
+						data: {
+							Libraries: {
+								connect: connectLibs.slice(i, i + PRISMA_PARAM_LIMIT / 2)
+							}
+						}
+					});
+				}
+
+				//connect taxonomies in chunks
+				const connectTaxa = taxaNames.map((taxonomy) => ({ taxonomy }));
+				for (let i = 0; i < connectTaxa.length; i += PRISMA_PARAM_LIMIT) {
+					await tx.analysis.update({
+						where: {
+							project_id_analysis_run_name: {
+								project_id: analysis.project_id,
+								analysis_run_name: analysis.analysis_run_name
+							}
+						},
+						data: {
+							Taxonomies: {
+								connect: connectTaxa.slice(i, i + PRISMA_PARAM_LIMIT)
+							}
+						}
+					});
+				}
 
 				await connectFeatsToSamples(tx, analysis.project_id, occurrences);
 

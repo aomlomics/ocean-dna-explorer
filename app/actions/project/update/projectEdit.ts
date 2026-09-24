@@ -95,7 +95,7 @@ async function doEdit(
 				oldChecksums
 			});
 			if (!parseResult) {
-				return;
+				throw new Error("An error occurred parsing one of the Project files.");
 			}
 		} catch (err) {
 			const error = err as Error;

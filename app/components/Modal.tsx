@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, type RefObject, useRef } from "react";
+import { type ReactNode, type RefObject } from "react";
 
 export default function Modal({
 	children,
@@ -10,17 +10,15 @@ export default function Modal({
 	className = "",
 	onClose
 }: {
-	children?: ReactNode;
+	children: ReactNode;
 	ref: RefObject<HTMLDialogElement | null>;
 	xRef?: RefObject<HTMLButtonElement | null>;
 	clickOffRef?: RefObject<HTMLButtonElement | null>;
 	className?: string;
 	onClose?: () => void;
 }) {
-	const modalRef = useRef<HTMLDialogElement>(null);
-
 	return (
-		<dialog ref={ref || modalRef} className="modal">
+		<dialog ref={ref} className="modal">
 			<div className={`modal-box [:where(&)]:m-10 ${className ?? ""}`}>
 				<button
 					ref={xRef}
@@ -28,11 +26,7 @@ export default function Modal({
 					className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
 					onClick={(e) => {
 						e.preventDefault();
-						if (ref) {
-							ref.current?.close();
-						} else {
-							modalRef.current?.close();
-						}
+						ref.current?.close();
 
 						if (onClose) {
 							onClose();
@@ -44,6 +38,7 @@ export default function Modal({
 
 				{children}
 			</div>
+
 			<form method="dialog" className="modal-backdrop">
 				<button ref={clickOffRef} aria-label="Close dialog" onClick={onClose}>
 					Close dialog

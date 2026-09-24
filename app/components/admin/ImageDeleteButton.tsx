@@ -1,40 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import DeleteConfirmModal from "@/app/components/mySubmissions/DeleteConfirmationModal";
 import deleteImageAction from "@/app/actions/image/deleteImage";
+import Modal from "../Modal";
 
 export default function ImageDeleteButton({ imageId, imageName }: { imageId: number; imageName: string }) {
-	const [open, setOpen] = useState(false);
-	const [loading, setLoading] = useState(false);
 	const router = useRouter();
+	const ref = useRef<HTMLDialogElement>(null);
 
-	const confirm = async () => {
+	const [loading, setLoading] = useState(false);
+
+	async function handleDelete() {
 		setLoading(true);
+
 		const res = await deleteImageAction(imageId);
-		setLoading(false);
-		setOpen(false);
 		if (res.statusMessage === "success") {
 			router.refresh();
 		} else {
 			alert(res.error || "Failed to delete image");
 		}
-	};
+
+		setLoading(false);
+	}
 
 	return (
-		<div className="relative">
-			<button className="btn btn-error btn-sm" onClick={() => setOpen(true)} disabled={loading}>
+		<>
+			<button className="btn btn-error btn-sm" onClick={() => ref.current?.showModal()} disabled={loading}>
 				{loading ? "Deleting..." : "Delete"}
 			</button>
-			<DeleteConfirmModal
-				isOpen={open}
-				onClose={() => setOpen(false)}
-				onConfirm={confirm}
-				title={imageName}
-				associatedAnalyses={[]}
-				entityLabel="image"
-			/>
-		</div>
+
+			<Modal ref={ref}>
+				<h2 className="text-2xl font-bold text-error">Confirm Deletion</h2>
+				<h3 className="text-2xl font-bold text-primary mb-2">{imageName}</h3>
+				<p className="mb-2 text-md text-base-content">Are you sure you want to delete the image?</p>
+
+				<button
+					onClick={async () => {
+						ref.current?.close();
+						await handleDelete();
+					}}
+					className="btn bg-primary text-error-content hover:bg-error"
+				>
+					Delete
+				</button>
+			</Modal>
+		</>
 	);
 }

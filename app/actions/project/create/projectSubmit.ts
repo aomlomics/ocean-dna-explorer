@@ -59,7 +59,7 @@ async function doSubmit(
 			imageFileUrl: imageInfo?.image.url
 		});
 		if (!parseResult) {
-			return;
+			throw new Error("An error occurred parsing one of the Project files.");
 		}
 	} catch (err) {
 		const error = err as Error;

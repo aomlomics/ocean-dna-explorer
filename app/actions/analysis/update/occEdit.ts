@@ -11,6 +11,7 @@ import {
 	disconnectFeatsFromSamples,
 	disconnectTaxaFromSamples,
 	handlePrismaError,
+	PRISMA_PARAM_LIMIT,
 	updateManyRaw
 } from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
@@ -319,20 +320,33 @@ async function doEdit(
 						occurrenceFileUrl_ODE: url,
 						occurrenceFileChecksum_ODE: occurrencesMd5,
 						Libraries: {
-							set: libIds.map((lib_id) => ({
-								project_id_lib_id: {
-									project_id,
-									lib_id
-								}
-							}))
-						},
-						Features: {
-							set: featureids.map((featureid) => ({
-								featureid
-							}))
+							set: []
 						}
 					}
 				});
+
+				//connect libraries in chunks
+				const connectLibs = libIds.map((lib_id) => ({
+					project_id_lib_id: {
+						project_id,
+						lib_id
+					}
+				}));
+				for (let i = 0; i < connectLibs.length; i += PRISMA_PARAM_LIMIT / 2) {
+					await tx.analysis.update({
+						where: {
+							project_id_analysis_run_name: {
+								project_id,
+								analysis_run_name
+							}
+						},
+						data: {
+							Libraries: {
+								connect: connectLibs.slice(i, i + PRISMA_PARAM_LIMIT / 2)
+							}
+						}
+					});
+				}
 
 				await stream.success("Success");
 				return true;

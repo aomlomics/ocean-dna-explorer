@@ -176,10 +176,11 @@ export default async function UserId({ params }: { params: Promise<{ userId: str
 											</Link>
 											<div className="flex gap-3">
 												<SubmissionDeleteButton
-													field="project_id"
 													action={projectDeleteAction}
+													table="Project"
 													target={proj.project_id}
-													associatedAnalyses={proj.Analyses}
+													associatedTable="Analysis"
+													associated={proj.Analyses}
 												/>
 											</div>
 										</div>
@@ -205,8 +206,8 @@ export default async function UserId({ params }: { params: Promise<{ userId: str
 															</Link>
 															<div className="flex gap-3">
 																<SubmissionDeleteButton
-																	field="analysis_run_name"
 																	action={analysisDeleteAction}
+																	table="Analysis"
 																	target={[proj.project_id, analysis.analysis_run_name]}
 																/>
 															</div>

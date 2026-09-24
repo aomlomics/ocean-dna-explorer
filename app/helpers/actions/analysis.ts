@@ -194,26 +194,6 @@ export async function parseAssignmentsFile({
 					parseSchemaToObject(field, value, taxonomyRow, "taxonomy");
 				}
 
-				//parse feature
-				const parsedFeature = FeatureOptionalDefaultsSchema.safeParse(
-					{
-						...featureRow,
-						sequenceLength_ODE: featureRow.dna_sequence.length
-					},
-					{
-						error: schemaParseErrorFunction
-					}
-				);
-
-				if (!parsedFeature.success) {
-					await channel.stream.error(getSchemaParseError(parsedFeature.error, "Feature", [featureRow.featureid]));
-					return;
-				}
-
-				//no optional fields
-
-				features.push(parsedFeature.data);
-
 				//parse assignment
 				const parsedAssignment = AssignmentOptionalDefaultsSchema.safeParse(
 					{
@@ -240,13 +220,19 @@ export async function parseAssignmentsFile({
 
 				assignments.push(parsedAssignment.data);
 
-				//parse taxonomy
-				const parsedTaxonomy = TaxonomyOptionalDefaultsSchema.safeParse(taxonomyRow, {
-					error: schemaParseErrorFunction
-				});
+				//parse feature
+				const parsedFeature = FeatureOptionalDefaultsSchema.safeParse(
+					{
+						...featureRow,
+						sequenceLength_ODE: featureRow.dna_sequence.length
+					},
+					{
+						error: schemaParseErrorFunction
+					}
+				);
 
-				if (!parsedTaxonomy.success) {
-					await channel.stream.error(getSchemaParseError(parsedTaxonomy.error, "Taxonomy", [taxonomyRow.taxonomy]));
+				if (!parsedFeature.success) {
+					await channel.stream.error(getSchemaParseError(parsedFeature.error, "Feature", [featureRow.featureid]));
 					return;
 				}
 
@@ -257,21 +243,11 @@ export async function parseAssignmentsFile({
 				//parse taxonomy
 				if (!uniqueTaxa.has(taxonomyRow.taxonomy)) {
 					const parsedTaxonomy = TaxonomyOptionalDefaultsSchema.safeParse(taxonomyRow, {
-						error: (iss) => {
-							return {
-								message: `Field: ${iss.path![0] as string}\nIssue: ${
-									iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
-								}`
-							};
-						}
+						error: schemaParseErrorFunction
 					});
 
 					if (!parsedTaxonomy.success) {
-						await channel.stream.error(
-							`Table: Taxonomy\n` +
-								`Key: ${taxonomyRow.taxonomy}\n\n` +
-								`${parsedTaxonomy.error.issues.map((e) => e.message).join("\n\n")}`
-						);
+						await channel.stream.error(getSchemaParseError(parsedTaxonomy.error, "Taxonomy", [taxonomyRow.taxonomy]));
 						return;
 					}
 

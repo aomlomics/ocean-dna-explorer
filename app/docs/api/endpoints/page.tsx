@@ -1,7 +1,7 @@
 import ApiCodeBlock from "@/app/components/docs/ApiCodeBlock";
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import InlineCode from "@/app/components/docs/InlineCode";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import type { Metadata } from "next";
 
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ApiEndpointsPage() {
-	const taxonomy = await prisma.taxonomy.findFirst({
+	const taxonomy = await trustedPrisma.taxonomy.findFirst({
 		orderBy: {
 			id: "asc"
 		},

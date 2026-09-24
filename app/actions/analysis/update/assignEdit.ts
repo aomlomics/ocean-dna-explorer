@@ -10,6 +10,7 @@ import {
 	connectTaxaToSamples,
 	disconnectTaxaFromSamples,
 	handlePrismaError,
+	PRISMA_PARAM_LIMIT,
 	updateManyRaw
 } from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
@@ -283,14 +284,29 @@ async function doEdit(
 						editHistory,
 						asvFileUrl_ODE: url,
 						asvFileChecksum_ODE: assignmentsMd5,
-						Features: {
-							set: features.map((feat) => ({ featureid: feat.featureid }))
-						},
 						Taxonomies: {
-							set: taxonomies.map((taxa) => ({ taxonomy: taxa.taxonomy }))
+							set: []
 						}
 					}
 				});
+
+				//connect taxonomies in chunks
+				const connect = taxonomies.map((taxa) => ({ taxonomy: taxa.taxonomy }));
+				for (let i = 0; i < connect.length; i += PRISMA_PARAM_LIMIT) {
+					await tx.analysis.update({
+						where: {
+							project_id_analysis_run_name: {
+								project_id,
+								analysis_run_name
+							}
+						},
+						data: {
+							Taxonomies: {
+								connect: connect.slice(i, i + PRISMA_PARAM_LIMIT)
+							}
+						}
+					});
+				}
 
 				await stream.success("Success");
 				return true;
