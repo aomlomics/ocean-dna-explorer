@@ -1,7 +1,7 @@
 "use client";
 
 import type { ProjectModel } from "@/app/generated/prisma/models/Project";
-import { type SetStateAction, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Modal from "../Modal";
 import ProgressBar from "../ProgressBar";
 import type { NetworkProgressPacket } from "@/types/globals";

@@ -143,7 +143,7 @@ export async function parseAssignmentsFile({
 	oldChecksum?: string;
 }) {
 	try {
-		const features = [] as Prisma.FeatureCreateWithoutAnalysesInput[];
+		const features = [] as Prisma.FeatureCreateManyInput[];
 		const uniqueTaxa = new Set() as Set<TaxonomyModel["taxonomy"]>;
 		const taxonomies = [] as Prisma.TaxonomyCreateWithoutAnalysesInput[];
 		const assignments = [] as Prisma.AssignmentCreateManyInput[];
