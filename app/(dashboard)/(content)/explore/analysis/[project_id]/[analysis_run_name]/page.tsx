@@ -149,17 +149,17 @@ export default async function Project_id_Analysis_run_name({
 			<div className="text-base breadcrumbs">
 				<ul>
 					<li>
-						<Link href="/explore/project" className="text-primary hover:text-primary-focus">
+						<Link href="/explore/project" className="link link-primary link-hover">
 							Projects
 						</Link>
 					</li>
 					<li>
-						<Link href={exploreUrl({ table: "project", project_id })} className="text-primary hover:text-primary-focus">
+						<Link href={exploreUrl({ table: "project", project_id })} className="link link-primary link-hover">
 							{project_id}
 						</Link>
 					</li>
 					<li>
-						<Link href={`/explore/analysis`} className="text-primary hover:text-primary-focus">
+						<Link href={`/explore/analysis`} className="link link-primary link-hover">
 							Analyses
 						</Link>
 					</li>
@@ -173,14 +173,14 @@ export default async function Project_id_Analysis_run_name({
 						<h1 className="text-4xl font-semibold text-primary mb-2">{analysis_run_name}</h1>
 					</TitleHoverTooltip>
 					<EditHistory editHistory={editHistory} />
-					{analysis.trusted && <div className="badge badge-primary p-3 select-none">Trusted</div>}
+					{analysis.trusted && <div className="badge badge-primary text-neutral-content p-3 select-none">Trusted</div>}
 					{Tags.map((t) => (
 						<AnalysisTag key={t.tagName} tag={t} />
 					))}
 				</div>
 				<p className="text-lg text-base-content/70">
 					Part of the{" "}
-					<Link href={exploreUrl({ table: "project", project_id })} className="text-primary hover:text-primary-focus">
+					<Link href={exploreUrl({ table: "project", project_id })} className="link link-primary link-hover">
 						{project_id}
 					</Link>{" "}
 					project

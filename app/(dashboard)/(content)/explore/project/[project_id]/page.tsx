@@ -272,7 +272,6 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		}
 	}
 	const sortedTaxa = Object.entries(taxaCount).sort(([, a], [, b]) => b - a);
-	const hasCoverImage = Boolean(project.imageFileUrl_ODE);
 
 	// Get top 2 taxonomies per assay
 	const topTaxaByAssay = Object.entries(taxaCountByAssay).reduce(
@@ -315,10 +314,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 						<a
 							key={assay}
 							href="#taxonomy-chart"
-							className={[
-								"group block cursor-pointer rounded-xl bg-base-100/20 px-4 py-3 transition-colors duration-150",
-								"hover:bg-base-300/30"
-							].join(" ")}
+							className="group block cursor-pointer rounded-xl bg-base-100/20 px-4 py-3 transition-colors duration-150 hover:bg-base-300/30"
 						>
 							<div className="space-y-2.5">
 								<div className="flex flex-col gap-1">
@@ -401,32 +397,31 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	);
 
 	const headerBlock = (
-		<header className={hasCoverImage ? "relative z-raised w-full min-w-0 max-w-full" : "w-full min-w-0 max-w-full"}>
+		<header className={`w-full min-w-0 max-w-full ${project.imageFileUrl_ODE ? "relative z-raised" : ""}`}>
 			<div className="flex flex-wrap gap-x-3 gap-y-2 items-center justify-between">
 				<div className="flex flex-wrap gap-2 items-center min-w-0">
 					<TitleHoverTooltip tooltip={TableMetadata.project.description}>
 						<h1
-							className={
-								hasCoverImage
-									? "text-4xl font-semibold text-primary mb-0 drop-shadow-sm [html[data-theme='light']_&]:drop-shadow-md"
-									: "text-4xl font-semibold text-primary mb-0"
-							}
+							className={`text-4xl font-semibold text-primary mb-0 ${
+								project.imageFileUrl_ODE ? "drop-shadow-sm [html[data-theme='light']_&]:drop-shadow-md" : ""
+							}`}
 						>
-							{project.project_id}
+							{project_id}
 						</h1>
 					</TitleHoverTooltip>
 					<EditHistory editHistory={editHistory} />
 				</div>
-				{hasCoverImage && project.imageFileUrl_ODE ? (
-					<ProjectCoverPhotoPreview src={project.imageFileUrl_ODE} title={project.project_name || project.project_id} />
-				) : null}
+
+				{project.imageFileUrl_ODE ? (
+					<ProjectCoverPhotoPreview src={project.imageFileUrl_ODE} title={project.project_name || project_id} />
+				) : (
+					<></>
+				)}
 			</div>
 			<p
-				className={
-					hasCoverImage
-						? "mt-3 w-fit max-w-[min(100%,46rem)] text-left text-4xl sm:text-5xl font-semibold leading-[1.12] text-pretty wrap-break-word text-base-content drop-shadow-sm [html[data-theme='dark']_&]:text-white"
-						: "mt-3 w-fit max-w-[min(100%,54rem)] text-left text-4xl sm:text-5xl font-semibold leading-[1.12] text-pretty wrap-break-word text-base-content [html[data-theme='dark']_&]:text-white"
-				}
+				className={`mt-3 w-fit text-left text-4xl sm:text-5xl font-semibold leading-[1.12] text-pretty wrap-break-word text-base-content [html[data-theme='dark']_&]:text-white ${
+					project.imageFileUrl_ODE ? "max-w-[min(100%,46rem)] drop-shadow-sm" : "max-w-[min(100%,54rem)]"
+				}`}
 			>
 				{project.project_name}
 			</p>
@@ -513,26 +508,15 @@ export default async function Project_id({ params }: { params: Promise<{ project
 
 	return (
 		<div id="project" className="space-y-8">
-			{hasCoverImage && project.imageFileUrl_ODE ? (
-				<div
-					className={[
-						"relative isolate -mt-4 w-screen max-w-[100vw] shrink-0 overflow-x-clip overflow-y-clip pt-4 pb-10",
-						"ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]"
-					].join(" ")}
-				>
+			{project.imageFileUrl_ODE ? (
+				<div className="relative isolate -mt-4 w-screen max-w-[100vw] shrink-0 overflow-x-clip overflow-y-clip pt-4 pb-10 ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]">
 					{/* Full-width page floor — photography only appears in the upper-right treatment */}
 					<div className="pointer-events-none absolute inset-0 z-0 bg-base-100" aria-hidden />
 
 					{/*
 					 * Top-right hero: top-0 + section overflow-y-clip keeps art under the navbar; right offsets + mask/object-position unchanged otherwise.
 					 */}
-					<div
-						className={[
-							"absolute top-0 z-0 rounded-2xl",
-							"-right-2 max-sm:-right-1 sm:-right-5",
-							"h-[min(54vh,600px)] w-[min(96vw,1400px)] max-sm:w-[min(98vw,760px)] max-sm:h-[min(38vh,400px)]"
-						].join(" ")}
-					>
+					<div className="absolute top-0 z-0 rounded-2xl -right-2 max-sm:-right-1 sm:-right-5 h-[min(54vh,600px)] w-[min(96vw,1400px)] max-sm:w-[min(98vw,760px)] max-sm:h-[min(38vh,400px)]">
 						<div
 							className="relative h-full w-full overflow-hidden rounded-2xl"
 							style={{
@@ -601,7 +585,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 
 			{/* No cover: map + depth/assays + metadata below. With cover, metadata sits under map inside mapDepthGrid. */}
 			<section className="mt-2 space-y-8">
-				{!hasCoverImage ? (
+				{!project.imageFileUrl_ODE ? (
 					/*
 					 * No cover image: allow the right column to extend below the map
 					 * without forcing the map taller. We do that by making a 2-row

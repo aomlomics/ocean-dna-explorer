@@ -998,9 +998,14 @@ const TableMetadata = {
 			],
 			feature: [
 				{
-					field: "Analyses",
-					table: "Analysis",
+					field: "Libraries",
+					table: "Library",
 					type: "one-to-many"
+				},
+				{
+					field: "Sample",
+					table: "Sample",
+					type: "many-to-one"
 				},
 				{
 					field: "Features",
@@ -1010,9 +1015,14 @@ const TableMetadata = {
 			],
 			Feature: [
 				{
-					field: "Analyses",
-					table: "Analysis",
+					field: "Libraries",
+					table: "Library",
 					type: "one-to-many"
+				},
+				{
+					field: "Sample",
+					table: "Sample",
+					type: "many-to-one"
 				},
 				{
 					field: "Features",
@@ -2089,11 +2099,6 @@ const TableMetadata = {
 				type: "one-to-many"
 			},
 			{
-				field: "Features",
-				table: "Feature",
-				type: "many-to-many"
-			},
-			{
 				field: "Taxonomies",
 				table: "Taxonomy",
 				type: "many-to-many"
@@ -2216,16 +2221,26 @@ const TableMetadata = {
 			],
 			feature: [
 				{
-					field: "Features",
+					field: "Occurrences",
+					table: "Occurrence",
+					type: "one-to-many"
+				},
+				{
+					field: "Feature",
 					table: "Feature",
-					type: "many-to-many"
+					type: "many-to-one"
 				}
 			],
 			Feature: [
 				{
-					field: "Features",
+					field: "Occurrences",
+					table: "Occurrence",
+					type: "one-to-many"
+				},
+				{
+					field: "Feature",
 					table: "Feature",
-					type: "many-to-many"
+					type: "many-to-one"
 				}
 			],
 			assignment: [
@@ -2811,11 +2826,6 @@ const TableMetadata = {
 		],
 		relations: [
 			{
-				field: "Analyses",
-				table: "Analysis",
-				type: "many-to-many"
-			},
-			{
 				field: "Samples",
 				table: "Sample",
 				type: "many-to-many"
@@ -2877,9 +2887,14 @@ const TableMetadata = {
 			],
 			assay: [
 				{
-					field: "Analyses",
+					field: "Occurrences",
+					table: "Occurrence",
+					type: "one-to-many"
+				},
+				{
+					field: "Analysis",
 					table: "Analysis",
-					type: "many-to-many"
+					type: "many-to-one"
 				},
 				{
 					field: "Assay",
@@ -2889,9 +2904,14 @@ const TableMetadata = {
 			],
 			Assay: [
 				{
-					field: "Analyses",
+					field: "Occurrences",
+					table: "Occurrence",
+					type: "one-to-many"
+				},
+				{
+					field: "Analysis",
 					table: "Analysis",
-					type: "many-to-many"
+					type: "many-to-one"
 				},
 				{
 					field: "Assay",
@@ -2959,16 +2979,26 @@ const TableMetadata = {
 			],
 			analysis: [
 				{
-					field: "Analyses",
+					field: "Occurrences",
+					table: "Occurrence",
+					type: "one-to-many"
+				},
+				{
+					field: "Analysis",
 					table: "Analysis",
-					type: "many-to-many"
+					type: "many-to-one"
 				}
 			],
 			Analysis: [
 				{
-					field: "Analyses",
+					field: "Occurrences",
+					table: "Occurrence",
+					type: "one-to-many"
+				},
+				{
+					field: "Analysis",
 					table: "Analysis",
-					type: "many-to-many"
+					type: "many-to-one"
 				}
 			],
 			occurrence: [
@@ -3059,9 +3089,14 @@ const TableMetadata = {
 			],
 			tag: [
 				{
-					field: "Analyses",
+					field: "Occurrences",
+					table: "Occurrence",
+					type: "one-to-many"
+				},
+				{
+					field: "Analysis",
 					table: "Analysis",
-					type: "many-to-many"
+					type: "many-to-one"
 				},
 				{
 					field: "Tags",
@@ -3071,9 +3106,14 @@ const TableMetadata = {
 			],
 			Tag: [
 				{
-					field: "Analyses",
+					field: "Occurrences",
+					table: "Occurrence",
+					type: "one-to-many"
+				},
+				{
+					field: "Analysis",
 					table: "Analysis",
-					type: "many-to-many"
+					type: "many-to-one"
 				},
 				{
 					field: "Tags",
@@ -4826,9 +4866,14 @@ const TableMetadata = {
 					type: "many-to-many"
 				},
 				{
-					field: "Features",
+					field: "Occurrences",
+					table: "Occurrence",
+					type: "one-to-many"
+				},
+				{
+					field: "Feature",
 					table: "Feature",
-					type: "many-to-many"
+					type: "many-to-one"
 				}
 			],
 			Feature: [
@@ -4838,9 +4883,14 @@ const TableMetadata = {
 					type: "many-to-many"
 				},
 				{
-					field: "Features",
+					field: "Occurrences",
+					table: "Occurrence",
+					type: "one-to-many"
+				},
+				{
+					field: "Feature",
 					table: "Feature",
-					type: "many-to-many"
+					type: "many-to-one"
 				}
 			],
 			assignment: [

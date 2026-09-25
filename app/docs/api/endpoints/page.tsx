@@ -2,7 +2,7 @@ import ApiCodeBlock from "@/app/components/docs/ApiCodeBlock";
 import Callout from "@/app/components/docs/Callout";
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import InlineCode from "@/app/components/docs/InlineCode";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -97,7 +97,7 @@ function EndpointSummary({ path, returns, options }: { path: string; returns: Re
 }
 
 export default async function ApiEndpointsPage() {
-	const taxonomy = await prisma.taxonomy.findFirst({
+	const taxonomy = await trustedPrisma.taxonomy.findFirst({
 		orderBy: {
 			id: "asc"
 		},

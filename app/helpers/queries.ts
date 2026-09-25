@@ -14,11 +14,13 @@ import type { AssignmentModel, OccurrenceModel, ProjectModel } from "../generate
 import type { $ZodIssue, ParseContext } from "zod/v4/core";
 import type { ZodError } from "zod";
 
-//Prisma prepared statements have a limit of 32,767
-const PARAM_LIMIT = 30000;
+//Prisma prepared statements have a limit of 32,767 parameters
+export const PRISMA_PARAM_LIMIT = 30000;
 
 export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): ErrorPacket | undefined {
 	if (err.constructor?.name === Prisma.PrismaClientKnownRequestError.name) {
+		console.error(err);
+
 		try {
 			if (err.code === "P2002") {
 				const meta = TableMetadata[err.meta!.modelName as ModelName];
@@ -37,7 +39,6 @@ export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): Er
 			}
 		} catch {}
 
-		console.error(err);
 		return { statusMessage: "error", error: "An unknown database error occurred." };
 	}
 }
@@ -168,8 +169,8 @@ export async function updateManyRaw(
 		}
 	}
 
-	if (fieldsWithId.size > PARAM_LIMIT) {
-		throw new Error(`A singular row has more than the parameter limit of ${PARAM_LIMIT}.`);
+	if (fieldsWithId.size > PRISMA_PARAM_LIMIT) {
+		throw new Error(`A singular row has more than the parameter limit of ${PRISMA_PARAM_LIMIT}.`);
 	}
 
 	const fields = Array.from(fieldsWithId) as string[];
@@ -198,7 +199,7 @@ export async function updateManyRaw(
 	}
 
 	let rowsAffected = 0;
-	const CHUNK_SIZE = Math.floor(PARAM_LIMIT / fieldsWithId.size);
+	const CHUNK_SIZE = Math.floor(PRISMA_PARAM_LIMIT / fieldsWithId.size);
 	for (let i = 0; i < data.length; i += CHUNK_SIZE) {
 		rowsAffected += await updateManyRawChunked(
 			client,
@@ -223,7 +224,7 @@ export async function connectFeatsToSamples(
 	let rowsAffected = 0;
 	// project_id contributes 1 parameter
 	// each pair contributes 2 parameters: lib_id + featureid
-	const CHUNK_SIZE = Math.floor((PARAM_LIMIT - 1) / 2);
+	const CHUNK_SIZE = Math.floor((PRISMA_PARAM_LIMIT - 1) / 2);
 	for (let i = 0; i < occurrences.length; i += CHUNK_SIZE) {
 		rowsAffected += await client.$executeRaw`
 			INSERT INTO ${Prisma.raw(`"${join.table}"`)}
@@ -262,7 +263,7 @@ export async function disconnectFeatsFromSamples(
 	let rowsAffected = 0;
 	// Each pair contributes 2 parameters: lib_id + featureid.
 	// project_id + analysis_run_name contribute 2 additional parameters.
-	const CHUNK_SIZE = Math.floor((PARAM_LIMIT - 2) / 2);
+	const CHUNK_SIZE = Math.floor((PRISMA_PARAM_LIMIT - 2) / 2);
 	for (let i = 0; i < removedOccurrences.length; i += CHUNK_SIZE) {
 		const chunk = removedOccurrences.slice(i, i + CHUNK_SIZE);
 
@@ -321,7 +322,7 @@ export async function connectTaxaToSamples(
 	let rowsAffected = 0;
 	//project_id contributes 1 parameter
 	//each pair contributes 2 parameters: lib_id + taxonomy
-	const CHUNK_SIZE = Math.floor((PARAM_LIMIT - 1) / 2);
+	const CHUNK_SIZE = Math.floor((PRISMA_PARAM_LIMIT - 1) / 2);
 	for (let i = 0; i < pairs.length; i += CHUNK_SIZE) {
 		rowsAffected += await client.$executeRaw`
 			INSERT INTO ${Prisma.raw(`"${join.table}"`)}
@@ -363,7 +364,7 @@ export async function disconnectTaxaFromSamples(
 	let rowsAffected = 0;
 	// Each pair contributes 2 parameters: lib_id + taxonomy.
 	// project_id + analysis_run_name contribute 2 additional parameters.
-	const CHUNK_SIZE = Math.floor((PARAM_LIMIT - 2) / 2);
+	const CHUNK_SIZE = Math.floor((PRISMA_PARAM_LIMIT - 2) / 2);
 	for (let i = 0; i < pairs.length; i += CHUNK_SIZE) {
 		const chunk = pairs.slice(i, i + CHUNK_SIZE);
 

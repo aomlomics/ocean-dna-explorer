@@ -1,32 +1,39 @@
 "use client";
 
-import type { ClerkUserObject, NetworkPacket, TargetAction } from "@/types/globals";
+import type { ClerkUserObject, NetworkPacket } from "@/types/globals";
 import { useAuth } from "@clerk/nextjs";
-import { type Dispatch, type MouseEventHandler, type ReactNode, type SetStateAction, useEffect, useState } from "react";
+import {
+	type Dispatch,
+	type MouseEventHandler,
+	type ReactNode,
+	type SetStateAction,
+	useEffect,
+	useRef,
+	useState
+} from "react";
 import { useDebouncedCallback } from "use-debounce";
 import Image from "next/image";
+import projectUpdateUserIdsAction from "../actions/project/update/projectUpdateUserIds";
+import Modal from "./Modal";
 
 export default function UserAdder({
 	disabled,
 	submittable,
 	userIds,
 	setUserIds,
-	submitAction,
-	target,
+	project_id,
 	afterSubmit,
 	cols = 2
 }: { disabled?: boolean; userIds: string[]; afterSubmit?: () => void; cols?: number } & (
 	| {
 			submittable?: false;
 			setUserIds: Dispatch<SetStateAction<string[]>>;
-			submitAction?: undefined;
-			target?: undefined;
+			project_id?: undefined;
 	  }
 	| {
 			submittable: true;
 			setUserIds?: undefined;
-			submitAction: TargetAction;
-			target: string;
+			project_id: string;
 	  }
 )) {
 	const { userId } = useAuth();
@@ -34,6 +41,7 @@ export default function UserAdder({
 	const [users, setUsers] = useState([] as ClerkUserObject[]);
 
 	const [loadingError, setLoadingError] = useState("");
+	const errorRef = useRef<HTMLDialogElement>(null);
 	const [submitError, setSubmitError] = useState("");
 
 	const [search, setSearch] = useState("");
@@ -109,8 +117,8 @@ export default function UserAdder({
 		if (submittable && (deletedUsers.length || newUsers.length)) {
 			setSubmitError("");
 
-			const result = await submitAction(
-				target,
+			const result = await projectUpdateUserIdsAction(
+				project_id,
 				newUsers.map((u) => u.id),
 				deletedUsers.map((u) => u.id)
 			);
@@ -127,6 +135,7 @@ export default function UserAdder({
 				}
 			} else if (result.statusMessage === "error") {
 				setSubmitError(result.error);
+				errorRef.current?.showModal();
 			}
 		}
 	}
@@ -189,7 +198,6 @@ export default function UserAdder({
 						Update Users
 					</button>
 				)}
-				{!!submitError && <div>Error: {submitError}</div>}
 			</div>
 
 			<div>
@@ -219,6 +227,15 @@ export default function UserAdder({
 					))}
 				</div>
 			</div>
+
+			{submittable ? (
+				<Modal ref={errorRef}>
+					<h3 className="text-lg font-bold mb-2 text-error">Editing Users Failed</h3>
+					<span className="mb-2 font-light whitespace-pre-wrap">{submitError}</span>
+				</Modal>
+			) : (
+				<></>
+			)}
 		</div>
 	);
 }

@@ -5,7 +5,7 @@ import CodeBlock from "@/app/components/docs/CodeBlock";
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import InlineCode from "@/app/components/docs/InlineCode";
 import OptionSummary from "@/app/components/docs/OptionSummary";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -52,7 +52,7 @@ const blastOptions = [
 ];
 
 export default async function ApiSearchPage() {
-	const project = await prisma.project.findFirst({
+	const project = await trustedPrisma.project.findFirst({
 		orderBy: {
 			id: "asc"
 		},

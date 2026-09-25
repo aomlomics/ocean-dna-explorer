@@ -2,7 +2,7 @@
 
 import type { AnalysisModel, TagModel } from "@/app/generated/prisma/models";
 import { type ReactNode, useRef, useState } from "react";
-import Modal from "../Modal";
+import Modal from "../../Modal";
 import type { NetworkProgressPacket } from "@/types/globals";
 import { upload } from "@vercel/blob/client";
 import { doProgressAction } from "@/app/helpers/progress";
@@ -10,13 +10,13 @@ import occEditAction from "@/app/actions/analysis/update/occEdit";
 import { v4 as uuidv4 } from "uuid";
 import analysisEditAction from "@/app/actions/analysis/update/analysisEdit";
 import assignEditAction from "@/app/actions/analysis/update/assignEdit";
-import ProgressBar from "../ProgressBar";
+import ProgressBar from "../../ProgressBar";
 import { getSubmissionFileName } from "@/app/helpers/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import AnalysisTag from "../tags/AnalysisTag";
+import AnalysisTag from "../../tags/AnalysisTag";
 
-export default function AnalysisEditButton({
+export default function AnalysisEditForm({
 	analysis: {
 		project_id,
 		analysis_run_name,
@@ -40,15 +40,11 @@ export default function AnalysisEditButton({
 	tags: TagModel[];
 }) {
 	const router = useRouter();
+
 	const [loading, setLoading] = useState(false);
 
-	//state variable that will have any error passed to it
+	const errorRef = useRef<HTMLDialogElement>(null);
 	const [errorMessage, setErrorMessage] = useState("");
-
-	//refs for popup modal
-	const modalRef = useRef<HTMLDialogElement>(null);
-	const modalXRef = useRef<HTMLButtonElement>(null);
-	const modalClickOffRef = useRef<HTMLButtonElement>(null);
 
 	//file input refs to clear inputs after submission
 	const analysisRef = useRef<HTMLInputElement>(null);
@@ -74,17 +70,14 @@ export default function AnalysisEditButton({
 		);
 	}
 
-	function finishSubmit() {
-		modalXRef.current!.disabled = false;
-		modalClickOffRef.current!.disabled = false;
+	function doError(err: string) {
 		setLoading(false);
+		setErrorMessage(err);
+		errorRef.current?.showModal();
 	}
 
 	async function onSubmit(e: React.SubmitEvent<HTMLFormElement>) {
 		e.preventDefault();
-
-		modalXRef.current!.disabled = true;
-		modalClickOffRef.current!.disabled = true;
 
 		setLoading(true);
 
@@ -134,8 +127,7 @@ export default function AnalysisEditButton({
 
 				//handle errors
 				if (analysisError) {
-					setErrorMessage(analysisError);
-					finishSubmit();
+					doError(analysisError);
 
 					return;
 				}
@@ -168,8 +160,7 @@ export default function AnalysisEditButton({
 
 				//handle errors
 				if (analysisError) {
-					setErrorMessage(analysisError);
-					finishSubmit();
+					doError(analysisError);
 
 					return;
 				}
@@ -199,8 +190,7 @@ export default function AnalysisEditButton({
 
 				//handle errors
 				if (assignmentsError) {
-					setErrorMessage(assignmentsError);
-					finishSubmit();
+					doError(assignmentsError);
 
 					return;
 				}
@@ -242,8 +232,7 @@ export default function AnalysisEditButton({
 
 				//handle errors
 				if (occurrencesError) {
-					setErrorMessage(occurrencesError);
-					finishSubmit();
+					doError(occurrencesError);
 
 					return;
 				}
@@ -256,94 +245,86 @@ export default function AnalysisEditButton({
 			}
 
 			//reset page
-			finishSubmit();
+			setLoading(false);
 			router.refresh();
 		} catch (err) {
 			const error = err as Error;
 
-			setErrorMessage(error.message);
-			finishSubmit();
+			doError(error.message);
 		}
 	}
 
 	return (
 		<>
-			<button
-				className="btn btn-sm bg-primary text-neutral-content hover:bg-info"
-				onClick={() => modalRef.current?.showModal()}
-			>
-				Edit
-			</button>
-			<Modal ref={modalRef} xRef={modalXRef} clickOffRef={modalClickOffRef}>
-				<form onSubmit={onSubmit} className="flex flex-col gap-3">
-					<h2>Edit Analysis: {analysis_run_name}</h2>
+			<form onSubmit={onSubmit} autoComplete="off">
+				<fieldset className="fieldset">
+					<legend className="fieldset-legend">
+						<h2>trusted</h2>
+					</legend>
+					<input
+						type="checkbox"
+						className="checkbox checkbox-primary"
+						checked={trustedToggle}
+						onChange={(e) => setTrustedToggle(e.currentTarget.checked)}
+					/>
+				</fieldset>
 
+				<div className="flex gap-5 flex-wrap items-center">
+					{selectedTags.map((t) => (
+						<div key={t.tagName} className="flex gap-1 items-center">
+							<AnalysisTag tag={t} />
+							<button
+								className="btn btn-error btn-sm"
+								onClick={() => setSelectedTags(selectedTags.filter((st) => st.tagName !== t.tagName))}
+								disabled={!!loading}
+							>
+								-
+							</button>
+						</div>
+					))}
+					{tags.length !== selectedTags.length ? (
+						<div className="dropdown">
+							<button className="btn btn-sm" tabIndex={0} role="button" disabled={!!loading}>
+								+
+							</button>
+							<ul tabIndex={-1} className="dropdown-content menu bg-base-200 rounded-box shadow-sm p-2 flex-nowrap">
+								<div className="max-h-75 overflow-y-scroll overscroll-contain flex flex-col gap-2">
+									{tags.reduce((acc, t) => {
+										if (!selectedTags.find((st) => st.tagName === t.tagName)) {
+											acc.push(
+												<li key={t.tagName} className="w-full">
+													<a
+														className="flex justify-center"
+														onClick={() => {
+															setSelectedTags([...selectedTags, t]);
+															(document.activeElement as HTMLDivElement).blur();
+														}}
+													>
+														<AnalysisTag tag={t} hideDescription />
+													</a>
+												</li>
+											);
+										}
+										return acc;
+									}, [] as ReactNode[])}
+								</div>
+							</ul>
+						</div>
+					) : (
+						<></>
+					)}
+				</div>
+
+				<div className="flex flex-col gap-3">
 					<fieldset className="fieldset">
-						<legend className="fieldset-legend flex gap-2">
-							<h2>trusted</h2>
+						<legend className="fieldset-legend flex-col items-start gap-0">
+							Analysis Metadata File:
+							<Link href={analysisMetadataFileUrl_ODE} className="link link-primary link-hover whitespace-nowrap w-0">
+								{getSubmissionFileName(analysisMetadataFileUrl_ODE)}
+							</Link>
 						</legend>
-						<input
-							type="checkbox"
-							className="checkbox checkbox-primary"
-							checked={trustedToggle}
-							onChange={(e) => setTrustedToggle(e.currentTarget.checked)}
-						/>
-					</fieldset>
 
-					<div className="flex gap-5 flex-wrap items-center">
-						{selectedTags.map((t) => (
-							<div key={t.tagName} className="flex gap-1 items-center">
-								<AnalysisTag tag={t} />
-								<button
-									className="btn btn-error btn-sm"
-									onClick={() => setSelectedTags(selectedTags.filter((st) => st.tagName !== t.tagName))}
-									disabled={!!loading}
-								>
-									-
-								</button>
-							</div>
-						))}
-						{tags.length !== selectedTags.length ? (
-							<div className="dropdown">
-								<button className="btn btn-sm" tabIndex={0} role="button" disabled={!!loading}>
-									+
-								</button>
-								<ul tabIndex={-1} className="dropdown-content menu bg-base-200 rounded-box shadow-sm p-2 flex-nowrap">
-									<div className="max-h-75 overflow-y-scroll overscroll-contain flex flex-col gap-2">
-										{tags.reduce((acc, t) => {
-											if (!selectedTags.find((st) => st.tagName === t.tagName)) {
-												acc.push(
-													<li key={t.tagName} className="w-full">
-														<a
-															className="flex justify-center"
-															onClick={() => {
-																setSelectedTags([...selectedTags, t]);
-																(document.activeElement as HTMLDivElement).blur();
-															}}
-														>
-															<AnalysisTag tag={t} hideDescription />
-														</a>
-													</li>
-												);
-											}
-											return acc;
-										}, [] as ReactNode[])}
-									</div>
-								</ul>
-							</div>
-						) : (
-							<></>
-						)}
-					</div>
-
-					<div className="grid grid-cols-2 gap-4 w-full">
-						<fieldset className="fieldset z-10">
-							<legend className="fieldset-legend flex-col items-start gap-0">
-								Analysis Metadata File:
-								<Link href={analysisMetadataFileUrl_ODE} className="link link-primary link-hover whitespace-nowrap w-0">
-									{getSubmissionFileName(analysisMetadataFileUrl_ODE)}
-								</Link>
-							</legend>
+						<div className="grid grid-cols-2 gap-4 items-center">
 							<input
 								type="file"
 								className="file-input file-input-primary"
@@ -352,16 +333,19 @@ export default function AnalysisEditButton({
 								onChange={(e) => setAnalysisFile(e.currentTarget.files?.item(0) ?? undefined)}
 								ref={analysisRef}
 							/>
-						</fieldset>
-						<ProgressBar loading={loading && !!analysisFile} data={analysisResponse} />
+							<ProgressBar loading={loading && !!analysisFile} data={analysisResponse} />
+						</div>
+					</fieldset>
 
-						<fieldset className="fieldset z-10">
-							<legend className="fieldset-legend flex-col items-start gap-0">
-								ASV Taxa/Features File:
-								<Link href={asvFileUrl_ODE} className="link link-primary link-hover whitespace-nowrap w-0">
-									{getSubmissionFileName(asvFileUrl_ODE)}
-								</Link>
-							</legend>
+					<fieldset className="fieldset">
+						<legend className="fieldset-legend flex-col items-start gap-0">
+							ASV Taxa/Features File:
+							<Link href={asvFileUrl_ODE} className="link link-primary link-hover whitespace-nowrap w-0">
+								{getSubmissionFileName(asvFileUrl_ODE)}
+							</Link>
+						</legend>
+
+						<div className="grid grid-cols-2 gap-4 items-center">
 							<input
 								type="file"
 								className="file-input file-input-primary"
@@ -370,16 +354,19 @@ export default function AnalysisEditButton({
 								onChange={(e) => setAssignmentsFile(e.currentTarget.files?.item(0) ?? undefined)}
 								ref={assignmentsRef}
 							/>
-						</fieldset>
-						<ProgressBar loading={loading && !!assignmentsFile} data={assignResponse} />
+							<ProgressBar loading={loading && !!assignmentsFile} data={assignResponse} />
+						</div>
+					</fieldset>
 
-						<fieldset className="fieldset z-10">
-							<legend className="fieldset-legend flex-col items-start gap-0">
-								Occurrence Table File:
-								<Link href={occurrenceFileUrl_ODE} className="link link-primary link-hover whitespace-nowrap w-0">
-									{getSubmissionFileName(occurrenceFileUrl_ODE)}
-								</Link>
-							</legend>
+					<fieldset className="fieldset">
+						<legend className="fieldset-legend flex-col items-start gap-0">
+							Occurrence Table File:
+							<Link href={occurrenceFileUrl_ODE} className="link link-primary link-hover whitespace-nowrap w-0">
+								{getSubmissionFileName(occurrenceFileUrl_ODE)}
+							</Link>
+						</legend>
+
+						<div className="grid grid-cols-2 gap-4 items-center">
 							<input
 								type="file"
 								className="file-input file-input-primary"
@@ -388,12 +375,14 @@ export default function AnalysisEditButton({
 								onChange={(e) => setOccurrencesFile(e.currentTarget.files?.item(0) ?? undefined)}
 								ref={occurrencesRef}
 							/>
-						</fieldset>
-						<ProgressBar loading={loading && !!occurrencesFile} data={occResponse} />
+							<ProgressBar loading={loading && !!occurrencesFile} data={occResponse} />
+						</div>
+					</fieldset>
 
+					<div className="grid grid-cols-2">
 						<button
 							type="submit"
-							className="btn"
+							className="btn btn-success justify-self-start"
 							disabled={
 								loading ||
 								(!analysisFile && !assignmentsFile && !occurrencesFile && trustedToggle === trusted && !tagsChanged())
@@ -410,7 +399,7 @@ export default function AnalysisEditButton({
 							errorMessage && (
 								<div className="flex justify-center">
 									<div className="tooltip tooltip-error" data-tip={errorMessage}>
-										<span className="text-white text-xl w-8 aspect-square rounded-full flex items-center justify-center border-2 border-error bg-error/10">
+										<span className="text-white text-xl w-8 aspect-square rounded-full flex items-center justify-center border-2 border-error bg-error/10 select-none">
 											✕
 										</span>
 									</div>
@@ -418,7 +407,12 @@ export default function AnalysisEditButton({
 							)
 						)}
 					</div>
-				</form>
+				</div>
+			</form>
+
+			<Modal ref={errorRef}>
+				<h3 className="text-lg font-bold mb-2 text-error">Submission Failed</h3>
+				<span className="mb-2 font-light whitespace-pre-wrap">{errorMessage}</span>
 			</Modal>
 		</>
 	);
