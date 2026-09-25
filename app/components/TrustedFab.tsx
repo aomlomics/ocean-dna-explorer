@@ -75,7 +75,7 @@ export default function TrustedFab() {
 
 		const updatePosition = () => {
 			const scrollTop = window.scrollY ?? document.documentElement.scrollTop ?? 0;
-			const visible = scrollTop > 300;
+			const visible = scrollTop > 100;
 			el.hidden = !visible;
 			if (!visible) return;
 
@@ -94,7 +94,7 @@ export default function TrustedFab() {
 	}, []);
 
 	const fabStyles = "btn btn-xl btn-circle shadow-xl";
-	const fabChildrenStyles = `tooltip tooltip-secondary before:text-primary-content group relative ${fabStyles}`;
+	const fabChildrenStyles = `tooltip before:text-base-content before:bg-base-200 before:border before:border-base-content/20 group relative ${fabStyles}`;
 
 	return (
 		<>
