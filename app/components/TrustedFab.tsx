@@ -8,6 +8,8 @@ import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 /** Same lift as ScrollToTop when buttons get too close to the footer */
 const BUTTON_ZONE_PX = 120;
+/** Same point as ScrollToTop: hidden until the page is scrolled down. */
+const SHOW_AFTER_SCROLL_PX = 300;
 
 const CIRCLE_BASE = "btn btn-xl btn-circle shadow-xl";
 const CIRCLE_CLASS = `${CIRCLE_BASE} border-none bg-base-200/90 text-base-content hover:bg-base-300`;
@@ -143,6 +145,11 @@ export default function TrustedFab() {
 		if (!el) return;
 
 		const updatePosition = () => {
+			const scrollTop = window.scrollY ?? document.documentElement.scrollTop ?? 0;
+			const visible = scrollTop > SHOW_AFTER_SCROLL_PX;
+			el.hidden = !visible;
+			if (!visible) return;
+
 			const offset = getFooterOffset();
 			el.style.bottom = offset > 0 ? `${offset}px` : "2rem";
 		};
@@ -164,6 +171,7 @@ export default function TrustedFab() {
 			{/* z level stays UNDERNEATH the loading screen */}
 			<div
 				ref={wrapRef}
+				hidden
 				className="fixed left-3 sm:left-8 z-popover"
 				style={{ bottom: "2rem" }}
 			>
