@@ -131,7 +131,7 @@ export function AnalysisFileDownloads({
 			>
 				<FileDownloadIcon />
 				<DownloadButtonLabel
-					title={busy ? "Downloading…" : "Download 1 analysis"}
+					title={busy ? "Downloading…" : "Download Analysis"}
 					sizeLabel={totalSizeLabel(urls, sizeByUrl)}
 				/>
 			</button>
@@ -180,7 +180,7 @@ export default function ProjectFileDownloads({
 		? "Downloading…"
 		: selectedCount === 1
 			? "Download 1 analysis"
-			: `Download ${selectedCount} analyses`;
+			: `Download ${selectedCount} Analyses`;
 
 	const downloadsInfo = (
 		<div className="space-y-2">
