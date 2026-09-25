@@ -56,7 +56,7 @@ export default async function ApiIntroductionPage() {
 							<div className="flex items-start gap-4">
 								<span className="w-8 shrink-0 text-4xl font-semibold leading-none text-primary">1</span>
 								<div className="min-w-0">
-								<h4 className="!mt-0 mb-2 !text-xl !font-semibold">Find the Data You Need</h4>
+									<h4 className="mt-0! mb-2 text-xl! font-semibold!">Find the Data You Need</h4>
 									<p>
 										The best place to start is our{" "}
 										<Link href="/docs/api/schema" className="link link-primary">
@@ -84,7 +84,7 @@ export default async function ApiIntroductionPage() {
 							<div className="flex items-start gap-4">
 								<span className="w-8 shrink-0 text-4xl font-semibold leading-none text-primary">2</span>
 								<div className="min-w-0">
-								<h4 className="!mt-0 mb-2 !text-xl !font-semibold">Build a Basic Query</h4>
+									<h4 className="mt-0! mb-2 text-xl! font-semibold!">Build a Basic Query</h4>
 									<p>
 										The simplest query retrieves data from a single table. The table name in the path is the endpoint.
 									</p>
@@ -104,7 +104,7 @@ export default async function ApiIntroductionPage() {
 							<div className="flex items-start gap-4">
 								<span className="w-8 shrink-0 text-4xl font-semibold leading-none text-primary">3</span>
 								<div className="min-w-0">
-								<h4 className="!mt-0 mb-2 !text-xl !font-semibold">Add Options</h4>
+									<h4 className="mt-0! mb-2 text-xl! font-semibold!">Add Options</h4>
 									<p>
 										Options go after the ? and change the response.{" "}
 										<Link href="/docs/api/queryParameters#field-selection" className="link link-primary">
@@ -140,7 +140,7 @@ export default async function ApiIntroductionPage() {
 							<div className="flex items-start gap-4">
 								<span className="w-8 shrink-0 text-4xl font-semibold leading-none text-primary">4</span>
 								<div className="min-w-0">
-								<h4 className="!mt-0 mb-2 !text-xl !font-semibold">Filter the Records</h4>
+									<h4 className="mt-0! mb-2 text-xl! font-semibold!">Filter the Records</h4>
 									<p>
 										A filter keeps records that match a value. It sits after the ? like an option, but the name is a
 										field on the table. fields and limit change what comes back. A filter changes which records match.
@@ -176,16 +176,17 @@ export default async function ApiIntroductionPage() {
 							<div className="flex items-start gap-4">
 								<span className="w-8 shrink-0 text-4xl font-semibold leading-none text-primary">5</span>
 								<div className="min-w-0">
-								<h4 className="!mt-0 mb-2 !text-xl !font-semibold">Combine Data with Relations</h4>
+									<h4 className="mt-0! mb-2 text-xl! font-semibold!">Combine Data with Relations</h4>
 									<p>
 										This is the most powerful feature of the API. Instead of fetching a project, then making a{" "}
 										<em>separate</em> request to find its samples, you can get it all in one go. By adding the{" "}
-										<code className="mx-1 font-mono !bg-transparent !rounded-none">relations</code> parameter, you&apos;re telling
-										the API: &quot;also give me the data from the related table.&quot;
+										<code className="mx-1 font-mono bg-transparent! rounded-none!">relations</code> parameter,
+										you&apos;re telling the API: &quot;also give me the data from the related table.&quot;
 									</p>
 									<p className="mt-2">
 										In the example below, we get a specific project and also retrieve all the data from the{" "}
-										<code className="mx-1 font-mono !bg-transparent !rounded-none">Samples</code> table that are linked to it.
+										<code className="mx-1 font-mono bg-transparent! rounded-none!">Samples</code> table that are linked
+										to it.
 									</p>
 									<ApiQueryDiagram
 										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
@@ -219,7 +220,7 @@ export default async function ApiIntroductionPage() {
 							<div className="flex items-start gap-4">
 								<span className="w-8 shrink-0 text-4xl font-semibold leading-none text-primary">6</span>
 								<div className="min-w-0">
-								<h4 className="!mt-0 mb-2 !text-xl !font-semibold">Make the Request</h4>
+									<h4 className="mt-0! mb-2 text-xl! font-semibold!">Make the Request</h4>
 									<p>
 										Pasting the URL in your browser is a great way to quickly test a query. The text you see is in JSON
 										format, a standard way for computers to exchange data. The{" "}
@@ -239,13 +240,16 @@ export default async function ApiIntroductionPage() {
 					content: (
 						<>
 							<p className="mb-4">
-								Any request whose path starts with <code className="mx-1 font-mono !bg-transparent !rounded-none">/api</code> counts toward a limit of{" "}
+								Any request whose path starts with{" "}
+								<code className="mx-1 font-mono bg-transparent! rounded-none!">/api</code> counts toward a limit of{" "}
 								<strong>20 requests every 10 seconds</strong>, measured per IP address. Paths under{" "}
-								<code className="mx-1 font-mono !bg-transparent !rounded-none">/api/internal</code> are not counted.
+								<code className="mx-1 font-mono bg-transparent! rounded-none!">/api/internal</code> are not counted.
 							</p>
 							<p className="mb-4">
-								Going over the limit returns <code className="mx-1 font-mono !bg-transparent !rounded-none">429 Too Many Requests</code>. Wait for the 10 second window to
-								reset, then retry. A short pause between calls in a loop is enough for normal use.
+								Going over the limit returns{" "}
+								<code className="mx-1 font-mono bg-transparent! rounded-none!">429 Too Many Requests</code>. Wait for
+								the 10 second window to reset, then retry. A short pause between calls in a loop is enough for normal
+								use.
 							</p>
 							<p>
 								Pull large tables with{" "}
@@ -350,8 +354,9 @@ if (http_status(response)$category == "Success") {
 								</li>
 								<li>
 									Table names are flexible. Singular or plural, any capitalization. So{" "}
-									<code className="mx-1 font-mono !bg-transparent !rounded-none">/api/sample</code> and{" "}
-									<code className="mx-1 font-mono !bg-transparent !rounded-none">/api/Samples</code> are the same request.
+									<code className="mx-1 font-mono bg-transparent! rounded-none!">/api/sample</code> and{" "}
+									<code className="mx-1 font-mono bg-transparent! rounded-none!">/api/Samples</code> are the same
+									request.
 								</li>
 								<li>
 									Each route accepts its own options. An option that works on one endpoint is not guaranteed to work on
@@ -362,27 +367,27 @@ if (http_status(response)$category == "Success") {
 									table.
 								</li>
 								<li>
-									Anything unrecognized is read as a field filter. A misspelled option name fails the request, because no
-									field by that name exists on the table.
+									Anything unrecognized is read as a field filter. A misspelled option name fails the request, because
+									no field by that name exists on the table.
 								</li>
 								<li>
 									Record IDs are database IDs.{" "}
-									<code className="mx-1 font-mono !bg-transparent !rounded-none">/api/project/5</code> looks up the{" "}
-									<code className="mx-1 font-mono !bg-transparent !rounded-none">id</code> field, not{" "}
-									<code className="mx-1 font-mono !bg-transparent !rounded-none">project_id</code> or any other name in the
-									data.
+									<code className="mx-1 font-mono bg-transparent! rounded-none!">/api/project/5</code> looks up the{" "}
+									<code className="mx-1 font-mono bg-transparent! rounded-none!">id</code> field, not{" "}
+									<code className="mx-1 font-mono bg-transparent! rounded-none!">project_id</code> or any other name in
+									the data.
 								</li>
 							</ul>
 
 							<Callout title="The API is built for code, not the browser">
 								<p>
-									Pasting a URL into the address bar is a great way to test a query, with one catch. Your browser
-									sends the cookie that stores the trusted toggle from the website, and that cookie overrides{" "}
-									<code className="mx-1 font-mono !bg-transparent !rounded-none">trusted=true</code> in the URL.
+									Pasting a URL into the address bar is a great way to test a query, with one catch. Your browser sends
+									the cookie that stores the trusted toggle from the website, and that cookie overrides{" "}
+									<code className="mx-1 font-mono bg-transparent! rounded-none!">trusted=true</code> in the URL.
 								</p>
 								<p>
-									If you are testing trusted data in a browser, switch the toggle on first. Requests from Python, R,
-									or any other script do not send the cookie and always behave as written.
+									If you are testing trusted data in a browser, switch the toggle on first. Requests from Python, R, or
+									any other script do not send the cookie and always behave as written.
 								</p>
 							</Callout>
 						</>
@@ -401,8 +406,8 @@ if (http_status(response)$category == "Success") {
 										<Link href="/explore/project" className="link link-primary">
 											Explore
 										</Link>{" "}
-										pages: View all data from each table with filters. You can only filter on fields within the table you
-										are looking at. Click on any blue data field to view the detail page for that specific record.
+										pages: View all data from each table with filters. You can only filter on fields within the table
+										you are looking at. Click on any blue data field to view the detail page for that specific record.
 									</li>
 									<li>
 										<Link href="/search" className="link link-primary">
@@ -414,7 +419,7 @@ if (http_status(response)$category == "Success") {
 									</li>
 									<li>
 										Direct API access: Paste API URLs directly in your browser (e.g.,{" "}
-										<code className="mx-1 font-mono !bg-transparent !rounded-none">{`${process.env.NEXT_PUBLIC_URL}/api/project?limit=3`}</code>
+										<code className="mx-1 font-mono bg-transparent! rounded-none!">{`${process.env.NEXT_PUBLIC_URL}/api/project?limit=3`}</code>
 										) to get JSON responses. Great for testing queries before coding.
 									</li>
 									<li>
@@ -433,24 +438,24 @@ if (http_status(response)$category == "Success") {
 									<li>
 										Getting all DNA sequences found in a specific sample. You want to query the feature table, but also
 										get all related occurrences. Query the table:{" "}
-										<code className="mx-1 font-mono !bg-transparent !rounded-none">/api/feature</code>. Include related
-										data: <code className="mx-1 font-mono !bg-transparent !rounded-none">?relations=occurrences</code>.
+										<code className="mx-1 font-mono bg-transparent! rounded-none!">/api/feature</code>. Include related
+										data: <code className="mx-1 font-mono bg-transparent! rounded-none!">?relations=occurrences</code>.
 									</li>
 									<li>
 										Finding all samples collected during a specific project. You want to query the project table and get
 										all its samples. Query the table:{" "}
-										<code className="mx-1 font-mono !bg-transparent !rounded-none">/api/project</code>. Include related
-										data: <code className="mx-1 font-mono !bg-transparent !rounded-none">?relations=Samples</code>.
+										<code className="mx-1 font-mono bg-transparent! rounded-none!">/api/project</code>. Include related
+										data: <code className="mx-1 font-mono bg-transparent! rounded-none!">?relations=Samples</code>.
 									</li>
 									<li>
 										Getting all sequencing analyses for a project. You want to query the project table and include its
 										analyses. Query the table:{" "}
-										<code className="mx-1 font-mono !bg-transparent !rounded-none">/api/project</code>. Include related
-										data: <code className="mx-1 font-mono !bg-transparent !rounded-none">?relations=Analyses</code>.
+										<code className="mx-1 font-mono bg-transparent! rounded-none!">/api/project</code>. Include related
+										data: <code className="mx-1 font-mono bg-transparent! rounded-none!">?relations=Analyses</code>.
 									</li>
 								</ul>
 								<p className="mt-3">
-									Use the <code className="mx-1 font-mono !bg-transparent !rounded-none">/api/❮table❯/relations</code>{" "}
+									Use the <code className="mx-1 font-mono bg-transparent! rounded-none!">/api/❮table❯/relations</code>{" "}
 									endpoint to see the exact relation names available for any table. Or check the{" "}
 									<Link href="/docs/api/schema#table-definitions" className="link link-primary">
 										Table Definitions

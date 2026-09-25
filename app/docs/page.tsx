@@ -17,8 +17,8 @@ export default function DocsPage() {
 			<HelpQuickNav />
 
 			<p className="mb-6 max-w-2xl text-base leading-relaxed">
-				The docs are split into two sections: Help is about the website itself, and API is strictly for API reference. Click Get Started,
-				or use the table of contents to open a specific section.
+				The docs are split into two sections: Help is about the website itself, and API is strictly for API reference.
+				Click Get Started, or use the table of contents to open a specific section.
 			</p>
 
 			<Link className="btn btn-primary" href={`/docs/${firstPage}/${Object.keys(DocsSections[firstPage])[0]}`}>

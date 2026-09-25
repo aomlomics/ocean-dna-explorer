@@ -97,26 +97,28 @@ function EndpointSummary({ path, returns, options }: { path: string; returns: Re
 }
 
 export default async function ApiEndpointsPage() {
-	const taxonomy = await trustedPrisma.taxonomy.findFirst({
-		orderBy: {
-			id: "asc"
-		},
-		select: {
-			id: true
-		}
-	});
+	const [taxonomy, submitter] = await trustedPrisma.$transaction([
+		trustedPrisma.taxonomy.findFirst({
+			orderBy: {
+				id: "asc"
+			},
+			select: {
+				id: true
+			}
+		}),
+		trustedPrisma.project.findFirst({
+			where: {
+				NOT: { userIds: { isEmpty: true } }
+			},
+			orderBy: {
+				id: "asc"
+			},
+			select: {
+				userIds: true
+			}
+		})
+	]);
 
-	const submitter = await prisma.project.findFirst({
-		where: {
-			NOT: { userIds: { isEmpty: true } }
-		},
-		orderBy: {
-			id: "asc"
-		},
-		select: {
-			userIds: true
-		}
-	});
 	const userIdsParam = submitter?.userIds.slice(0, 2).join(",");
 
 	return (
@@ -126,7 +128,8 @@ export default async function ApiEndpointsPage() {
 			header={
 				<>
 					<p className="mb-4">
-						Every endpoint is a GET request and returns JSON. Replace <code className="px-1 py-0.5 bg-base-300 rounded">❮table❯</code> with any table name from the{" "}
+						Every endpoint is a GET request and returns JSON. Replace{" "}
+						<code className="px-1 py-0.5 bg-base-300 rounded">❮table❯</code> with any table name from the{" "}
 						<Link href="/docs/api/schema" className="link link-primary">
 							Database Schema
 						</Link>
@@ -153,8 +156,11 @@ export default async function ApiEndpointsPage() {
 						<>
 							<p className="mb-4">
 								Table names are case-insensitive, and singular or plural both work. So{" "}
-								<code className="px-1 py-0.5 bg-base-300 rounded">/api/project</code>, <code className="px-1 py-0.5 bg-base-300 rounded">/api/projects</code>, and <code className="px-1 py-0.5 bg-base-300 rounded">/api/Projects</code> are the same
-								request. The same rule applies to table names used inside options such as <code className="px-1 py-0.5 bg-base-300 rounded">relations</code>.
+								<code className="px-1 py-0.5 bg-base-300 rounded">/api/project</code>,{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">/api/projects</code>, and{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">/api/Projects</code> are the same request. The same
+								rule applies to table names used inside options such as{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">relations</code>.
 							</p>
 
 							<div className="mb-3">
@@ -172,11 +178,7 @@ export default async function ApiEndpointsPage() {
 					title: "Get All Tables",
 					content: (
 						<>
-							<EndpointSummary
-								path="/api/tables"
-								returns="An array of table name strings."
-								options="None."
-							/>
+							<EndpointSummary path="/api/tables" returns="An array of table name strings." options="None." />
 
 							<p className="mb-4">Use this to discover which tables you can query.</p>
 
@@ -198,8 +200,10 @@ export default async function ApiEndpointsPage() {
 								path="/api/❮table❯/fields"
 								returns={
 									<>
-										An object keyed by field name. Each value has a <code className="px-1 py-0.5 bg-base-300 rounded">type</code>, an <code className="px-1 py-0.5 bg-base-300 rounded">optional</code> flag,
-										and a <code className="px-1 py-0.5 bg-base-300 rounded">values</code> array when the field is an enum.
+										An object keyed by field name. Each value has a{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">type</code>, an{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">optional</code> flag, and a{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">values</code> array when the field is an enum.
 									</>
 								}
 								options="None."
@@ -231,8 +235,9 @@ export default async function ApiEndpointsPage() {
 								path="/api/❮table❯/relations"
 								returns={
 									<>
-										An array of objects with <code className="px-1 py-0.5 bg-base-300 rounded">field</code> (the name to use in queries), <code className="px-1 py-0.5 bg-base-300 rounded">table</code> (the
-										table it points at), and <code className="px-1 py-0.5 bg-base-300 rounded">type</code> (such as one-to-many).
+										An array of objects with <code className="px-1 py-0.5 bg-base-300 rounded">field</code> (the name to
+										use in queries), <code className="px-1 py-0.5 bg-base-300 rounded">table</code> (the table it points
+										at), and <code className="px-1 py-0.5 bg-base-300 rounded">type</code> (such as one-to-many).
 									</>
 								}
 								options="None."
@@ -311,7 +316,8 @@ export default async function ApiEndpointsPage() {
 
 							<p className="mb-4">
 								This is the main endpoint and the one most queries use. Without options it returns every record in the
-								table, so add <code className="px-1 py-0.5 bg-base-300 rounded">limit</code> while you are experimenting.
+								table, so add <code className="px-1 py-0.5 bg-base-300 rounded">limit</code> while you are
+								experimenting.
 							</p>
 
 							<div className="mb-4">
@@ -338,13 +344,17 @@ export default async function ApiEndpointsPage() {
 								path="/api/❮table❯/count"
 								returns={
 									<>
-										A single number in <code className="px-1 py-0.5 bg-base-300 rounded">result</code> instead of an array.
+										A single number in <code className="px-1 py-0.5 bg-base-300 rounded">result</code> instead of an
+										array.
 									</>
 								}
 								options={
 									<>
-										<code className="px-1 py-0.5 bg-base-300 rounded">trusted</code>, field filters, <code className="px-1 py-0.5 bg-base-300 rounded">search</code>, <code className="px-1 py-0.5 bg-base-300 rounded">advanced</code>,{" "}
-										<code className="px-1 py-0.5 bg-base-300 rounded">polygon</code>, <code className="px-1 py-0.5 bg-base-300 rounded">circle</code>, and the BLAST options.
+										<code className="px-1 py-0.5 bg-base-300 rounded">trusted</code>, field filters,{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">search</code>,{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">advanced</code>,{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">polygon</code>,{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">circle</code>, and the BLAST options.
 									</>
 								}
 							/>
@@ -355,8 +365,12 @@ export default async function ApiEndpointsPage() {
 							</p>
 
 							<p className="mb-4">
-								Options that shape records rather than select them are rejected here, including <code className="px-1 py-0.5 bg-base-300 rounded">fields</code>,{" "}
-								<code className="px-1 py-0.5 bg-base-300 rounded">relations</code>, <code className="px-1 py-0.5 bg-base-300 rounded">ids</code>, <code className="px-1 py-0.5 bg-base-300 rounded">orderBy</code>, and <code className="px-1 py-0.5 bg-base-300 rounded">limit</code>.
+								Options that shape records rather than select them are rejected here, including{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">fields</code>,{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">relations</code>,{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">ids</code>,{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">orderBy</code>, and{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">limit</code>.
 							</p>
 
 							<div className="mb-4">
@@ -382,16 +396,23 @@ export default async function ApiEndpointsPage() {
 								returns="A single object, or an error if no record has that ID."
 								options={
 									<>
-										<code className="px-1 py-0.5 bg-base-300 rounded">trusted</code>, <code className="px-1 py-0.5 bg-base-300 rounded">fields</code>, <code className="px-1 py-0.5 bg-base-300 rounded">relations</code>, <code className="px-1 py-0.5 bg-base-300 rounded">relationsFields</code>,{" "}
-										<code className="px-1 py-0.5 bg-base-300 rounded">relationsAllFields</code>, and <code className="px-1 py-0.5 bg-base-300 rounded">relCounts</code>.
+										<code className="px-1 py-0.5 bg-base-300 rounded">trusted</code>,{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">fields</code>,{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">relations</code>,{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">relationsFields</code>,{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">relationsAllFields</code>, and{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">relCounts</code>.
 									</>
 								}
 							/>
 
 							<Callout title="This is the database ID, not project_id or samp_name">
 								<p>
-									<code className="px-1 py-0.5 bg-base-300 rounded">❮id❯</code> is the integer primary key from the <code className="px-1 py-0.5 bg-base-300 rounded">id</code> field. It is not{" "}
-									<code className="px-1 py-0.5 bg-base-300 rounded">project_id</code>, <code className="px-1 py-0.5 bg-base-300 rounded">samp_name</code>, or any other name you see in the data.
+									<code className="px-1 py-0.5 bg-base-300 rounded">❮id❯</code> is the integer primary key from the{" "}
+									<code className="px-1 py-0.5 bg-base-300 rounded">id</code> field. It is not{" "}
+									<code className="px-1 py-0.5 bg-base-300 rounded">project_id</code>,{" "}
+									<code className="px-1 py-0.5 bg-base-300 rounded">samp_name</code>, or any other name you see in the
+									data.
 								</p>
 								<p>
 									To look a record up by a name you already know, filter on the table endpoint instead, for example{" "}
@@ -459,27 +480,31 @@ export default async function ApiEndpointsPage() {
 								path="/api/user"
 								returns={
 									<>
-										An array of user objects with <code className="px-1 py-0.5 bg-base-300 rounded">id</code>, <code className="px-1 py-0.5 bg-base-300 rounded">firstName</code>, <code className="px-1 py-0.5 bg-base-300 rounded">lastName</code>,{" "}
-										<code className="px-1 py-0.5 bg-base-300 rounded">publicMetadata</code>, <code className="px-1 py-0.5 bg-base-300 rounded">banned</code>, and <code className="px-1 py-0.5 bg-base-300 rounded">imageUrl</code>.
+										An array of user objects with <code className="px-1 py-0.5 bg-base-300 rounded">id</code>,{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">firstName</code>,{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">lastName</code>,{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">publicMetadata</code>,{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">banned</code>, and{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">imageUrl</code>.
 									</>
 								}
 								options={
 									<>
-										<code className="px-1 py-0.5 bg-base-300 rounded">userIds</code> (comma separated) or <code className="px-1 py-0.5 bg-base-300 rounded">query</code> (name search).
+										<code className="px-1 py-0.5 bg-base-300 rounded">userIds</code> (comma separated) or{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">query</code> (name search).
 									</>
 								}
 							/>
 
 							<p className="mb-4">
-								Every project carries a <code className="px-1 py-0.5 bg-base-300 rounded">userIds</code> field listing the accounts that submitted it. Those are
-								opaque IDs, so pass them here to find out who the people are.
+								Every project carries a <code className="px-1 py-0.5 bg-base-300 rounded">userIds</code> field listing
+								the accounts that submitted it. Those are opaque IDs, so pass them here to find out who the people are.
 							</p>
 
 							{userIdsParam ? (
 								<>
 									<div className="mb-4">
-										Example URL:{" "}
-										<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/user?userIds=${userIdsParam}`} />
+										Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/user?userIds=${userIdsParam}`} />
 									</div>
 
 									<p className="mb-4">Example response:</p>
@@ -490,9 +515,7 @@ export default async function ApiEndpointsPage() {
 								</>
 							) : null}
 
-							<p className="mt-4">
-								Email addresses are never included in this response for unauthenticated requests.
-							</p>
+							<p className="mt-4">Email addresses are never included in this response for unauthenticated requests.</p>
 						</>
 					)
 				},
@@ -540,8 +563,9 @@ export default async function ApiEndpointsPage() {
 							</div>
 
 							<p className="mt-6 mb-4">
-								The remaining endpoints take no options at all, with one exception: <code className="px-1 py-0.5 bg-base-300 rounded">/api/❮table❯/fields/❮field❯</code>{" "}
-								accepts <code className="px-1 py-0.5 bg-base-300 rounded">trusted</code>.
+								The remaining endpoints take no options at all, with one exception:{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">/api/❮table❯/fields/❮field❯</code> accepts{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">trusted</code>.
 							</p>
 
 							<Callout title="Unsupported options are errors, not warnings">

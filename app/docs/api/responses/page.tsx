@@ -33,7 +33,9 @@ export default function ApiResponsesPage() {
 				<div className="space-y-4">
 					<p>
 						Every endpoint returns JSON in the same envelope, whether the request succeeded or failed. Check{" "}
-						<code className="px-1 py-0.5 bg-base-300 rounded">statusMessage</code> first, then read <code className="px-1 py-0.5 bg-base-300 rounded">result</code> or <code className="px-1 py-0.5 bg-base-300 rounded">error</code>.
+						<code className="px-1 py-0.5 bg-base-300 rounded">statusMessage</code> first, then read{" "}
+						<code className="px-1 py-0.5 bg-base-300 rounded">result</code> or{" "}
+						<code className="px-1 py-0.5 bg-base-300 rounded">error</code>.
 					</p>
 				</div>
 			}
@@ -46,7 +48,8 @@ export default function ApiResponsesPage() {
 							<p className="mb-4">A successful response always has these two keys:</p>
 
 							<p className="mb-4">
-								The live examples on these pages show only <code className="px-1 py-0.5 bg-base-300 rounded">result</code>. A count of 3 is the number inside{" "}
+								The live examples on these pages show only{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">result</code>. A count of 3 is the number inside{" "}
 								<code className="px-1 py-0.5 bg-base-300 rounded">result</code>, not the whole response.
 							</p>
 
@@ -61,9 +64,10 @@ export default function ApiResponsesPage() {
 							/>
 
 							<p className="my-4">
-								BLAST queries add two more keys at the top level: <code className="px-1 py-0.5 bg-base-300 rounded">BlastQueryResults</code> with the scores for
-								each sequence match, and <code className="px-1 py-0.5 bg-base-300 rounded">existingBlastDate</code> with the date if that exact query had already
-								been run. See{" "}
+								BLAST queries add two more keys at the top level:{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">BlastQueryResults</code> with the scores for each
+								sequence match, and <code className="px-1 py-0.5 bg-base-300 rounded">existingBlastDate</code> with the
+								date if that exact query had already been run. See{" "}
 								<Link href="/docs/api/searching#blast-search" className="link link-primary">
 									BLAST Search
 								</Link>
@@ -73,8 +77,9 @@ export default function ApiResponsesPage() {
 							<Callout title="Check statusMessage, not the HTTP status">
 								<p>
 									Errors are returned with a normal 200 response and{" "}
-									<code className="px-1 py-0.5 bg-base-300 rounded">&quot;statusMessage&quot;: &quot;error&quot;</code> in the body. Code that only checks the HTTP
-									status will treat a failed query as a success and then find no <code className="px-1 py-0.5 bg-base-300 rounded">result</code> key.
+									<code className="px-1 py-0.5 bg-base-300 rounded">&quot;statusMessage&quot;: &quot;error&quot;</code>{" "}
+									in the body. Code that only checks the HTTP status will treat a failed query as a success and then
+									find no <code className="px-1 py-0.5 bg-base-300 rounded">result</code> key.
 								</p>
 							</Callout>
 						</>
@@ -86,7 +91,8 @@ export default function ApiResponsesPage() {
 					content: (
 						<>
 							<p className="mb-4">
-								The envelope never changes, but what sits inside <code className="px-1 py-0.5 bg-base-300 rounded">result</code> does.
+								The envelope never changes, but what sits inside{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">result</code> does.
 							</p>
 
 							<div className="overflow-x-auto">
@@ -124,8 +130,9 @@ export default function ApiResponsesPage() {
 					content: (
 						<>
 							<p className="mb-4">
-								When a request fails, <code className="px-1 py-0.5 bg-base-300 rounded">result</code> is replaced by <code className="px-1 py-0.5 bg-base-300 rounded">error</code>, which holds a message
-								written for a person to read.
+								When a request fails, <code className="px-1 py-0.5 bg-base-300 rounded">result</code> is replaced by{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">error</code>, which holds a message written for a
+								person to read.
 							</p>
 
 							<CodeBlock
@@ -139,12 +146,10 @@ export default function ApiResponsesPage() {
 							<Callout title="Rejected queries return a generic message">
 								<p>
 									The table, count, and single record endpoints report every rejected query as{" "}
-									<code className="px-1 py-0.5 bg-base-300 rounded">An unknown server error occurred.</code> The specific reason is logged on the server, not sent
-									back to you.
+									<code className="px-1 py-0.5 bg-base-300 rounded">An unknown server error occurred.</code> The
+									specific reason is logged on the server, not sent back to you.
 								</p>
-								<p>
-									So when a query fails, work backwards from the causes listed below rather than from the message.
-								</p>
+								<p>So when a query fails, work backwards from the causes listed below rather than from the message.</p>
 							</Callout>
 
 							<div className="mb-4">
@@ -153,8 +158,8 @@ export default function ApiResponsesPage() {
 							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/invalid_table`} />
 
 							<p className="mt-6">
-								Some endpoints do return a specific message. Asking for a field that does not exist on a table is one
-								of them.
+								Some endpoints do return a specific message. Asking for a field that does not exist on a table is one of
+								them.
 							</p>
 
 							<div className="mb-4 mt-4">
@@ -169,9 +174,7 @@ export default function ApiResponsesPage() {
 					title: "Common Errors",
 					content: (
 						<>
-							<p className="mb-4">
-								Check your URL against this list.
-							</p>
+							<p className="mb-4">Check your URL against this list.</p>
 
 							<div className="overflow-x-auto">
 								<table className="table table-md table-zebra">
@@ -192,8 +195,11 @@ export default function ApiResponsesPage() {
 										<tr>
 											<td>Invalid field name</td>
 											<td>
-												Every name in <code className="px-1 py-0.5 bg-base-300 rounded">fields</code>, <code className="px-1 py-0.5 bg-base-300 rounded">distinct</code>, <code className="px-1 py-0.5 bg-base-300 rounded">orderBy</code>, or a filter
-												must exist on the table. Get the list from <code className="px-1 py-0.5 bg-base-300 rounded">/api/❮table❯/fields</code>.
+												Every name in <code className="px-1 py-0.5 bg-base-300 rounded">fields</code>,{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">distinct</code>,{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">orderBy</code>, or a filter must exist on the
+												table. Get the list from{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">/api/❮table❯/fields</code>.
 											</td>
 										</tr>
 										<tr>
@@ -209,29 +215,37 @@ export default function ApiResponsesPage() {
 										<tr>
 											<td>Conflicting filters</td>
 											<td>
-												Field filters, <code className="px-1 py-0.5 bg-base-300 rounded">search</code>, <code className="px-1 py-0.5 bg-base-300 rounded">ids</code>, and <code className="px-1 py-0.5 bg-base-300 rounded">advanced</code> cannot be
-												combined with each other.
+												Field filters, <code className="px-1 py-0.5 bg-base-300 rounded">search</code>,{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">ids</code>, and{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">advanced</code> cannot be combined with each
+												other.
 											</td>
 										</tr>
 										<tr>
 											<td>Missing companion option</td>
 											<td>
-												<code className="px-1 py-0.5 bg-base-300 rounded">page</code> requires <code className="px-1 py-0.5 bg-base-300 rounded">limit</code>. <code className="px-1 py-0.5 bg-base-300 rounded">relationsFields</code> and{" "}
-												<code className="px-1 py-0.5 bg-base-300 rounded">relationsAllFields</code> require <code className="px-1 py-0.5 bg-base-300 rounded">relations</code>, and cannot be used together.
+												<code className="px-1 py-0.5 bg-base-300 rounded">page</code> requires{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">limit</code>.{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">relationsFields</code> and{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">relationsAllFields</code> require{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">relations</code>, and cannot be used together.
 											</td>
 										</tr>
 										<tr>
 											<td>Wrong value type</td>
 											<td>
-												<code className="px-1 py-0.5 bg-base-300 rounded">limit</code>, <code className="px-1 py-0.5 bg-base-300 rounded">page</code>, and <code className="px-1 py-0.5 bg-base-300 rounded">ids</code> take integers.{" "}
-												<code className="px-1 py-0.5 bg-base-300 rounded">orderBy</code> takes a field and either asc or desc.
+												<code className="px-1 py-0.5 bg-base-300 rounded">limit</code>,{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">page</code>, and{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">ids</code> take integers.{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">orderBy</code> takes a field and either asc or
+												desc.
 											</td>
 										</tr>
 										<tr>
 											<td>Relation not reachable</td>
 											<td>
-												The table named in <code className="px-1 py-0.5 bg-base-300 rounded">relations</code> must be connected to the one you are querying. See
-												the{" "}
+												The table named in <code className="px-1 py-0.5 bg-base-300 rounded">relations</code> must be
+												connected to the one you are querying. See the{" "}
 												<Link href="/docs/api/schema" className="link link-primary">
 													Database Schema
 												</Link>
@@ -243,8 +257,9 @@ export default function ApiResponsesPage() {
 							</div>
 
 							<p className="mt-6">
-								An empty <code className="px-1 py-0.5 bg-base-300 rounded">result</code> array is not an error. It means the query was valid and nothing matched.
-								If you expected rows, check whether <code className="px-1 py-0.5 bg-base-300 rounded">trusted=true</code> is filtering them out.
+								An empty <code className="px-1 py-0.5 bg-base-300 rounded">result</code> array is not an error. It means
+								the query was valid and nothing matched. If you expected rows, check whether{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">trusted=true</code> is filtering them out.
 							</p>
 						</>
 					)

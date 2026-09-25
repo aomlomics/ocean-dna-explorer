@@ -116,9 +116,7 @@ export default async function HelpSearchPage() {
 					title: "Query Examples",
 					content: (
 						<>
-							<p className="mb-4">
-								Click a card to open Search with that query filled in:
-							</p>
+							<p className="mb-4">Click a card to open Search with that query filled in:</p>
 
 							<div className="flex gap-8">
 								<Link href={`/search?table=sample&advanced=[["project_id","equals","${project?.project_id}"]]`}>

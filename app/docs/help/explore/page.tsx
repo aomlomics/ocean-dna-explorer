@@ -1,7 +1,7 @@
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
-import { TrustedShieldIcon } from "@/app/components/home/HomeTrustedIndicator";
 import Link from "next/link";
 import type { Metadata } from "next";
+import TrustedToggle from "@/app/components/header/TrustedToggle";
 
 export const metadata: Metadata = {
 	title: "Explore | Help",
@@ -29,7 +29,7 @@ export default function HelpExplorePage() {
 						<li>Apply filters or searches across all columns</li>
 						<li>Explore results using a grid or list view</li>
 						<li>Search within specific columns using the column header search inputs</li>
-								<li>Open a record by clicking a row</li>
+						<li>Open a record by clicking a row</li>
 					</ul>
 					<p className="mb-4">
 						<strong>Note:</strong> Explore pages only filter data within the selected table. To query across multiple
@@ -48,11 +48,11 @@ export default function HelpExplorePage() {
 					content: (
 						<>
 							<ul className="list-disc ml-6 mb-4">
-									<li>Global search: Use the top search box to search across all columns in the current table.</li>
-									<li>
-										Column-specific search: Use the column header search input boxes to search within a specific field.
-									</li>
-								</ul>
+								<li>Global search: Use the top search box to search across all columns in the current table.</li>
+								<li>
+									Column-specific search: Use the column header search input boxes to search within a specific field.
+								</li>
+							</ul>
 						</>
 					)
 				},
@@ -66,8 +66,9 @@ export default function HelpExplorePage() {
 									Projects
 								</Link>{" "}
 								represent research initiatives or sampling campaigns. Each project contains multiple samples and at
-								least one analysis. Projects and analyses are the two things you can submit. The submitter can add other users to the project. Everyone added needs the
-								Contributor role, and those people can then upload analyses of that project&apos;s data.
+								least one analysis. Projects and analyses are the two things you can submit. The submitter can add other
+								users to the project. Everyone added needs the Contributor role, and those people can then upload
+								analyses of that project&apos;s data.
 							</p>
 							<p className="mb-4">
 								To submit a project, go to the{" "}
@@ -228,27 +229,26 @@ export default function HelpExplorePage() {
 								record that is trusted or untrusted. That changes the data shown across the site, including on the other
 								Explore tables, because samples, occurrences, taxonomies, and the rest are tied to those analyses.
 							</p>
-							<p className="mb-4">
-								<TrustedShieldIcon
-									trusted
-									className="mr-1.5 inline-block h-6 w-6 fill-current align-[-0.2em] text-white [html[data-theme='light']_&]:text-base-content"
-								/>
-								The shield in the header, and the menu in the bottom-left, switches between trusted data and all data.
-								Trusted data shows only reviewed analyses. All data includes unreviewed analyses too. Maps, counts,
-								charts, Search, and Explore rows follow that switch.{" "}
-								<Link className="link link-primary" href="/docs/help/overview#trusted-vs-untrusted-data">
-									Trusted vs Untrusted Data
-								</Link>{" "}
-								covers it in more detail.
-							</p>
+							<div className="flex justify-center gap-2 mb-4">
+								<TrustedToggle />
+								<p>
+									The shield in the header, and the menu in the bottom-left, switches between trusted data and all data.
+									Trusted data shows only reviewed analyses. All data includes unreviewed analyses too. Maps, counts,
+									charts, Search, and Explore rows follow that switch.{" "}
+									<Link className="link link-primary" href="/docs/help/overview#trusted-vs-untrusted-data">
+										Trusted vs Untrusted Data
+									</Link>{" "}
+									covers it in more detail.
+								</p>
+							</div>
 							<p className="mb-4">
 								Analysis data includes information about the sequencing method, bioinformatic processing parameters, and
 								taxonomic assignments.
 							</p>
 							<p className="mb-4">
-								The analysis page links to its project. It includes
-								file downloads, a map of the samples in the run, the assay used, and counts for occurrences, assignments,
-								and samples. Below that are the taxonomies, assignments, a taxonomy chart, and alpha diversity.
+								The analysis page links to its project. It includes file downloads, a map of the samples in the run, the
+								assay used, and counts for occurrences, assignments, and samples. Below that are the taxonomies,
+								assignments, a taxonomy chart, and alpha diversity.
 							</p>
 						</>
 					)
@@ -262,7 +262,8 @@ export default function HelpExplorePage() {
 								<Link className="link link-primary" href="/explore/occurrence">
 									Occurrences
 								</Link>{" "}
-								are individual detection records: how many times a feature was counted in one library, from one analysis.
+								are individual detection records: how many times a feature was counted in one library, from one
+								analysis.
 							</p>
 							<ul className="list-disc ml-6 mb-4">
 								<li>Tied to a project, analysis, library, and feature</li>
@@ -361,8 +362,8 @@ export default function HelpExplorePage() {
 								<li>GBIF Suggest API did not return a matching taxonomy</li>
 							</ul>
 							<p className="mb-4">
-								On taxonomy Explore pages, GBIF occurrence photos are also available for family, genus, and species. Some
-								images may include deceased strandings or museum specimens, and a warning is shown before the image
+								On taxonomy Explore pages, GBIF occurrence photos are also available for family, genus, and species.
+								Some images may include deceased strandings or museum specimens, and a warning is shown before the image
 								appears. A Spotlight image can be shown when one has been added.
 							</p>
 							<p className="mb-4">

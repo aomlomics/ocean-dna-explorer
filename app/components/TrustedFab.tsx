@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
 import { TrustedIcon, UntrustedIcon } from "./icons";

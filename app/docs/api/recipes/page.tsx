@@ -32,8 +32,9 @@ export default function ApiRecipesPage() {
 						.
 					</p>
 					<p>
-						Every example returns untrusted data, which is the API default. Add <code className="px-1 py-0.5 bg-base-300 rounded">trusted=true</code> to any of them
-						to match what the website shows.
+						Every example returns untrusted data, which is the API default. Add{" "}
+						<code className="px-1 py-0.5 bg-base-300 rounded">trusted=true</code> to any of them to match what the
+						website shows.
 					</p>
 				</div>
 			}
@@ -76,7 +77,9 @@ export default function ApiRecipesPage() {
 
 							<div className="mb-4">
 								Example URL:{" "}
-								<InlineCode code={`${base}/api/project?institution=noaa&fields=project_id,project_name,institution&limit=5`} />
+								<InlineCode
+									code={`${base}/api/project?institution=noaa&fields=project_id,project_name,institution&limit=5`}
+								/>
 							</div>
 
 							<p className="mb-4">Example response:</p>
@@ -93,7 +96,8 @@ export default function ApiRecipesPage() {
 					content: (
 						<>
 							<p className="mb-4">
-								A library has one sample. <code className="px-1 py-0.5 bg-base-300 rounded">relationsFields</code> picks which sample fields come back.
+								A library has one sample. <code className="px-1 py-0.5 bg-base-300 rounded">relationsFields</code> picks
+								which sample fields come back.
 							</p>
 
 							<div className="mb-4">
@@ -117,9 +121,9 @@ export default function ApiRecipesPage() {
 					content: (
 						<>
 							<p className="mb-4">
-								An occurrence reaches a sample through its library. <code className="px-1 py-0.5 bg-base-300 rounded">limit=1</code> is one occurrence, so the
-								library in the middle and the sample at the end are each a single record. The library comes back as an
-								id.
+								An occurrence reaches a sample through its library.{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">limit=1</code> is one occurrence, so the library in
+								the middle and the sample at the end are each a single record. The library comes back as an id.
 							</p>
 
 							<div className="mb-4">
@@ -156,11 +160,13 @@ export default function ApiRecipesPage() {
 							</div>
 
 							<p className="mb-4">
-								To count related records per row instead, use <code className="px-1 py-0.5 bg-base-300 rounded">relCounts</code> on the table endpoint.
+								To count related records per row instead, use{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">relCounts</code> on the table endpoint.
 							</p>
 
 							<div className="mb-4">
-								Example URL: <InlineCode code={`${base}/api/project?fields=project_id&relCounts=samples,analyses&limit=5`} />
+								Example URL:{" "}
+								<InlineCode code={`${base}/api/project?fields=project_id&relCounts=samples,analyses&limit=5`} />
 							</div>
 
 							<ApiCodeBlock
@@ -176,17 +182,20 @@ export default function ApiRecipesPage() {
 					content: (
 						<>
 							<p className="mb-4">
-								Large tables should be pulled in blocks. Set <code className="px-1 py-0.5 bg-base-300 rounded">limit</code> to the block size and increase{" "}
-								<code className="px-1 py-0.5 bg-base-300 rounded">page</code> until a request comes back with fewer records than the limit.
+								Large tables should be pulled in blocks. Set{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">limit</code> to the block size and increase{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">page</code> until a request comes back with fewer
+								records than the limit.
 							</p>
 
 							<p className="mb-4">
-								Always pair pagination with <code className="px-1 py-0.5 bg-base-300 rounded">orderBy</code>. Without a sort, the order is not guaranteed and a
-								record can appear on two pages or be skipped.
+								Always pair pagination with <code className="px-1 py-0.5 bg-base-300 rounded">orderBy</code>. Without a
+								sort, the order is not guaranteed and a record can appear on two pages or be skipped.
 							</p>
 
 							<div className="mb-4">
-								Example URL: <InlineCode code={`${base}/api/sample?fields=samp_name&orderBy=samp_name,asc&limit=5&page=3`} />
+								Example URL:{" "}
+								<InlineCode code={`${base}/api/sample?fields=samp_name&orderBy=samp_name,asc&limit=5&page=3`} />
 							</div>
 
 							<div className="mb-6">
@@ -228,12 +237,13 @@ print(len(samples))`}
 					content: (
 						<>
 							<p className="mb-4">
-								Use <code className="px-1 py-0.5 bg-base-300 rounded">distinct</code> to collapse repeated values. One field gives you the list of values in use,
-								which is handy for deciding what to filter on next.
+								Use <code className="px-1 py-0.5 bg-base-300 rounded">distinct</code> to collapse repeated values. One
+								field gives you the list of values in use, which is handy for deciding what to filter on next.
 							</p>
 
 							<div className="mb-4">
-								Example URL: <InlineCode code={`${base}/api/sample?distinct=geo_loc_name&fields=geo_loc_name&limit=5`} />
+								Example URL:{" "}
+								<InlineCode code={`${base}/api/sample?distinct=geo_loc_name&fields=geo_loc_name&limit=5`} />
 							</div>
 
 							<div className="mb-6">
@@ -268,8 +278,9 @@ print(len(samples))`}
 					content: (
 						<>
 							<p className="mb-4">
-								Projects store the accounts that submitted them in <code className="px-1 py-0.5 bg-base-300 rounded">userIds</code>. Those are opaque IDs, so take
-								them to the user endpoint to get names.
+								Projects store the accounts that submitted them in{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">userIds</code>. Those are opaque IDs, so take them to
+								the user endpoint to get names.
 							</p>
 
 							<div className="mb-4">
@@ -281,7 +292,8 @@ print(len(samples))`}
 							</div>
 
 							<div className="mb-4">
-								Step 2, resolve them: <InlineCode code={`${base}/api/user?userIds=`} /> followed by those ids, comma separated.
+								Step 2, resolve them: <InlineCode code={`${base}/api/user?userIds=`} /> followed by those ids, comma
+								separated.
 							</div>
 
 							<p>
