@@ -3,14 +3,14 @@
 import Image from "next/image";
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
-import { ShowcaseTrustedLabel } from "@/app/components/home/HomeTrustedIndicator";
-import { ProjectIcon } from "@/app/components/icons";
+import { ProjectIcon, TrustedIcon, UntrustedIcon } from "@/app/components/icons";
 import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
 import { matchGbifForPhylopic } from "@/app/components/images/matchGbifForPhylopic";
 import DynamicMap from "@/app/components/map/DynamicMap";
 import { RanksBySpecificity } from "@/types/objects";
 import { AnimatePresence, motion, type Transition } from "framer-motion";
 import type { ProjectBundle } from "./data";
+import { TrustedLabel } from "@/app/components/header/TrustedToggle";
 
 const DEFAULT_PROJECT_DURATION_MS = 40_000;
 const GRID_CELL_COUNT = 10;
@@ -515,7 +515,10 @@ export default function ShowcaseClient({
 									<p className="text-[1.75rem] font-semibold tracking-tight text-base-content/92 sm:text-[2.2rem]">
 										Ocean DNA Explorer
 									</p>
-									<ShowcaseTrustedLabel trusted={trusted} />
+									<p className="mt-1 flex items-center gap-2 text-base font-medium tracking-tight text-base-content/80 sm:text-lg">
+										{trusted ? <TrustedIcon className="text-primary" /> : <UntrustedIcon className="text-primary" />}
+										Showing <TrustedLabel />
+									</p>
 								</div>
 							</div>
 

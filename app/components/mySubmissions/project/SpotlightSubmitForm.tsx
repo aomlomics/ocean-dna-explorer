@@ -72,6 +72,7 @@ export default function SpotlightSubmitForm({
 			).url;
 
 			spotlight = {
+				project_id,
 				imageFileUrl_ODE: imageUrl,
 				description: form.description.value,
 				commonName: form.commonName.value,

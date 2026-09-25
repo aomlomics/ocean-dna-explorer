@@ -1,74 +1,20 @@
 "use client";
 
-import { type KeyboardEvent, type ReactNode, useCallback, useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import Link from "next/link";
-import { TrustedModeExplanation, TrustedShieldIcon } from "@/app/components/home/HomeTrustedIndicator";
-import { unfocus } from "@/app/helpers/utils";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
-
-/** Same lift as ScrollToTop when buttons get too close to the footer */
-const BUTTON_ZONE_PX = 120;
-/** Same point as ScrollToTop: hidden until the page is scrolled down. */
-const SHOW_AFTER_SCROLL_PX = 300;
-
-const CIRCLE_BASE = "btn btn-xl btn-circle shadow-xl";
-const CIRCLE_CLASS = `${CIRCLE_BASE} border-none bg-base-200/90 text-base-content hover:bg-base-300`;
-const CIRCLE_ACTIVE_CLASS = `${CIRCLE_BASE} btn-primary`;
-const FAB_TIP_CLASS =
-	"pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-10 -translate-y-1/2 whitespace-nowrap rounded-md border border-base-content/20 bg-base-200 px-3 py-2 text-sm leading-snug text-base-content opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-within:opacity-100";
-const FAB_TIP_CARET_CLASS =
-	"absolute left-0 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-l border-base-content/20 bg-base-200";
-
-const DOCS_HREF = "/docs/help/overview";
-
-function closeFab() {
-	unfocus();
-	if (document.activeElement instanceof HTMLElement) {
-		document.activeElement.blur();
-	}
-}
-
-function FabAction({
-	tip,
-	active,
-	href,
-	onClick,
-	children
-}: {
-	tip: string;
-	active?: boolean;
-	href?: string;
-	onClick?: () => void;
-	children: ReactNode;
-}) {
-	const className = active ? CIRCLE_ACTIVE_CLASS : CIRCLE_CLASS;
-
-	const control = href ? (
-		<Link href={href} className={className} aria-label={tip} onClick={onClick}>
-			{children}
-		</Link>
-	) : (
-		<button type="button" className={className} aria-label={tip} onClick={onClick}>
-			{children}
-		</button>
-	);
-
-	return (
-		<div>
-			<div className="group relative hover:z-50 focus-within:z-50">
-				{control}
-				<span className={FAB_TIP_CLASS}>
-					<span aria-hidden="true" className={FAB_TIP_CARET_CLASS} />
-					{tip}
-				</span>
-			</div>
-		</div>
-	);
-}
+import { TrustedIcon, UntrustedIcon } from "./icons";
+import Modal from "./Modal";
 
 function InfoIcon() {
 	return (
-		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" className="size-8 stroke-current" aria-hidden>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			viewBox="0 0 24 24"
+			fill="none"
+			className="size-8 stroke-current"
+			aria-hidden
+		>
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"
@@ -109,7 +55,7 @@ function getFooterOffset(): number {
 
 	if (r.bottom <= 0 || r.top >= ih) return 0;
 
-	const stripTop = ih - BUTTON_ZONE_PX;
+	const stripTop = ih - 120;
 	if (r.bottom <= stripTop) return 0;
 
 	const effectiveTop = Math.max(r.top, stripTop);
@@ -118,27 +64,10 @@ function getFooterOffset(): number {
 
 export default function TrustedFab() {
 	const { trusted, setTrusted } = useTrusted();
+
 	const explainRef = useRef<HTMLDialogElement | null>(null);
 	const wrapRef = useRef<HTMLDivElement | null>(null);
-
-	const openExplanation = useCallback(() => {
-		explainRef.current?.showModal();
-	}, []);
-
-	const setMode = useCallback(
-		(value: boolean) => {
-			if (trusted !== value) setTrusted(value);
-			closeFab();
-		},
-		[setTrusted, trusted]
-	);
-
-	const onTriggerKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
-		if (event.key === " " || event.key === "Enter") {
-			event.preventDefault();
-			event.currentTarget.focus();
-		}
-	}, []);
+	const fabOpenRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		const el = wrapRef.current;
@@ -146,7 +75,7 @@ export default function TrustedFab() {
 
 		const updatePosition = () => {
 			const scrollTop = window.scrollY ?? document.documentElement.scrollTop ?? 0;
-			const visible = scrollTop > SHOW_AFTER_SCROLL_PX;
+			const visible = scrollTop > 300;
 			el.hidden = !visible;
 			if (!visible) return;
 
@@ -164,72 +93,104 @@ export default function TrustedFab() {
 		};
 	}, []);
 
-	const modeLabel = trusted ? "trusted data" : "all data";
+	const fabStyles = "btn btn-xl btn-circle shadow-xl";
+	const fabChildrenStyles = `tooltip tooltip-secondary before:text-primary-content group relative ${fabStyles}`;
 
 	return (
 		<>
 			{/* z level stays UNDERNEATH the loading screen */}
-			<div
-				ref={wrapRef}
-				hidden
-				className="fixed left-3 sm:left-8 z-popover"
-				style={{ bottom: "2rem" }}
-			>
+			<div ref={wrapRef} hidden className="fixed left-3 sm:left-8 z-popover" style={{ bottom: "2rem" }}>
 				<div className="fab fab-flower fab-start">
-				<div
-					tabIndex={0}
-					role="button"
-					className={CIRCLE_ACTIVE_CLASS}
-					aria-label={`Data filter, currently showing ${modeLabel}. Open options.`}
-					aria-haspopup="true"
-					onKeyDown={onTriggerKeyDown}
-				>
-					<TrustedShieldIcon trusted={trusted} className="size-8 fill-current" />
-				</div>
-
-				<div className="fab-close">
-					<span className={CIRCLE_ACTIVE_CLASS} aria-hidden>
-						✕
-					</span>
-				</div>
-
-				<FabAction tip="What is Trusted data?" onClick={openExplanation}>
-					<InfoIcon />
-				</FabAction>
-
-				<FabAction tip="Help Docs" href={DOCS_HREF} onClick={closeFab}>
-					<DocsIcon />
-				</FabAction>
-
-				<FabAction tip="Show only trusted data" active={trusted} onClick={() => setMode(true)}>
-					<TrustedShieldIcon trusted className="size-8 fill-current" />
-				</FabAction>
-
-				<FabAction tip="Show all data" active={!trusted} onClick={() => setMode(false)}>
-					<TrustedShieldIcon trusted={false} className="size-8 fill-current" />
-				</FabAction>
-			</div>
-			</div>
-
-			<dialog ref={explainRef} className="modal z-modal">
-				<div className="modal-box">
-					<button
-						type="button"
-						aria-label="Close dialog"
-						className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-						onClick={() => explainRef.current?.close()}
+					<div
+						ref={fabOpenRef}
+						tabIndex={0}
+						role="button"
+						className={`btn-primary ${fabStyles}`}
+						aria-label={`Data filter, currently showing ${trusted ? "trusted data" : "all data"}. Open options.`}
+						aria-haspopup="true"
 					>
-						✕
+						{trusted ? <TrustedIcon className="size-8" /> : <UntrustedIcon className="size-8" />}
+					</div>
+
+					<div className="fab-close">
+						<span className={`btn-primary ${fabStyles}`} aria-hidden>
+							✕
+						</span>
+					</div>
+
+					<button
+						className={`z-50 ${fabChildrenStyles}`}
+						data-tip="What is Trusted data?"
+						aria-label="What is Trusted data?"
+						onClick={() => explainRef.current?.showModal()}
+					>
+						<InfoIcon />
 					</button>
-					<h2 className="mb-3 text-xl font-semibold text-primary">Trusted data</h2>
-					<TrustedModeExplanation />
+
+					<Link
+						className={`z-49 ${fabChildrenStyles}`}
+						data-tip="Help Docs"
+						aria-label="Help Docs"
+						href="/docs/help/overview"
+					>
+						<DocsIcon />
+					</Link>
+
+					<button
+						className={`z-48 ${fabChildrenStyles} ${trusted ? "btn-primary" : ""}`}
+						data-tip="Show only trusted data"
+						aria-label="Show only trusted data"
+						onClick={() => {
+							if (!trusted) {
+								setTrusted(true);
+								fabOpenRef.current?.focus();
+								fabOpenRef.current?.blur();
+							}
+						}}
+					>
+						<TrustedIcon className="size-8" />
+					</button>
+
+					<button
+						className={`z-47 ${fabChildrenStyles} ${trusted ? "" : "btn-primary"}`}
+						data-tip="Show all data"
+						aria-label="Show all data"
+						onClick={() => {
+							if (trusted) {
+								setTrusted(false);
+								fabOpenRef.current?.focus();
+								fabOpenRef.current?.blur();
+							}
+						}}
+					>
+						<UntrustedIcon className="size-8" />
+					</button>
 				</div>
-				<form method="dialog" className="modal-backdrop">
-					<button type="submit" aria-label="Close dialog">
-						Close dialog
-					</button>
-				</form>
-			</dialog>
+			</div>
+
+			<Modal ref={explainRef}>
+				<h2 className="mb-3 text-xl font-semibold text-primary">Trusted data</h2>
+				<TrustedModeExplanation />
+			</Modal>
 		</>
+	);
+}
+
+export function TrustedModeExplanation() {
+	return (
+		<div className="space-y-2">
+			<p>
+				Trusted data includes only analyses that have passed ODE review for standardized metadata and bioinformatics
+				processing. All data (untrusted) adds unreviewed or experimental analyses.
+			</p>
+			<p>
+				Switching this filter updates the data you see: points on maps, numbers in data cards, visualizations, search
+				results, and rows on Explore pages.
+			</p>
+			<p>
+				eDNA often picks up contamination, so unreviewed analyses can include false detections. Trusted mode hides those
+				until they have been checked.
+			</p>
+		</div>
 	);
 }

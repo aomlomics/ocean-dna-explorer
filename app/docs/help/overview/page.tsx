@@ -1,7 +1,7 @@
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
-import { TrustedShieldIcon } from "@/app/components/home/HomeTrustedIndicator";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { TrustedIcon, UntrustedIcon } from "@/app/components/icons";
 
 export const metadata: Metadata = {
 	title: "Overview | Help",
@@ -86,28 +86,32 @@ export default function HelpOverviewPage() {
 					content: (
 						<>
 							<p className="mb-4">
-								ODE can show only reviewed analyses, or every analysis (and their associated Taxonomies, Samples, Occurrences, etc.) in the database. Switch the data presented to you with the shield in the
-								header, or with the persistent menu in the bottom-left corner of every page.
+								ODE can show only reviewed analyses, or every analysis (and their associated Taxonomies, Samples,
+								Occurrences, etc.) in the database. Switch the data presented to you with the shield in the header, or
+								with the persistent menu in the bottom-left corner of every page.
 							</p>
 							<div className="mb-4 flex items-start gap-3">
-								<TrustedShieldIcon trusted className="mt-0.5 h-6 w-6 shrink-0 fill-current text-primary" />
+								<TrustedIcon className="text-primary" />
 								<p className="mb-0">
-									<strong>Trusted data</strong> (default) includes only analyses that have been reviewed for contamination, noise, and other potential causes of innacurate identifications.
+									<strong>Trusted data</strong> (default) includes only analyses that have been reviewed for
+									contamination, noise, and other potential causes of innacurate identifications.
 								</p>
 							</div>
 							<div className="mb-4 flex items-start gap-3">
-								<TrustedShieldIcon trusted={false} className="mt-0.5 h-6 w-6 shrink-0 fill-current text-primary" />
+								<UntrustedIcon className="text-primary" />
 								<p className="mb-0">
 									<strong>All data</strong> includes everything submitted to the database.
 								</p>
 							</div>
 							<p className="mb-4">
-								The data presented to you will change when you use the Trusted toggle: the points on maps, the numbers in the data cards, the data
-								points on visualizations, the results of your searches, and the rows of data on Explore pages.
+								The data presented to you will change when you use the Trusted toggle: the points on maps, the numbers
+								in the data cards, the data points on visualizations, the results of your searches, and the rows of data
+								on Explore pages.
 							</p>
 							<p className="mb-4">
 								eDNA often picks up contamination, so unreviewed analyses can include false detections. Trusted mode
-								hides those until they have been checked. A real example: the human and turkey DNA identified in a particular project was likely caused by the scientist having a turkey sandwich for lunch!
+								hides those until they have been checked. A real example: the human and turkey DNA identified in a
+								particular project was likely caused by the scientist having a turkey sandwich for lunch!
 							</p>
 						</>
 					)

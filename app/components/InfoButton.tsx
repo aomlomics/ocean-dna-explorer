@@ -130,8 +130,7 @@ export default function InfoButton({
 			: type === "error"
 				? "text-rose-500/85 hover:text-rose-500"
 				: "text-primary/85 hover:text-primary";
-	const hoverAccentClass =
-		type === "warning" ? "hover:-translate-y-px" : type === "error" ? "hover:-translate-y-px" : "hover:-translate-y-px";
+	const hoverAccentClass = "hover:-translate-y-px";
 	const richCaretClass =
 		dir === "tooltip-right"
 			? "left-0 top-3 -translate-x-1/2 rotate-45 border-l border-b"

@@ -19,7 +19,9 @@ import {
 	WidgetCardSkeleton
 } from "../components/home/DashboardExtras";
 import { cookies } from "next/headers";
-import { HomeTrustedSubtitle } from "@/app/components/home/HomeTrustedIndicator";
+import TrustedToggle, { TrustedLabel } from "../components/header/TrustedToggle";
+import InfoButton from "../components/InfoButton";
+import { TrustedModeExplanation } from "../components/TrustedFab";
 
 const heroPrimaryBtnClass =
 	"btn btn-md btn-secondary bg-primary/90 backdrop-blur-sm outline-none border-0 text-white font-normal hover:bg-primary transition-all duration-300 text-base px-6 py-3 min-h-12";
@@ -81,7 +83,17 @@ export default async function Home() {
 								</div>
 
 								<div className="mb-5 flex flex-wrap items-center gap-x-1.5 text-2xl font-semibold leading-tight text-shadow-3xl sm:mb-6 sm:text-3xl">
-									<HomeTrustedSubtitle />
+									<span className="inline-flex items-center gap-[0.3em]">
+										<TrustedToggle className={"h-[1.5em] w-[1.5em]"} />
+
+										<span className="font-semibold">Showing</span>
+										<span className="font-semibold text-primary">
+											<TrustedLabel />
+										</span>
+										<InfoButton dir="tooltip-bottom">
+											<TrustedModeExplanation />
+										</InfoButton>
+									</span>
 								</div>
 							</div>
 
