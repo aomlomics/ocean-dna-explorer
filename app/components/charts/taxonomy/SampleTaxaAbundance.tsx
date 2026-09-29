@@ -84,14 +84,7 @@ export default function SampleTaxaAbundance({
 		() =>
 			Array.from(
 				Object.values(taxonomiesByName).reduce((acc, taxa) => {
-					if (
-						taxa[abundanceRank] &&
-						!acc.has(taxa[abundanceRank]) &&
-						assignsWithOccs.some(
-							(assign) => assign.taxonomy === taxa.taxonomy && assign.Occurrences.some((occ) => occ.organismQuantity)
-						)
-					)
-						acc.add(taxa[abundanceRank]);
+					if (taxa[abundanceRank]) acc.add(taxa[abundanceRank]);
 					return acc;
 				}, new Set() as Set<string>)
 			),
