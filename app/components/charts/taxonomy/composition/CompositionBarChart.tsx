@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import {
 	COMPOSITION_BAR_DEFAULT_RANK,
-	type AssignsByFeatureid,
+	type AssignsWithOccs,
 	type TaxonomiesByName
 } from "../../wrappers/TaxonomyVisualize";
 import { BarElement, CategoryScale, Chart as ChartJS, LinearScale, Title, Tooltip } from "chart.js";
@@ -17,11 +17,11 @@ import { aggregateByRank, TOP_N } from "./helpers";
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Title);
 
 export default function CompositionBarChart({
-	assignsByFeatureid,
+	assignsWithOccs,
 	taxonomiesByName,
 	taxaRanksWithData
 }: {
-	assignsByFeatureid: AssignsByFeatureid;
+	assignsWithOccs: AssignsWithOccs;
 	taxonomiesByName: TaxonomiesByName;
 	taxaRanksWithData: TaxonomicRank[];
 }) {
@@ -32,7 +32,7 @@ export default function CompositionBarChart({
 	const [rank, setRank] = useState(COMPOSITION_BAR_DEFAULT_RANK);
 
 	const chartData = useMemo(() => {
-		const { totals, grandTotal } = aggregateByRank(assignsByFeatureid, taxonomiesByName, rank);
+		const { totals, grandTotal } = aggregateByRank(assignsWithOccs, taxonomiesByName, rank);
 
 		const sorted = Array.from(totals.entries())
 			.map(([label, value]) => ({
@@ -52,7 +52,7 @@ export default function CompositionBarChart({
 				}
 			]
 		};
-	}, [assignsByFeatureid, taxonomiesByName, rank, primaryColor]);
+	}, [assignsWithOccs, taxonomiesByName, rank, primaryColor]);
 
 	return (
 		<div className="relative p-6">

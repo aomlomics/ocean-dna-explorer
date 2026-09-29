@@ -1,7 +1,7 @@
 "use client";
 
 import type { SampleModel } from "@/app/generated/prisma/models/Sample";
-import { type ReactNode, useMemo, useRef, useState } from "react";
+import { type ReactNode, useMemo, useRef, useState, useTransition } from "react";
 import distinctColors from "distinct-colors";
 import { Scatter } from "react-chartjs-2";
 import {
@@ -43,6 +43,7 @@ type DataPoint = {
 //TODO: style dates in legend properly (options.plugins.legend.labels.generateLabels)
 //TODO: add checklist for legendField
 //TODO: store zoom as state, don't reset zoom when changing legendField
+//TODO: properly label SamplePoints using project_id where necessary
 export default function SampleScatterPlot({
 	samples,
 	fields,
@@ -62,13 +63,21 @@ export default function SampleScatterPlot({
 	const [xReverse, setXReverse] = useState(false);
 	const [yReverse, setYReverse] = useState(false);
 
-	const [loading, setLoading] = useState(false);
+	const [loading, startTransition] = useTransition();
 
-	function buildChartData(
-		newXField: keyof SampleModel,
-		newYField: keyof SampleModel,
-		newLegendField: keyof SampleModel
-	) {
+	const [legendField, setLegendField] = useState(DEFAULT_LEGEND_FIELD);
+	const [xField, setXField] = useState(() =>
+		xyFields.includes(DEFAULT_X_FIELD)
+			? DEFAULT_X_FIELD
+			: (xyFields.find((f) => f !== DEFAULT_LEGEND_FIELD) as keyof SampleModel)
+	);
+	const [yField, setYField] = useState(() =>
+		xyFields.includes(DEFAULT_Y_FIELD)
+			? DEFAULT_Y_FIELD
+			: (xyFields.find((f) => f !== DEFAULT_LEGEND_FIELD && f !== xField) as keyof SampleModel)
+	);
+
+	const chartInfo = useMemo(() => {
 		const labels = new Set() as Set<string>;
 
 		let tempXMin = undefined as number | undefined;
@@ -80,27 +89,27 @@ export default function SampleScatterPlot({
 		const tempDatasets = samples.reduce(
 			(acc, p) => {
 				let val = null;
-				if (userDefinedFields?.has(newLegendField)) {
+				if (userDefinedFields?.has(legendField)) {
 					if (p.userDefined) {
-						val = p.userDefined[newLegendField];
+						val = p.userDefined[legendField];
 					}
 				} else {
-					val = p[newLegendField];
+					val = p[legendField];
 				}
 
 				if (val != null && !((val as string | number) in DeadValueEnum) && val !== "") {
 					let xVal = null as number | Date | null;
-					if (userDefinedFields?.has(newXField)) {
-						const val = p.userDefined?.[newXField];
+					if (userDefinedFields?.has(xField)) {
+						const val = p.userDefined?.[xField];
 						if (val != null) {
-							if (getFieldType(newXField) === "number") {
-								xVal = parseFloat(val);
+							if (getFieldType(xField) === "number") {
+								xVal = Number(val);
 							} else {
 								xVal = new Date(val);
 							}
 						}
 					} else {
-						xVal = p[newXField] as typeof xVal;
+						xVal = p[xField] as typeof xVal;
 					}
 
 					if (
@@ -110,17 +119,17 @@ export default function SampleScatterPlot({
 							: Number.isFinite(xVal.getTime()) && !(xVal.getTime() in DeadValueEnum))
 					) {
 						let yVal = null as number | Date | null;
-						if (userDefinedFields?.has(newYField)) {
-							const val = p.userDefined?.[newYField];
+						if (userDefinedFields?.has(yField)) {
+							const val = p.userDefined?.[yField];
 							if (val) {
-								if (getFieldType(newYField) === "number") {
+								if (getFieldType(yField) === "number") {
 									yVal = parseFloat(val);
 								} else {
 									yVal = new Date(val);
 								}
 							}
 						} else {
-							yVal = p[newYField] as typeof yVal;
+							yVal = p[yField] as typeof yVal;
 						}
 
 						if (
@@ -193,30 +202,21 @@ export default function SampleScatterPlot({
 			yMin: tempYMin,
 			yMax: tempYMax
 		};
-	}
-
-	const [xField, setXField] = useState(DEFAULT_X_FIELD);
-	const [yField, setYField] = useState(DEFAULT_Y_FIELD);
-	const [legendField, setLegendField] = useState(DEFAULT_LEGEND_FIELD);
-
-	const chartInfo = useMemo(() => buildChartData(xField, yField, legendField), [samples, xField, yField, legendField]);
+	}, [samples, xField, yField, legendField]);
 
 	function getFieldType(newField: keyof SampleModel) {
 		if (userDefinedFields?.has(newField)) {
 			let tempType = "date" as "number" | "date";
 
 			for (const samp of samples) {
-				if (samp.userDefined && samp.userDefined[newField] != null) {
-					const value = samp.userDefined[newField];
-
-					if (value != null && value.trim() !== "") {
-						const numericValue = Number(value);
-
-						if (Number.isFinite(numericValue)) {
-							tempType = "number";
-							break;
-						}
-					}
+				if (
+					samp.userDefined &&
+					samp.userDefined[newField] != null &&
+					samp.userDefined[newField].trim() !== "" &&
+					Number.isFinite(Number(samp.userDefined[newField]))
+				) {
+					tempType = "number";
+					break;
 				}
 			}
 
@@ -252,11 +252,7 @@ export default function SampleScatterPlot({
 						</legend>
 						<select
 							value={xField}
-							onChange={(e) => {
-								setLoading(true);
-								setXField(e.currentTarget.value as keyof SampleModel);
-								setLoading(false);
-							}}
+							onChange={(e) => startTransition(() => setXField(e.currentTarget.value as keyof SampleModel))}
 							className="select"
 							disabled={loading}
 						>
@@ -278,12 +274,12 @@ export default function SampleScatterPlot({
 					<button
 						disabled={loading}
 						aria-label="Swap X and Y axes"
-						onClick={() => {
-							setLoading(true);
-							setXField(yField);
-							setYField(xField);
-							setLoading(false);
-						}}
+						onClick={() =>
+							startTransition(() => {
+								setXField(yField);
+								setYField(xField);
+							})
+						}
 					>
 						<svg
 							viewBox="0 0 24 24"
@@ -315,11 +311,7 @@ export default function SampleScatterPlot({
 						</legend>
 						<select
 							value={yField}
-							onChange={(e) => {
-								setLoading(true);
-								setYField(e.currentTarget.value as keyof SampleModel);
-								setLoading(false);
-							}}
+							onChange={(e) => startTransition(() => setYField(e.currentTarget.value as keyof SampleModel))}
 							className="select"
 							disabled={loading}
 						>
@@ -343,11 +335,7 @@ export default function SampleScatterPlot({
 					<legend className="fieldset-legend">Color points by:</legend>
 					<select
 						value={legendField}
-						onChange={(e) => {
-							setLoading(true);
-							setLegendField(e.currentTarget.value as keyof SampleModel);
-							setLoading(false);
-						}}
+						onChange={(e) => startTransition(() => setLegendField(e.currentTarget.value as keyof SampleModel))}
 						className="select"
 						disabled={loading}
 					>

@@ -33,9 +33,8 @@ export default function SampleVisualize({ samples }: { samples: SampleModel[] })
 	fields.delete("userDefined");
 	fields.delete("samp_name");
 
-	const xyFields = new Set(["eventDate", "minimumDepthInMeters"]) as Set<string>;
-	const userDefinedFields = new Set() as Set<string>;
 	//add to xy field options
+	const xyFields = new Set() as Set<string>;
 	for (const f of Array.from(fields)) {
 		const key = f as keyof SampleModel;
 		const type = getZodType("sample", key).type;
@@ -45,51 +44,55 @@ export default function SampleVisualize({ samples }: { samples: SampleModel[] })
 		}
 	}
 
-	//remove all fields without any values
-	for (const f of Array.from(fields)) {
-		const key = f as keyof SampleModel;
-		const type = getZodType("sample", key).type;
+	const fieldsWithValues = new Set<string>();
+	const userDefinedFields = new Set<string>();
+	const badUdXyFields = new Set<string>();
 
-		let hasVal = false;
-		for (const samp of samples) {
-			if (samp[key] !== null) {
-				let isDead = false;
+	const unmodifiedFields = Array.from(fields);
+	for (const samp of samples) {
+		//check if fields have values
+		for (const f of unmodifiedFields) {
+			if (!fieldsWithValues.has(f)) {
+				const key = f as keyof SampleModel;
+				if (samp[key] != null) {
+					const type = getZodType("sample", key).type;
 
-				if (type !== "boolean") {
-					if (type === "date") {
-						isDead = (samp[key] as Date).getTime() in DeadValueEnum;
-					} else {
-						isDead = (samp[key] as string | number) in DeadValueEnum;
-					}
-				}
-
-				if (!isDead) {
-					hasVal = true;
-					break;
-				}
-			}
-
-			//add userDefined fields
-			if (samp.userDefined) {
-				for (const ud in samp.userDefined) {
-					if (samp.userDefined[ud] != null && !(samp.userDefined[ud] in DeadValueEnum) && samp.userDefined[ud] !== "") {
-						fields.add(ud);
-						userDefinedFields.add(ud);
-
-						if (
-							!isNaN(parseFloat(samp.userDefined[ud])) ||
-							!isNaN(new Date(samp.userDefined[ud]) as unknown as number)
-						) {
-							xyFields.add(ud);
-						} else if (xyFields.has(ud)) {
-							xyFields.delete(ud);
-						}
+					if (
+						type !== "boolean" &&
+						!(type === "date"
+							? (samp[key] as Date).getTime() in DeadValueEnum
+							: (samp[key] as string | number) in DeadValueEnum)
+					) {
+						fieldsWithValues.add(f);
 					}
 				}
 			}
 		}
 
-		if (!hasVal) {
+		//add userDefined fields
+		if (samp.userDefined) {
+			for (const ud in samp.userDefined) {
+				if (samp.userDefined[ud] != null && !(samp.userDefined[ud] in DeadValueEnum) && samp.userDefined[ud] !== "") {
+					fields.add(ud);
+					userDefinedFields.add(ud);
+					fieldsWithValues.add(ud);
+
+					if (Number.isFinite(Number(samp.userDefined[ud])) || !isNaN(new Date(samp.userDefined[ud]).getTime())) {
+						if (!badUdXyFields.has(ud)) {
+							xyFields.add(ud);
+						}
+					} else {
+						badUdXyFields.add(ud);
+						xyFields.delete(ud);
+					}
+				}
+			}
+		}
+	}
+
+	//anything that never had a valid value gets removed
+	for (const f of fields) {
+		if (!fieldsWithValues.has(f)) {
 			fields.delete(f);
 			xyFields.delete(f);
 		}

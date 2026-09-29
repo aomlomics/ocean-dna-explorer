@@ -4,6 +4,9 @@ export const TAXONOMY_VISUALIZE_TABS = {
 	abundance: {
 		title: "Relative Abundance"
 	},
+	sampleTaxa: {
+		title: "Sample Abundance"
+	},
 	treemap: {
 		title: "Treemap"
 	},

@@ -18,6 +18,7 @@ import Link from "next/link";
 import { TAXONOMY_VISUALIZE_TABS } from "../taxonomy/tabs";
 import { useSearchParams } from "next/navigation";
 import LoadingTaxaBarChart from "../loading/taxonomy/LoadingTaxaBarChart";
+import LoadingSampleTaxaAbundance from "../loading/taxonomy/LoadingSampleTaxaAbundance";
 import LoadingTaxonomyTreemap from "../loading/taxonomy/LoadingTaxonomyTreemap";
 import LoadingTaxaPrevalenceHistogram from "../loading/taxonomy/LoadingTaxaPrevalenceHistogram";
 import LoadingTaxaSampleHeatmap from "../loading/taxonomy/LoadingTaxaSampleHeatmap";
@@ -28,6 +29,9 @@ import LoadingDarkTaxaPlot from "../loading/taxonomy/LoadingDarkTaxaPlot";
 
 import dynamic from "next/dynamic";
 const TaxaBarChart = dynamic(() => import("../taxonomy/TaxaBarChart"), {
+	ssr: false
+});
+const SampleTaxaAbundance = dynamic(() => import("../taxonomy/SampleTaxaAbundance"), {
 	ssr: false
 });
 const TaxonomyTreemap = dynamic(() => import("../taxonomy/TaxonomyTreemap"), {
@@ -52,20 +56,17 @@ const DarkTaxaPlot = dynamic(() => import("../taxonomy/DarkTaxaPlot"), {
 	ssr: false
 });
 
-export type AssignsByFeatureid = Record<
-	AssignmentModel["featureid"],
-	{
-		featureid: AssignmentModel["featureid"];
-		taxonomy: AssignmentModel["taxonomy"];
-		percent_id: AssignmentModel["percent_id"];
-		Occurrences: {
-			organismQuantity: OccurrenceModel["organismQuantity"];
-			Library: {
-				id: LibraryModel["id"];
-			};
-		}[];
-	}
->;
+export type AssignsWithOccs = {
+	featureid: AssignmentModel["featureid"];
+	taxonomy: AssignmentModel["taxonomy"];
+	percent_id: AssignmentModel["percent_id"];
+	Occurrences: {
+		organismQuantity: OccurrenceModel["organismQuantity"];
+		Library: {
+			id: LibraryModel["id"];
+		};
+	}[];
+}[];
 
 export type TaxonomiesByName = Record<
 	TaxonomyModel["taxonomy"],
@@ -85,6 +86,8 @@ export type LibsWithSampleById = Map<
 >;
 
 export const ABUNDANCE_DEFAULT_RANK = "kingdom" as TaxonomicRank;
+export const SAMPLE_ABUNDANCE_DEFAULT_FIELD = "temp";
+export const SAMPLE_ABUNDANCE_DEFAULT_LEGEND_FIELD = "project_id";
 export const TREEMAP_DEFAULT_PARENT_RANK = "phylum" as TaxonomicRank;
 export const TREEMAP_DEFAULT_CHILD_RANK = "family" as TaxonomicRank;
 export const PREVALENCE_DEFAULT_RANK = "species" as TaxonomicRank;
@@ -98,13 +101,13 @@ export const DARK_TAXA_DEFAULT_INNER_RANK = "kingdom" as TaxonomicRank;
 export const DARK_TAXA_DEFAULT_OUTER_RANK = "phylum" as TaxonomicRank;
 
 export default function TaxonomyVisualize({
-	assignsByFeatureid,
+	assignsWithOccs,
 	taxonomiesByName,
 	libsWithSampleById,
 	pathnamePrefix,
 	loading
 }: {
-	assignsByFeatureid: AssignsByFeatureid;
+	assignsWithOccs: AssignsWithOccs;
 	taxonomiesByName: TaxonomiesByName;
 	libsWithSampleById: LibsWithSampleById;
 	pathnamePrefix?: string;
@@ -115,6 +118,7 @@ export default function TaxonomyVisualize({
 
 	const {
 		sampFields,
+		sampNumericFields,
 		userDefinedFields,
 		sampleLabels,
 		libraryLabels,
@@ -139,8 +143,20 @@ export default function TaxonomyVisualize({
 		sampFields.delete("userDefined");
 		sampFields.delete("samp_name");
 
+		//add to xy field options
+		const sampNumericFields = new Set(["temp"]) as Set<string>;
+		for (const f of Array.from(sampFields)) {
+			const key = f as keyof SampleModel;
+			const type = getZodType("sample", key).type;
+
+			if (type === "integer" || type === "float" || type === "date") {
+				sampNumericFields.add(key);
+			}
+		}
+
 		const fieldsWithValues = new Set<string>();
 		const userDefinedFields = new Set<string>();
+		const badUdNumericFields = new Set<string>();
 
 		//deduplicate samples
 		const samples = Array.from(
@@ -150,15 +166,18 @@ export default function TaxonomyVisualize({
 		for (const samp of samples) {
 			//check if fields have values
 			for (const f of sampFields) {
-				const key = f as keyof SampleModel;
+				if (!fieldsWithValues.has(f)) {
+					const key = f as keyof SampleModel;
 
-				if (!fieldsWithValues.has(f) && samp[key] != null) {
-					const type = getZodType("sample", key).type;
+					if (samp[key] != null) {
+						const type = getZodType("sample", key).type;
 
-					if (type !== "boolean") {
-						if (type === "date" && !((samp[key] as Date).getTime() in DeadValueEnum)) {
-							fieldsWithValues.add(f);
-						} else if (!((samp[key] as string | number) in DeadValueEnum)) {
+						if (
+							type !== "boolean" &&
+							!(type === "date"
+								? (samp[key] as Date).getTime() in DeadValueEnum
+								: (samp[key] as string | number) in DeadValueEnum)
+						) {
 							fieldsWithValues.add(f);
 						}
 					}
@@ -172,6 +191,15 @@ export default function TaxonomyVisualize({
 						sampFields.add(ud);
 						fieldsWithValues.add(ud);
 						userDefinedFields.add(ud);
+
+						if (Number.isFinite(Number(samp.userDefined[ud])) || !isNaN(new Date(samp.userDefined[ud]).getTime())) {
+							if (!badUdNumericFields.has(ud)) {
+								sampNumericFields.add(ud);
+							}
+						} else {
+							badUdNumericFields.add(ud);
+							sampNumericFields.delete(ud);
+						}
 					}
 				}
 			}
@@ -228,26 +256,27 @@ export default function TaxonomyVisualize({
 
 		//total count of all organisms
 		let totalOrganismQuantity = 0;
-		for (const assign of Object.values(assignsByFeatureid)) {
+		for (const assign of assignsWithOccs) {
 			for (const occ of assign.Occurrences) {
-				if (occ.organismQuantity > 0) {
-					totalOrganismQuantity += Number(occ.organismQuantity);
-				}
+				totalOrganismQuantity += occ.organismQuantity;
 			}
 		}
 
 		//taxonomic ranks with values
 		const taxaRanksWithData = new Set() as Set<TaxonomicRank>;
-		for (const taxonomy of Object.values(taxonomiesByName)) {
-			for (const rank of TaxonomicRanks) {
-				if (taxonomy[rank]) {
-					taxaRanksWithData.add(rank);
+		for (const rank of TaxonomicRanks) {
+			if (!taxaRanksWithData.has(rank)) {
+				for (const taxonomy of Object.values(taxonomiesByName)) {
+					if (taxonomy[rank]) {
+						taxaRanksWithData.add(rank);
+					}
 				}
 			}
 		}
 
 		return {
-			sampFields,
+			sampFields: Array.from(sampFields),
+			sampNumericFields,
 			userDefinedFields,
 			sampleLabels,
 			libraryLabels,
@@ -255,7 +284,7 @@ export default function TaxonomyVisualize({
 			totalOrganismQuantity,
 			taxaRanksWithData: [...taxaRanksWithData]
 		};
-	}, [assignsByFeatureid, taxonomiesByName, libsWithSampleById]);
+	}, [assignsWithOccs, taxonomiesByName, libsWithSampleById]);
 
 	//build tabs
 	const newParams = new URLSearchParams(searchParams);
@@ -334,12 +363,30 @@ export default function TaxonomyVisualize({
 					<LoadingTaxaBarChart />
 				) : (
 					<TaxaBarChart
-						assignsByFeatureid={assignsByFeatureid}
+						assignsWithOccs={assignsWithOccs}
 						taxonomiesByName={taxonomiesByName}
 						libsWithSampleById={sortedLibraries}
-						sampFields={Array.from(sampFields)}
+						sampFields={sampFields}
 						userDefinedFields={userDefinedFields}
 						libraryLabels={libraryLabels}
+						taxaRanksWithData={taxaRanksWithData}
+					/>
+				)
+			) : (
+				<></>
+			)}
+
+			{currentTab[0] === "sampleTaxa" ? (
+				loading ? (
+					<LoadingSampleTaxaAbundance />
+				) : (
+					<SampleTaxaAbundance
+						assignsWithOccs={assignsWithOccs}
+						taxonomiesByName={taxonomiesByName}
+						libsWithSampleById={libsWithSampleById}
+						sampFields={sampFields}
+						sampNumericFields={Array.from(sampNumericFields)}
+						userDefinedFields={userDefinedFields}
 						taxaRanksWithData={taxaRanksWithData}
 					/>
 				)
@@ -352,7 +399,7 @@ export default function TaxonomyVisualize({
 					<LoadingTaxonomyTreemap />
 				) : (
 					<TaxonomyTreemap
-						assignsByFeatureid={assignsByFeatureid}
+						assignsWithOccs={assignsWithOccs}
 						taxonomiesByName={taxonomiesByName}
 						taxaRanksWithData={taxaRanksWithData}
 					/>
@@ -366,7 +413,7 @@ export default function TaxonomyVisualize({
 					<LoadingTaxaPrevalenceHistogram />
 				) : (
 					<TaxaPrevalenceHistogram
-						assignsByFeatureid={assignsByFeatureid}
+						assignsWithOccs={assignsWithOccs}
 						taxonomiesByName={taxonomiesByName}
 						libsWithSampleById={libsWithSampleById}
 						taxaRanksWithData={taxaRanksWithData}
@@ -381,7 +428,7 @@ export default function TaxonomyVisualize({
 					<LoadingTaxaSampleHeatmap />
 				) : (
 					<TaxaSampleHeatmap
-						assignsByFeatureid={assignsByFeatureid}
+						assignsWithOccs={assignsWithOccs}
 						taxonomiesByName={taxonomiesByName}
 						libsWithSampleById={libsWithSampleById}
 						sampleLabels={sampleLabels}
@@ -399,7 +446,7 @@ export default function TaxonomyVisualize({
 							<LoadingCompositionBarChart />
 						) : (
 							<CompositionBarChart
-								assignsByFeatureid={assignsByFeatureid}
+								assignsWithOccs={assignsWithOccs}
 								taxonomiesByName={taxonomiesByName}
 								taxaRanksWithData={taxaRanksWithData}
 							/>
@@ -412,7 +459,7 @@ export default function TaxonomyVisualize({
 							<LoadingTaxonomyLollipopChart />
 						) : (
 							<TaxonomyLollipopChart
-								assignsByFeatureid={assignsByFeatureid}
+								assignsWithOccs={assignsWithOccs}
 								taxonomiesByName={taxonomiesByName}
 								taxaRanksWithData={taxaRanksWithData}
 							/>
@@ -425,7 +472,7 @@ export default function TaxonomyVisualize({
 							<LoadingCompositionSunburst />
 						) : (
 							<CompositionSunburst
-								assignsByFeatureid={assignsByFeatureid}
+								assignsWithOccs={assignsWithOccs}
 								taxonomiesByName={taxonomiesByName}
 								taxaRanksWithData={taxaRanksWithData}
 							/>
@@ -443,7 +490,7 @@ export default function TaxonomyVisualize({
 					<LoadingDarkTaxaPlot />
 				) : (
 					<DarkTaxaPlot
-						assignsByFeatureid={assignsByFeatureid}
+						assignsWithOccs={assignsWithOccs}
 						taxonomiesByName={taxonomiesByName}
 						libsWithSampleById={libsWithSampleById}
 						totalOrganismQuantity={totalOrganismQuantity}

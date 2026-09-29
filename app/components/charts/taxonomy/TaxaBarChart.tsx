@@ -14,7 +14,7 @@ import Checklist from "@/app/components/Checklist";
 import chroma from "chroma-js";
 import {
 	ABUNDANCE_DEFAULT_RANK,
-	type AssignsByFeatureid,
+	type AssignsWithOccs,
 	type LibsWithSampleById,
 	type TaxonomiesByName
 } from "../wrappers/TaxonomyVisualize";
@@ -27,7 +27,7 @@ const DEFAULT_MAX_TAXONOMIES = 20;
 //TODO: separate libraries by project_id
 //TODO: paginate on averageBy
 export default function TaxaBarChart({
-	assignsByFeatureid,
+	assignsWithOccs,
 	taxonomiesByName,
 	libsWithSampleById,
 	sampFields,
@@ -35,7 +35,7 @@ export default function TaxaBarChart({
 	libraryLabels,
 	taxaRanksWithData
 }: {
-	assignsByFeatureid: AssignsByFeatureid;
+	assignsWithOccs: AssignsWithOccs;
 	taxonomiesByName: TaxonomiesByName;
 	libsWithSampleById: LibsWithSampleById;
 	sampFields: string[];
@@ -66,7 +66,7 @@ export default function TaxaBarChart({
 		//the counts of ALL rank values per library
 		const libraryTotals = {} as Record<LibraryModel["id"], OccurrenceModel["organismQuantity"]>;
 
-		for (const assign of Object.values(assignsByFeatureid)) {
+		for (const assign of assignsWithOccs) {
 			const rankVal = taxonomiesByName[assign.taxonomy]![rank] ?? "undefined";
 			rankValues.add(rankVal);
 
@@ -195,7 +195,7 @@ export default function TaxaBarChart({
 			}
 		};
 	}, [
-		assignsByFeatureid,
+		assignsWithOccs,
 		taxonomiesByName,
 		libsWithSampleById,
 		rank,

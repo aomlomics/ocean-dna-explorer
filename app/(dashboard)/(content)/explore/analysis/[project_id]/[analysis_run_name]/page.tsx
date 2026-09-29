@@ -421,13 +421,12 @@ async function TaxonomyVisualizeSuspense({
 		return <></>;
 	}
 
-	const assignsByFeatureid = Object.fromEntries(analysis.Assignments.map((a) => [a.featureid, a]));
 	const taxonomiesByName = Object.fromEntries(analysis.Taxonomies.map((taxonomy) => [taxonomy.taxonomy, taxonomy]));
 	const libsWithSampleById = new Map(analysis.Libraries.map((lib) => [lib.id, { ...lib, Sample: lib.Sample }]));
 
 	return (
 		<TaxonomyVisualize
-			assignsByFeatureid={assignsByFeatureid}
+			assignsWithOccs={analysis.Assignments}
 			taxonomiesByName={taxonomiesByName}
 			libsWithSampleById={libsWithSampleById}
 		/>

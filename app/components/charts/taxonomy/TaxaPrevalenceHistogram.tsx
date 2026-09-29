@@ -7,7 +7,7 @@ import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import ChartCopyButton from "../ChartCopyButton";
 import type { TaxonomicRank } from "@/types/globals";
 import {
-	type AssignsByFeatureid,
+	type AssignsWithOccs,
 	type TaxonomiesByName,
 	type LibsWithSampleById,
 	PREVALENCE_DEFAULT_RANK
@@ -18,12 +18,12 @@ import type { SampleModel } from "@/app/generated/prisma/models";
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip);
 
 export default function TaxaPrevalenceHistogram({
-	assignsByFeatureid,
+	assignsWithOccs,
 	taxonomiesByName,
 	libsWithSampleById,
 	taxaRanksWithData
 }: {
-	assignsByFeatureid: AssignsByFeatureid;
+	assignsWithOccs: AssignsWithOccs;
 	taxonomiesByName: TaxonomiesByName;
 	libsWithSampleById: LibsWithSampleById;
 	taxaRanksWithData: TaxonomicRank[];
@@ -37,7 +37,7 @@ export default function TaxaPrevalenceHistogram({
 	const chartData = useMemo(() => {
 		const samplesByTaxon = new Map<string, Set<SampleModel["id"]>>();
 
-		for (const assign of Object.values(assignsByFeatureid)) {
+		for (const assign of assignsWithOccs) {
 			const taxon = taxonomiesByName[assign.taxonomy]![rank];
 			if (taxon) {
 				let sampleSet = samplesByTaxon.get(taxon);
@@ -79,7 +79,7 @@ export default function TaxaPrevalenceHistogram({
 				}
 			]
 		};
-	}, [assignsByFeatureid, taxonomiesByName, libsWithSampleById, rank, primaryColor]);
+	}, [assignsWithOccs, taxonomiesByName, libsWithSampleById, rank, primaryColor]);
 
 	return (
 		<div className="relative p-6">

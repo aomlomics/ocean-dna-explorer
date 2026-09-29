@@ -1,17 +1,17 @@
 import type { TaxonomicRank } from "@/types/globals";
-import type { AssignsByFeatureid, TaxonomiesByName } from "../../wrappers/TaxonomyVisualize";
+import type { AssignsWithOccs, TaxonomiesByName } from "../../wrappers/TaxonomyVisualize";
 
 export const TOP_N = 25;
 
 export function aggregateByRank(
-	assignsByFeatureid: AssignsByFeatureid,
+	assignsWithOccs: AssignsWithOccs,
 	taxonomiesByName: TaxonomiesByName,
 	rank: TaxonomicRank
 ) {
 	const totals = new Map<string, number>();
 	let grandTotal = 0;
 
-	for (const assign of Object.values(assignsByFeatureid)) {
+	for (const assign of assignsWithOccs) {
 		const label = taxonomiesByName[assign.taxonomy]![rank];
 
 		if (label) {

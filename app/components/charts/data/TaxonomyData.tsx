@@ -20,7 +20,7 @@ import {
 	SampleSchema,
 	TaxonomyPartialSchema
 } from "@/prisma/generated/zod";
-import TaxonomyVisualize, { type AssignsByFeatureid } from "../wrappers/TaxonomyVisualize";
+import TaxonomyVisualize from "../wrappers/TaxonomyVisualize";
 import z from "zod";
 import { FIRST_TAXONOMY_VISUALIZE_TAB } from "../taxonomy/tabs";
 import { useEffect, useMemo } from "react";
@@ -73,10 +73,10 @@ export default function TaxonomyData({ pathnamePrefix }: { pathnamePrefix: strin
 		{ revalidateOnFocus: false }
 	);
 
-	const { assignsByFeatureid, taxonomiesByName, libsWithSampleById } = useMemo(() => {
+	const { assignments, taxonomiesByName, libsWithSampleById } = useMemo(() => {
 		if (isLoading || !data) {
 			return {
-				assignsByFeatureid: {},
+				assignments: [],
 				taxonomiesByName: {},
 				libsWithSampleById: new Map()
 			};
@@ -105,20 +105,10 @@ export default function TaxonomyData({ pathnamePrefix }: { pathnamePrefix: strin
 		//convert to proper formats
 		const taxaInData = new Set() as Set<AssignmentModel["taxonomy"]>;
 		const libsInData = new Set() as Set<LibraryModel["id"]>;
-		const assignsByFeatureid = assignments.reduce((acc, a) => {
-			//filter data to match assignments
-			taxaInData.add(a.taxonomy);
-			for (const occ of a.Occurrences) libsInData.add(occ.Library.id);
-
-			//combine occurrences across analyses via the featureid
-			if (!acc[a.featureid]) {
-				acc[a.featureid] = a;
-			} else {
-				acc[a.featureid]!.Occurrences.push(...a.Occurrences);
-			}
-
-			return acc;
-		}, {} as AssignsByFeatureid);
+		for (const assign of assignments) {
+			taxaInData.add(assign.taxonomy);
+			for (const occ of assign.Occurrences) libsInData.add(occ.Library.id);
+		}
 
 		const taxonomiesByName = Object.fromEntries(
 			taxonomies.filter((taxa) => taxaInData.has(taxa.taxonomy)).map((taxa) => [taxa.taxonomy, taxa])
@@ -130,7 +120,7 @@ export default function TaxonomyData({ pathnamePrefix }: { pathnamePrefix: strin
 		);
 
 		return {
-			assignsByFeatureid,
+			assignments,
 			taxonomiesByName,
 			libsWithSampleById
 		};
@@ -142,7 +132,7 @@ export default function TaxonomyData({ pathnamePrefix }: { pathnamePrefix: strin
 
 	return (
 		<TaxonomyVisualize
-			assignsByFeatureid={assignsByFeatureid}
+			assignsWithOccs={assignments}
 			taxonomiesByName={taxonomiesByName}
 			libsWithSampleById={libsWithSampleById}
 			pathnamePrefix={pathnamePrefix}
