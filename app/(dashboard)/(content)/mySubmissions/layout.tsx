@@ -6,6 +6,7 @@ import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
+import SubmitMobileGate from "@/app/components/submit/SubmitMobileGate";
 
 export const metadata: Metadata = {
 	title: {
@@ -63,8 +64,10 @@ export default async function MySubmissionsLayout({ children }: { children: Reac
 				<h1 className="text-4xl font-normal text-primary">My Submissions</h1>
 			</div>
 
+			<SubmitMobileGate />
+
 			{projects.length === 0 ? (
-				<div className="card bg-base-200 shadow-sm min-h-65 h-fit hover:shadow-sm transition-shadow overflow-hidden">
+				<div className="hidden lg:flex card bg-base-200 shadow-sm min-h-65 h-fit hover:shadow-sm transition-shadow overflow-hidden">
 					<div className="card-body">
 						<p className="text-base text-base-content mb-6">No Projects found. Submit a new project to get started.</p>
 						<div className="mt-auto">
@@ -78,7 +81,7 @@ export default async function MySubmissionsLayout({ children }: { children: Reac
 					</div>
 				</div>
 			) : (
-				<div className="grid grid-cols-[25%_75%]">
+				<div className="hidden lg:grid grid-cols-[25%_75%]">
 					<div className="sticky top-5 self-start">
 						<MySubmissionsSidebar projects={projects} />
 					</div>
