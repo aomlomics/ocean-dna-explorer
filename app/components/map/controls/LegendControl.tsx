@@ -46,7 +46,11 @@ export default function LegendControl({
 	defaultLegend?: LegendInfo;
 }) {
 	const [filter, setFilter] = useState("");
-	const [shown, setShown] = useState(!!legendInfo);
+	const [shown, setShown] = useState(() => {
+		if (typeof window === "undefined") return false;
+
+		return window.matchMedia("(min-width: 1024px)").matches && !!legendInfo;
+	});
 
 	if (!legend) {
 		return null;
@@ -54,7 +58,7 @@ export default function LegendControl({
 
 	return (
 		<LeafletControl click scroll className="leaflet-bar border-none! mb-6! flex flex-col gap-2">
-			<CollapsibleMapContainer hiddenText="Show legend" defaultCollapse={!legendInfo} onCollapse={(c) => setShown(!c)}>
+			<CollapsibleMapContainer hiddenText="Show legend" defaultCollapse={!shown} onCollapse={(c) => setShown(!c)}>
 				<ResizableMapContainer
 					growDirection={"up"}
 					detectChange={[
@@ -70,9 +74,9 @@ export default function LegendControl({
 					maxMinHeight={200}
 				>
 					<div className="flex flex-col w-full">
-						<div className="text-lg flex justify-between items-center gap-2">
+						<div className="text-lg flex justify-between items-center gap-2 border-b-2 pb-2 mb-3 border-primary">
 							{titleTable ? (
-								<InfoButton text={`Clustering on ${TableMetadata[titleTable].titleField}.`} dir="tooltip-left" />
+								<InfoButton text={`Clustering on ${TableMetadata[titleTable].titleField}.`} dir="tooltip-bottom" />
 							) : (
 								<></>
 							)}
@@ -83,7 +87,7 @@ export default function LegendControl({
 							/>
 
 							<select
-								className="select select-xs select-primary text-sm mr-3 grow min-w-max"
+								className="select select-xs select-primary text-sm mr-3 grow"
 								value={legendInfo?.field ?? ""}
 								onChange={async (e) => {
 									const field = e.target.value;
@@ -105,7 +109,7 @@ export default function LegendControl({
 							</select>
 
 							{legendInfo && legendInfo.mode === "gradient" ? (
-								<div className="dropdown dropdown-top dropdown-end">
+								<div className="dropdown dropdown-top dropdown-end hidden lg:inline-block">
 									<div tabIndex={0} role="button">
 										<svg
 											height="20px"
@@ -185,7 +189,7 @@ export default function LegendControl({
 							)}
 						</div>
 
-						<div className="flex flex-col ml-1 mr-2 border-t-2 border-primary mt-2 pt-3 pb-2 overflow-y-auto overflow-x-hidden">
+						<div className="flex flex-col ml-1 mr-2 pb-2 overflow-y-auto overflow-x-hidden">
 							<Legend legendInfo={legendInfo} setLegendInfo={setLegendInfo} />
 						</div>
 					</div>

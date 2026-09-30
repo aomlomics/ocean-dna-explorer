@@ -9,7 +9,7 @@ import ChartCopyButton from "../ChartCopyButton";
 import type { SampleModel, OccurrenceModel } from "@/app/generated/prisma/models";
 import chroma from "chroma-js";
 import {
-	type AssignsByFeatureid,
+	type AssignsWithOccs,
 	type TaxonomiesByName,
 	type LibsWithSampleById,
 	HEATMAP_DEFAULT_RANK
@@ -22,13 +22,13 @@ const TOP_N = 30;
 
 //TODO: add checklists for taxonomies and samples
 export default function TaxaSampleHeatmap({
-	assignsByFeatureid,
+	assignsWithOccs,
 	taxonomiesByName,
 	libsWithSampleById,
 	sampleLabels,
 	taxaRanksWithData
 }: {
-	assignsByFeatureid: AssignsByFeatureid;
+	assignsWithOccs: AssignsWithOccs;
 	taxonomiesByName: TaxonomiesByName;
 	libsWithSampleById: LibsWithSampleById;
 	sampleLabels: Map<SampleModel["id"], string>;
@@ -42,7 +42,7 @@ export default function TaxaSampleHeatmap({
 	const { data, taxa, maxValue, median } = useMemo(() => {
 		const matrix = {} as Record<string, Map<SampleModel["id"], OccurrenceModel["organismQuantity"]>>;
 
-		for (const assign of Object.values(assignsByFeatureid)) {
+		for (const assign of assignsWithOccs) {
 			const row = (matrix[taxonomiesByName[assign.taxonomy]![rank] ?? "Unassigned"] ??= new Map());
 
 			for (const occ of assign.Occurrences) {
@@ -72,7 +72,7 @@ export default function TaxaSampleHeatmap({
 			maxValue,
 			median: filtered.sort((a, b) => a.v - b.v)[Math.floor(filtered.length / 2)]?.v ?? 0
 		};
-	}, [assignsByFeatureid, taxonomiesByName, libsWithSampleById, rank]);
+	}, [assignsWithOccs, taxonomiesByName, libsWithSampleById, rank]);
 
 	const colorScale = chroma.scale(["#f1f5f9", accentColor, secondaryColor]).domain([0, median, maxValue]) as (
 		v: number

@@ -260,7 +260,7 @@ export default async function OccurrencePage({
 				<div className="grid grid-cols-1 lg:grid-cols-8 gap-6 items-start">
 					{/* Left: single-sample map and assay */}
 					<div className="lg:col-span-3 flex flex-col gap-6">
-						<Map locations={[occurrence.Library.Sample]} className="w-full min-h-80 rounded-xl" />
+						<Map locations={[occurrence.Library.Sample]} className="w-full lg:min-h-80 rounded-xl" />
 						<AssaysCard
 							title={assayCardTitle}
 							assays={[

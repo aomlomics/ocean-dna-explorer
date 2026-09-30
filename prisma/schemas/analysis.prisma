@@ -122,6 +122,7 @@ model Occurrence {
     Assignment        Assignment @relation(fields: [project_id, analysis_run_name, featureid], references: [project_id, analysis_run_name, featureid], onDelete: Cascade)
 
     // Data
+    ///@zod.number.gt(0, { message: "The organismQuantity must be greater than zero (all zero values are safely ignored)." })
     organismQuantity Int
 
     @@unique([project_id, analysis_run_name, lib_id, featureid])

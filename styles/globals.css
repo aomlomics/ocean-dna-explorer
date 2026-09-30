@@ -694,3 +694,8 @@ body:has(.tour-layout-root) #main-content {
 	--clerk-color-foreground: #e2e8f0;
 	--clerk-color-text-secondary: #7dbae5;
 }
+
+.map-popup .leaflet-popup-content {
+	min-width: var(--map-popup-min-width);
+	max-width: var(--map-popup-max-width);
+}

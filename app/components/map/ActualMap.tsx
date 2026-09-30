@@ -182,6 +182,15 @@ export default function ActualMap({
 				}
 			}
 
+			if (mapRef.current) {
+				mapRef.current
+					.getContainer()
+					.style.setProperty("--map-popup-min-width", `${Math.min(300, mapRef.current.getSize().x / 1.5)}px`);
+				mapRef.current
+					.getContainer()
+					.style.setProperty("--map-popup-max-width", `${mapRef.current.getSize().x / 1.5}px`);
+			}
+
 			setDrawReady(true);
 		}
 	}, [drawAlmostReady]);

@@ -395,7 +395,7 @@ export const OccurrenceSchema = z.object({
   analysis_run_name: z.string(),
   lib_id: z.string(),
   featureid: z.string(),
-  organismQuantity: z.number().int(),
+  organismQuantity: z.number().gt(0, { message: "The organismQuantity must be greater than zero (all zero values are safely ignored)." }),
 })
 
 export type Occurrence = z.infer<typeof OccurrenceSchema>

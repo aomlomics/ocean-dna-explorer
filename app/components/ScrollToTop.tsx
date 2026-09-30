@@ -81,7 +81,7 @@ export default function ScrollToTop() {
 						bottom: footerOffset > 0 ? `${footerOffset}px` : "2rem",
 						zIndex: BUTTON_Z_INDEX
 					}}
-					className="fixed right-3 sm:right-8 p-3 sm:p-4 bg-base-300 text-base-content rounded-full shadow-xl hover:bg-primary hover:text-primary-content transition-colors duration-300 pointer-events-auto"
+					className="btn btn-xl btn-circle fixed right-3 sm:right-8 p-3 sm:p-4 hover:btn-primary"
 					aria-label="Scroll to top"
 				>
 					<svg

@@ -32,7 +32,7 @@ export default function NoLocationPointsControl({
 	const [shown, setShown] = useState(false);
 
 	return (
-		<LeafletControl click scroll>
+		<LeafletControl click scroll className="hidden lg:block">
 			<CollapsibleMapContainer
 				dir="left"
 				defaultCollapse

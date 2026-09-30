@@ -6,21 +6,21 @@ import { Chart as ChartJS, ArcElement, Tooltip, Title } from "chart.js";
 import distinctColors from "distinct-colors";
 import chroma from "chroma-js";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
-import type { AssignsByFeatureid, TaxonomiesByName } from "../wrappers/TaxonomyVisualize";
+import type { AssignsWithOccs, TaxonomiesByName } from "../wrappers/TaxonomyVisualize";
 import type { TaxonomicRank } from "@/types/globals";
 
 ChartJS.register(ArcElement, Tooltip, Title);
 
 export default function TaxonomySunburst({
 	ref,
-	assignments,
+	assignsWithOccs,
 	taxonomiesByName,
 	parentRank,
 	childRank,
 	title
 }: {
 	ref: RefObject<ChartJS<"doughnut"> | null>;
-	assignments: AssignsByFeatureid[keyof AssignsByFeatureid][];
+	assignsWithOccs: AssignsWithOccs;
 	taxonomiesByName: TaxonomiesByName;
 	parentRank: TaxonomicRank;
 	childRank: TaxonomicRank;
@@ -31,7 +31,7 @@ export default function TaxonomySunburst({
 	const { innerLabels, innerData, innerColors, outerLabels, outerData, outerColors } = useMemo(() => {
 		const totals = new Map<string, Map<string, number>>();
 
-		for (const assign of assignments) {
+		for (const assign of assignsWithOccs) {
 			const taxonomy = taxonomiesByName[assign.taxonomy]!;
 			const parent = taxonomy[parentRank];
 			const child = taxonomy[childRank];
@@ -113,7 +113,7 @@ export default function TaxonomySunburst({
 			outerData,
 			outerColors
 		};
-	}, [assignments, taxonomiesByName, parentRank, childRank]);
+	}, [assignsWithOccs, taxonomiesByName, parentRank, childRank]);
 
 	return (
 		<div className="w-full max-w-125">

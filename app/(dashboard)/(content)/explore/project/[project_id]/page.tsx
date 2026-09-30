@@ -357,7 +357,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					legend
 					draw
 					legendOmit={["project_id"]}
-					className="h-126 w-full min-h-136"
+					className="lg:h-136 w-full"
 					defaultLegendField="expedition_id"
 				/>
 			</div>
@@ -601,7 +601,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 								legend
 								draw
 								legendOmit={["project_id"]}
-								className="h-126 w-full min-h-136"
+								className="lg:h-136 w-full"
 								defaultLegendField="expedition_id"
 							/>
 						</div>

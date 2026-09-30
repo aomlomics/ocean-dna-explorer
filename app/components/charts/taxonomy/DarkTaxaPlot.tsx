@@ -9,7 +9,7 @@ import {
 	DARK_TAXA_DEFAULT_INNER_RANK,
 	DARK_TAXA_DEFAULT_OUTER_RANK,
 	DARK_TAXA_DEFAULT_THRESHOLD,
-	type AssignsByFeatureid,
+	type AssignsWithOccs,
 	type LibsWithSampleById,
 	type TaxonomiesByName
 } from "../wrappers/TaxonomyVisualize";
@@ -108,13 +108,13 @@ function KDESparkline({ values, color }: { values: number[]; color: string }) {
 }
 
 export default function DarkTaxaPlot({
-	assignsByFeatureid,
+	assignsWithOccs,
 	taxonomiesByName,
 	libsWithSampleById,
 	totalOrganismQuantity,
 	taxaRanksWithData
 }: {
-	assignsByFeatureid: AssignsByFeatureid;
+	assignsWithOccs: AssignsWithOccs;
 	taxonomiesByName: TaxonomiesByName;
 	libsWithSampleById: LibsWithSampleById;
 	totalOrganismQuantity: number;
@@ -128,9 +128,8 @@ export default function DarkTaxaPlot({
 	const [childRank, setChildRank] = useState(DARK_TAXA_DEFAULT_OUTER_RANK);
 
 	const darkAssignments = useMemo(
-		() =>
-			Object.values(assignsByFeatureid).filter((assign) => assign.percent_id == null || assign.percent_id < threshold),
-		[assignsByFeatureid, threshold]
+		() => assignsWithOccs.filter((assign) => assign.percent_id == null || assign.percent_id < threshold),
+		[assignsWithOccs, threshold]
 	);
 
 	const rows = useMemo(() => {
@@ -257,7 +256,7 @@ export default function DarkTaxaPlot({
 
 			<TaxonomySunburst
 				ref={chartRef}
-				assignments={darkAssignments}
+				assignsWithOccs={darkAssignments}
 				taxonomiesByName={taxonomiesByName}
 				parentRank={parentRank}
 				childRank={childRank}

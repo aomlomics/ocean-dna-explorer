@@ -250,7 +250,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 				</div>
 
 				<div className="space-y-4">
-					<Map locations={dbTaxonomy.Samples} where={{ taxonomy }} cluster className="h-105 w-full rounded-lg" />
+					<Map locations={dbTaxonomy.Samples} where={{ taxonomy }} cluster className="lg:h-105 w-full rounded-lg" />
 					{pageGbif?.mediaTaxonKey != null ? (
 						<div className="bg-base-200 rounded-lg p-6 shadow-sm">
 							<GbifIucnStatus taxonKey={pageGbif.mediaTaxonKey} />

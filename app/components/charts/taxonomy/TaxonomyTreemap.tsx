@@ -11,7 +11,7 @@ import type { TaxonomicRank } from "@/types/globals";
 import {
 	TREEMAP_DEFAULT_CHILD_RANK,
 	TREEMAP_DEFAULT_PARENT_RANK,
-	type AssignsByFeatureid,
+	type AssignsWithOccs,
 	type TaxonomiesByName
 } from "../wrappers/TaxonomyVisualize";
 import type { OccurrenceModel } from "@/app/generated/prisma/models";
@@ -28,11 +28,11 @@ function getContrastText(color: Color) {
 }
 
 export default function TaxonomyTreemap({
-	assignsByFeatureid,
+	assignsWithOccs,
 	taxonomiesByName,
 	taxaRanksWithData
 }: {
-	assignsByFeatureid: AssignsByFeatureid;
+	assignsWithOccs: AssignsWithOccs;
 	taxonomiesByName: TaxonomiesByName;
 	taxaRanksWithData: TaxonomicRank[];
 }) {
@@ -48,7 +48,7 @@ export default function TaxonomyTreemap({
 	const { rows, parentColors } = useMemo(() => {
 		const totals = new Map<string, Map<string, OccurrenceModel["organismQuantity"]>>();
 
-		for (const assign of Object.values(assignsByFeatureid)) {
+		for (const assign of assignsWithOccs) {
 			const taxonomy = taxonomiesByName[assign.taxonomy]!;
 			const parent = taxonomy[parentRank];
 			const child = taxonomy[childRank];
@@ -104,7 +104,7 @@ export default function TaxonomyTreemap({
 			rows,
 			parentColors
 		};
-	}, [assignsByFeatureid, taxonomiesByName, parentRank, childRank]);
+	}, [assignsWithOccs, taxonomiesByName, parentRank, childRank]);
 
 	return (
 		<div className="relative p-6">

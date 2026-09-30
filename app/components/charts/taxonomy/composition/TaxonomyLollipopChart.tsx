@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { BarElement, CategoryScale, Chart as ChartJS, LinearScale, Title, Tooltip, type Plugin } from "chart.js";
 import {
 	COMPOSITION_LOLLIPOP_DEFAULT_RANK,
-	type AssignsByFeatureid,
+	type AssignsWithOccs,
 	type TaxonomiesByName
 } from "../../wrappers/TaxonomyVisualize";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
@@ -17,11 +17,11 @@ import { Bar } from "react-chartjs-2";
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Title);
 
 export default function TaxonomyLollipopChart({
-	assignsByFeatureid,
+	assignsWithOccs,
 	taxonomiesByName,
 	taxaRanksWithData
 }: {
-	assignsByFeatureid: AssignsByFeatureid;
+	assignsWithOccs: AssignsWithOccs;
 	taxonomiesByName: TaxonomiesByName;
 	taxaRanksWithData: TaxonomicRank[];
 }) {
@@ -32,7 +32,7 @@ export default function TaxonomyLollipopChart({
 	const [rank, setRank] = useState(COMPOSITION_LOLLIPOP_DEFAULT_RANK);
 
 	const { labels, percents } = useMemo(() => {
-		const { totals, grandTotal } = aggregateByRank(assignsByFeatureid, taxonomiesByName, rank);
+		const { totals, grandTotal } = aggregateByRank(assignsWithOccs, taxonomiesByName, rank);
 
 		const sorted = Array.from(totals.entries())
 			.map(([label, value]) => ({
@@ -46,7 +46,7 @@ export default function TaxonomyLollipopChart({
 			labels: sorted.map((s) => s.label),
 			percents: sorted.map((s) => s.percent)
 		};
-	}, [assignsByFeatureid, taxonomiesByName, rank]);
+	}, [assignsWithOccs, taxonomiesByName, rank]);
 
 	const lollipopCapsPlugin = {
 		id: "lollipopCaps",

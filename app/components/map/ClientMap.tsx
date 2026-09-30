@@ -60,7 +60,7 @@ export default function ClientMap({
 
 	return (
 		<div
-			className={`overflow-hidden [:where(&)]:bg-base-200 [:where(&)]:aspect-video [:where(&)]:rounded-lg ${className ?? ""}`}
+			className={`overflow-hidden [:where(&)]:bg-base-200 [:where(&)]:aspect-square [:where(&)]:lg:aspect-video [:where(&)]:rounded-lg ${className ?? ""}`}
 		>
 			{error ? (
 				<div className="w-full h-full flex justify-center items-center">

@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import {
 	COMPOSITION_SUNBURST_DEFAULT_INNER_RANK,
 	COMPOSITION_SUNBURST_DEFAULT_OUTER_RANK,
-	type AssignsByFeatureid,
+	type AssignsWithOccs,
 	type TaxonomiesByName
 } from "../../wrappers/TaxonomyVisualize";
 import type { Chart as ChartJS } from "chart.js";
@@ -13,11 +13,11 @@ import ChartCopyButton from "../../ChartCopyButton";
 import TaxonomySunburst from "../../custom/TaxonomySunburst";
 
 export default function CompositionSunburst({
-	assignsByFeatureid,
+	assignsWithOccs,
 	taxonomiesByName,
 	taxaRanksWithData
 }: {
-	assignsByFeatureid: AssignsByFeatureid;
+	assignsWithOccs: AssignsWithOccs;
 	taxonomiesByName: TaxonomiesByName;
 	taxaRanksWithData: TaxonomicRank[];
 }) {
@@ -69,7 +69,7 @@ export default function CompositionSunburst({
 
 			<TaxonomySunburst
 				ref={ref}
-				assignments={Object.values(assignsByFeatureid)}
+				assignsWithOccs={assignsWithOccs}
 				taxonomiesByName={taxonomiesByName}
 				parentRank={parentRank}
 				childRank={childRank}
