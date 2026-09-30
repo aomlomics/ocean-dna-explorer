@@ -80,13 +80,10 @@ export default function SampleScatterPlot({
 	const chartInfo = useMemo(() => {
 		const labels = new Set() as Set<string>;
 
-		let tempXMin = undefined as number | undefined;
-		let tempXMax = undefined as number | undefined;
-		let tempYMin = undefined as number | undefined;
-		let tempYMax = undefined as number | undefined;
+		const xType = getFieldType(xField);
+		const yType = getFieldType(yField);
 
-		//construct datasets using legendField
-		const tempDatasets = samples.reduce(
+		const result = samples.reduce(
 			(acc, p) => {
 				let val = null;
 				if (userDefinedFields?.has(legendField)) {
@@ -102,7 +99,7 @@ export default function SampleScatterPlot({
 					if (userDefinedFields?.has(xField)) {
 						const val = p.userDefined?.[xField];
 						if (val != null) {
-							if (getFieldType(xField) === "number") {
+							if (xType === "number") {
 								xVal = Number(val);
 							} else {
 								xVal = new Date(val);
@@ -122,7 +119,7 @@ export default function SampleScatterPlot({
 						if (userDefinedFields?.has(yField)) {
 							const val = p.userDefined?.[yField];
 							if (val) {
-								if (getFieldType(yField) === "number") {
+								if (yType === "number") {
 									yVal = parseFloat(val);
 								} else {
 									yVal = new Date(val);
@@ -139,32 +136,33 @@ export default function SampleScatterPlot({
 								: Number.isFinite(yVal.getTime()) && !(yVal.getTime() in DeadValueEnum))
 						) {
 							const numXVal = typeof xVal === "number" ? xVal : xVal.getTime();
-							if (tempXMin == null || numXVal < tempXMin) {
-								tempXMin = numXVal;
+							if (acc.xMin == null || numXVal < acc.xMin) {
+								acc.xMin = numXVal;
 							}
-							if (tempXMax == null || numXVal > tempXMax) {
-								tempXMax = numXVal;
+							if (acc.xMax == null || numXVal > acc.xMax) {
+								acc.xMax = numXVal;
 							}
 
 							const numYVal = typeof yVal === "number" ? yVal : yVal.getTime();
-							if (tempYMin == null || numYVal < tempYMin) {
-								tempYMin = numYVal;
+							if (acc.yMin == null || numYVal < acc.yMin) {
+								acc.yMin = numYVal;
 							}
-							if (tempYMax == null || numYVal > tempYMax) {
-								tempYMax = numYVal;
+							if (acc.yMax == null || numYVal > acc.yMax) {
+								acc.yMax = numYVal;
 							}
 
 							const label = val.toString();
-							const set = acc.find((s) => s.label === label);
+							const set = acc.datasetMap.get(label);
 							if (set) {
 								set.data.push({ x: xVal, y: yVal, samp_name: p.samp_name });
 							} else {
 								labels.add(label);
-								acc.push({
+								const dataset = {
 									label,
 									data: [{ x: xVal, y: yVal, samp_name: p.samp_name }],
 									...POINT_STYLES
-								});
+								};
+								acc.datasetMap.set(label, dataset);
 							}
 						}
 					}
@@ -172,8 +170,22 @@ export default function SampleScatterPlot({
 
 				return acc;
 			},
-			[] as (Omit<DataPoint, "borderColor" | "backgroundColor"> & { borderColor?: string; backgroundColor?: string })[]
+			{
+				datasetMap: new Map<
+					string,
+					Omit<DataPoint, "borderColor" | "backgroundColor"> & {
+						borderColor?: string;
+						backgroundColor?: string;
+					}
+				>(),
+				xMin: undefined as number | undefined,
+				xMax: undefined as number | undefined,
+				yMin: undefined as number | undefined,
+				yMax: undefined as number | undefined
+			}
 		);
+
+		const tempDatasets = Array.from(result.datasetMap.values());
 
 		//assign colors
 		distinctColors({ count: tempDatasets.length, chromaMin: 35, lightMin: 35 }).forEach((color, i) => {
@@ -181,21 +193,33 @@ export default function SampleScatterPlot({
 			tempDatasets[i]!.backgroundColor = color.alpha(0.5).hex();
 		});
 
-		const xMin = tempXMin !== undefined && tempXMax !== undefined ? tempXMin - (tempXMax - tempXMin) / 20 : tempXMin;
-		const xMax = tempXMin !== undefined && tempXMax !== undefined ? tempXMax + (tempXMax - tempXMin) / 20 : tempXMax;
-		const yMin = tempYMin !== undefined && tempYMax !== undefined ? tempYMin - (tempYMax - tempYMin) / 20 : tempYMin;
-		const yMax = tempYMin !== undefined && tempYMax !== undefined ? tempYMax + (tempYMax - tempYMin) / 20 : tempYMax;
+		const xMin =
+			result.xMin !== undefined && result.xMax !== undefined
+				? result.xMin - (result.xMax - result.xMin) / 20
+				: result.xMin;
+		const xMax =
+			result.xMin !== undefined && result.xMax !== undefined
+				? result.xMax + (result.xMax - result.xMin) / 20
+				: result.xMax;
+		const yMin =
+			result.yMin !== undefined && result.yMax !== undefined
+				? result.yMin - (result.yMax - result.yMin) / 20
+				: result.yMin;
+		const yMax =
+			result.yMin !== undefined && result.yMax !== undefined
+				? result.yMax + (result.yMax - result.yMin) / 20
+				: result.yMax;
 
 		return {
 			data: { labels: Array.from(labels).sort(), datasets: tempDatasets as DataPoint[] },
-			xType: getFieldType(xField),
+			xType,
 			xMin,
 			xMax,
-			yType: getFieldType(yField),
+			yType,
 			yMin,
 			yMax
 		};
-	}, [samples, xField, yField, legendField]);
+	}, [samples, xField, yField, legendField, userDefinedFields]);
 
 	function getFieldType(newField: keyof SampleModel) {
 		if (userDefinedFields?.has(newField)) {
