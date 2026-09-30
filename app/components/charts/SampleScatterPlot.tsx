@@ -175,32 +175,25 @@ export default function SampleScatterPlot({
 			[] as (Omit<DataPoint, "borderColor" | "backgroundColor"> & { borderColor?: string; backgroundColor?: string })[]
 		);
 
-		if (tempXMin !== undefined && tempXMax !== undefined) {
-			const xBuffer = (tempXMax - tempXMin) / 20;
-			tempXMin = tempXMin - xBuffer;
-			tempXMax = tempXMax + xBuffer;
-		}
-
-		if (tempYMin !== undefined && tempYMax !== undefined) {
-			const yBuffer = (tempYMax - tempYMin) / 20;
-			tempYMin = tempYMin - yBuffer;
-			tempYMax = tempYMax + yBuffer;
-		}
-
 		//assign colors
 		distinctColors({ count: tempDatasets.length, chromaMin: 35, lightMin: 35 }).forEach((color, i) => {
 			tempDatasets[i]!.borderColor = color.hex();
 			tempDatasets[i]!.backgroundColor = color.alpha(0.5).hex();
 		});
 
+		const xMin = tempXMin !== undefined && tempXMax !== undefined ? tempXMin - (tempXMax - tempXMin) / 20 : tempXMin;
+		const xMax = tempXMin !== undefined && tempXMax !== undefined ? tempXMax + (tempXMax - tempXMin) / 20 : tempXMax;
+		const yMin = tempYMin !== undefined && tempYMax !== undefined ? tempYMin - (tempYMax - tempYMin) / 20 : tempYMin;
+		const yMax = tempYMin !== undefined && tempYMax !== undefined ? tempYMax + (tempYMax - tempYMin) / 20 : tempYMax;
+
 		return {
 			data: { labels: Array.from(labels).sort(), datasets: tempDatasets as DataPoint[] },
 			xType: getFieldType(xField),
-			xMin: tempXMin,
-			xMax: tempXMax,
+			xMin,
+			xMax,
 			yType: getFieldType(yField),
-			yMin: tempYMin,
-			yMax: tempYMax
+			yMin,
+			yMax
 		};
 	}, [samples, xField, yField, legendField]);
 
