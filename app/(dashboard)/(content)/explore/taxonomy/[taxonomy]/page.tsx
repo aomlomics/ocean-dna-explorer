@@ -4,8 +4,7 @@ import Link from "next/link";
 import { RanksBySpecificity } from "@/types/objects";
 import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import TableMetadata from "@/types/tableMetadata";
-import { AnalysisIcon, ProjectIcon, LocationIcon } from "@/app/components/icons";
-import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
+import { AnalysisIcon, FeatureIcon, ProjectIcon, SampleIcon, TaxonomyIcon } from "@/app/components/icons";
 import GbifIucnStatus from "@/app/components/images/GbifIucnStatus";
 import { matchGbifForPhylopic } from "@/app/components/images/matchGbifForPhylopic";
 import TaxonomyVisualToggle from "@/app/components/images/TaxonomyVisualToggle";
@@ -115,21 +114,6 @@ async function resolveTaxonomyPageGbif(taxonomyObj: TaxonomyModel): Promise<{
 	};
 }
 
-function StaticActgBackdrop({ className = "" }: { className?: string }) {
-	// Non-animated ACTG grid, intended as a subtle texture behind icons.
-	const lines = ["ACTGACTGACTG", "CTGACTGACTGA", "TGACTGACTGAC", "GACTGACTGACT", "ACTGACTGACTG"];
-
-	return (
-		<div
-			className={`font-mono text-[10px] leading-[1.05] tracking-[0.22em] text-primary/60 opacity-70 select-none ${className}`}
-		>
-			{lines.map((l, i) => (
-				<div key={i}>{l}</div>
-			))}
-		</div>
-	);
-}
-
 export default async function TaxonomyPage({ params }: { params: Promise<{ taxonomy: string }> }) {
 	const { taxonomy } = await decodeRouteParams(params);
 
@@ -182,10 +166,24 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 
 	return (
 		<div id="taxonomy" className="container mx-auto py-6 space-y-6 max-w-full pb-8">
+			<div className="text-base breadcrumbs">
+				<ul>
+					<li>
+						<Link href="/explore/taxonomy" className="text-primary hover:text-primary-focus">
+							Taxonomies
+						</Link>
+					</li>
+					<li className="wrap-anywhere">{taxonomy}</li>
+				</ul>
+			</div>
+
 			<header>
 				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
-					<h1 className="mb-0 text-4xl font-semibold leading-[1.05] text-primary">
-						{dbTaxonomy.species || dbTaxonomy.genus || taxonomy.split(";").pop()?.replace("_", " ")}
+					<h1 className="mb-0 flex items-center gap-2 text-4xl font-semibold leading-[1.05] text-primary">
+						<TaxonomyIcon className="size-8! shrink-0" />
+						<span className="min-w-0 wrap-anywhere">
+							{dbTaxonomy.species || dbTaxonomy.genus || taxonomy.split(";").pop()?.replace("_", " ")}
+						</span>
 					</h1>
 					<TableInfo table="taxonomy" />
 					<span className="-translate-y-2 shrink-0 rounded-md bg-base-300 px-2.5 py-1 text-sm font-medium leading-normal text-base-content">
@@ -298,7 +296,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 								data-tip="View Samples as Search"
 							>
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
-									<LocationIcon />
+									<SampleIcon />
 								</div>
 								<div className="text-center mb-1">
 									<div className="text-3xl font-bold text-primary">{dbTaxonomy.Samples.length}</div>
@@ -320,21 +318,8 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 								className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`}
 								data-tip="Find other Features with this Taxonomy"
 							>
-								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto relative overflow-hidden">
-									<StaticActgBackdrop className="opacity-60" />
-									<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-										{phyloPic?.imageUrl ? (
-											<div className="relative w-12 h-12 opacity-95">
-												<ThemeAwarePhyloPic
-													src={phyloPic.imageUrl}
-													alt="Taxonomic outline"
-													className="object-contain"
-												/>
-											</div>
-										) : (
-											<div className="text-primary text-3xl font-semibold leading-none">?</div>
-										)}
-									</div>
+								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
+									<FeatureIcon />
 								</div>
 								<div className="text-center mb-1 px-2">
 									<div className="text-sm font-medium text-base-content/70 uppercase">Features</div>

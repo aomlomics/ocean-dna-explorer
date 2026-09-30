@@ -4,6 +4,7 @@ import { getDataTableNameSafe } from "@/app/helpers/schema";
 import { capitalizeTable } from "@/app/helpers/utils";
 import TableMetadata from "@/types/tableMetadata";
 import TableInfo from "@/app/components/TableInfo";
+import { TableIcon } from "@/app/components/icons";
 import SearchContent from "@/app/components/search/SearchContent";
 import { redirect } from "next/navigation";
 import { trustedPrisma } from "@/app/helpers/prisma";
@@ -45,10 +46,13 @@ export default async function Search({
 				{table && (
 					<header className="flex items-start justify-between">
 						<div className="flex flex-wrap items-center gap-2">
-							<h1 className="text-4xl font-normal text-base-content">
-								<span className="">Search</span>{" "}
-								<span className="text-base-content text-2xl align-middle font-normal">❯</span>{" "}
-								<span className="text-primary font-normal">{TableMetadata[table].plural}</span>
+							<h1 className="flex flex-wrap items-center gap-2 text-4xl font-normal text-base-content">
+								<span>Search</span>
+								<span className="text-base-content text-2xl font-normal">❯</span>
+								<span className="inline-flex items-center gap-2 text-primary font-normal">
+									<TableIcon table={table} className="size-8!" />
+									{TableMetadata[table].plural}
+								</span>
 							</h1>
 							<TableInfo table={table} />
 						</div>

@@ -59,9 +59,8 @@ function CompactAssayChip({ assay_name, target_gene }: { assay_name: string; tar
 
 /**
  * Header glyphs — same icons used on the /submit page so the visual
- * language is consistent. ProjectIcon is the boat (≈2.5:1 aspect ratio,
- * so we give it a wide w-12 by default) and AnalysisIcon is the laptop
- * with a chart (1:1).
+ * language is consistent. Both table icons are square 24×24 drawings,
+ * sized here to sit beside the submission stamp.
  */
 function ProjectGlyph({ className = "" }: { className?: string }) {
 	return <ProjectIcon className={["shrink-0", className].join(" ")} />;
@@ -205,9 +204,7 @@ function LatestProjectCard({ project }: ProjectProps) {
 					{/* Header row — glyph + submission stamp; info button right */}
 					<div className="flex items-center justify-between gap-3">
 						<div className="flex items-center gap-3 min-w-0">
-							{/* Boat icon (≈2.5:1) — give it width so it doesn't
-							    squish into a square. */}
-							<ProjectGlyph className="w-14 h-6 text-primary" />
+							<ProjectGlyph className="size-8! text-primary" />
 							<LatestStamp label="Project" date={project.dateSubmitted} />
 						</div>
 						<DashCardInfoButton
@@ -321,7 +318,7 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 				<div className="flex items-start justify-between gap-3">
 					<div className="flex items-center gap-3 min-w-0">
 						{/* Laptop / analysis glyph — same icon used on the /submit page. */}
-						<AnalysisGlyph className="w-8 h-8 text-primary" />
+						<AnalysisGlyph className="size-8! text-primary" />
 						<LatestStamp label="Analysis" date={analysis.dateSubmitted} />
 						{/* Keep "Trusted" only when applicable; remove noisy "Unverified". */}
 						{analysis.trusted && (

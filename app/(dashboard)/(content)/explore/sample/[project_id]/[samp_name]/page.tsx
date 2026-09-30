@@ -7,7 +7,7 @@ import { exploreUrl } from "@/app/helpers/utils";
 import TaxonomyDonutChart from "@/app/components/charts/TaxonomyDonutChart";
 import StatCard from "@/app/components/explore/StatCard";
 import DropdownCard from "@/app/components/explore/DropdownCard";
-import { EyeIcon, AnalysisIcon, AssayIcon, FishIcon, LocationIcon } from "@/app/components/icons";
+import { SampleIcon, OccurrenceIcon, AnalysisIcon, AssayIcon, TaxonomyIcon, LocationIcon } from "@/app/components/icons";
 import type { AnalysisModel, AssayModel } from "@/app/generated/prisma/models";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
@@ -131,7 +131,10 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 			<header>
 				<div className="flex gap-2 items-center">
 					<TitleHoverTooltip tooltip={TableMetadata.sample.description}>
-						<h1 className="text-4xl font-semibold text-primary mb-2">{samp_name}</h1>
+						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+							<SampleIcon className="size-8! shrink-0" />
+							<span className="min-w-0 wrap-anywhere">{samp_name}</span>
+						</h1>
 					</TitleHoverTooltip>
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
@@ -164,7 +167,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 						<StatCard
 							title="Occurrences"
 							value={Libraries.reduce((count, lib) => count + lib._count.Occurrences, 0)}
-							icon={<EyeIcon />}
+							icon={<OccurrenceIcon />}
 							link={`/search?table=occurrence&advanced=[["sample","samp_name","equals","${samp_name}"]]`}
 							layout="horizontal"
 							tooltip="View as Search"
@@ -187,7 +190,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 						<StatCard
 							title="Taxonomies"
 							value={Taxonomies.length}
-							icon={<FishIcon />}
+							icon={<TaxonomyIcon />}
 							link={`/search?table=taxonomy&advanced=[["sample","samp_name","equals","${samp_name}"]]`}
 							layout="horizontal"
 							tooltip="View as Search"

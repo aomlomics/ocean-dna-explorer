@@ -3,6 +3,7 @@ import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import GcDonut from "@/app/components/charts/GcDonut";
+import { AssignmentIcon } from "@/app/components/icons";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
@@ -102,7 +103,10 @@ export default async function AssignmentPage({
 			<header>
 				<div className="flex gap-2 items-center">
 					<TitleHoverTooltip tooltip={TableMetadata.assignment.description}>
-						<h1 className="text-4xl font-semibold text-primary mb-2">Assignment</h1>
+						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+							<AssignmentIcon className="size-8! shrink-0" />
+							Assignment
+						</h1>
 					</TitleHoverTooltip>
 				</div>
 				<div className="mt-3 mb-4 inline-flex items-center gap-5 bg-base-200 rounded-xl px-5 py-4">

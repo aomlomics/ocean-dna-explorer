@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import PrimerDiagram from "@/app/components/explore/PrimerDiagram";
 import GcDonut from "@/app/components/charts/GcDonut";
 import StatCard from "@/app/components/explore/StatCard";
-import { AnalysisIcon, DnaIcon, FishIcon, LocationIcon } from "@/app/components/icons";
+import { AssayIcon, AnalysisIcon, DnaIcon, TaxonomyIcon, SampleIcon, LibraryIcon } from "@/app/components/icons";
 import DropdownCard from "@/app/components/explore/DropdownCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import TableMetadata from "@/types/tableMetadata";
@@ -133,7 +133,10 @@ export default async function Assay_name({
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1 className="text-4xl font-semibold text-primary mb-2">{assay_name}</h1>
+					<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+						<AssayIcon className="size-8! shrink-0" />
+						<span className="min-w-0 wrap-anywhere">{assay_name}</span>
+					</h1>
 				</div>
 				<div className="mt-1 w-full min-w-0 max-w-full text-sm text-base-content/80 space-y-1">
 					<div className="flex flex-wrap gap-x-6 gap-y-1">
@@ -344,14 +347,14 @@ export default async function Assay_name({
 							<div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
 								<StatCard
 									title="Samples"
-									icon={<LocationIcon />}
+									icon={<SampleIcon />}
 									value={new Set(Libraries.map((lib) => lib.samp_name)).size}
 									link={`/search?table=sample&advanced=[["assay","assay_name","equals","${assay_name}"]]`}
 									tooltip="View as Search"
 								/>
 								<StatCard
 									title="Libraries"
-									icon={<LocationIcon />}
+									icon={<LibraryIcon />}
 									value={Libraries.length}
 									link={`/search?table=library&advanced=[["assay_name","equals","${assay_name}"]]`}
 									tooltip="View as Search"
@@ -359,7 +362,7 @@ export default async function Assay_name({
 								<StatCard
 									title="Taxonomies"
 									value={assay.Analyses.reduce((count, a) => count + a._count.Taxonomies, 0)}
-									icon={<FishIcon />}
+									icon={<TaxonomyIcon />}
 									link={`/search?table=taxonomy&advanced=[["analysis","assay_name","equals","${assay_name}"]]`}
 									tooltip="View as Search"
 								/>

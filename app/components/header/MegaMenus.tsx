@@ -1,5 +1,6 @@
 "use client";
 
+import { TableIcon } from "@/app/components/icons";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
 import DocsSections from "@/types/docsSections";
 import Image from "next/image";
@@ -17,19 +18,19 @@ const MEGA_MENU_OPEN_DELAY_MS = 60; // Faster open reduces tab-to-tab flicker.
 const MEGA_MENU_CLOSE_DELAY_MS = 180; // Slightly slower close smooths hover transitions.
 
 const EXPLORE_LEFT_ITEMS = [
-	{ label: "Projects", href: "/explore/project" },
-	{ label: "Samples", href: "/explore/sample" },
-	{ label: "Assays", href: "/explore/assay" },
-	{ label: "AssayPreps", href: "/explore/assayPrep" },
-	{ label: "Libraries", href: "/explore/library" }
+	{ label: "Projects", href: "/explore/project", table: "project" },
+	{ label: "Samples", href: "/explore/sample", table: "sample" },
+	{ label: "Assays", href: "/explore/assay", table: "assay" },
+	{ label: "AssayPreps", href: "/explore/assayPrep", table: "assayPrep" },
+	{ label: "Libraries", href: "/explore/library", table: "library" }
 ];
 
 const EXPLORE_RIGHT_ITEMS = [
-	{ label: "Analyses", href: "/explore/analysis" },
-	{ label: "Occurrences", href: "/explore/occurrence" },
-	{ label: "Features", href: "/explore/feature" },
-	{ label: "Assignments", href: "/explore/assignment" },
-	{ label: "Taxonomies", href: "/explore/taxonomy" }
+	{ label: "Analyses", href: "/explore/analysis", table: "analysis" },
+	{ label: "Occurrences", href: "/explore/occurrence", table: "occurrence" },
+	{ label: "Features", href: "/explore/feature", table: "feature" },
+	{ label: "Assignments", href: "/explore/assignment", table: "assignment" },
+	{ label: "Taxonomies", href: "/explore/taxonomy", table: "taxonomy" }
 ];
 
 const LEARN_MEGA_MENU_ITEMS: { href: string; title: string; subtitle: string }[] = [
@@ -358,15 +359,16 @@ function MenuSectionHeader({
 	);
 }
 
-function MenuItem({ href, label }: { href: string; label: string }) {
+function MenuItem({ href, label, icon }: { href: string; label: string; icon?: React.ReactNode }) {
 	const closeMegaMenuForNavigation = useMegaMenuNavigate();
 	return (
 		<Link
 			href={href}
 			prefetch={MENU_LINK_PREFETCH}
 			onClick={closeMegaMenuForNavigation ?? undefined}
-			className="block py-1 px-2 text-base text-base-content/80 hover:text-primary hover:bg-base-200/60 rounded-md"
+			className="flex items-center gap-2 py-1 px-2 text-base text-base-content/80 hover:text-primary hover:bg-base-200/60 rounded-md"
 		>
+			{icon ? <span className="inline-flex shrink-0 text-primary">{icon}</span> : null}
 			{label}
 		</Link>
 	);
@@ -462,12 +464,22 @@ export function ExploreMegaMenu() {
 					<div className="mt-4 grid grid-cols-2 gap-4">
 						<div className="space-y-1">
 							{EXPLORE_LEFT_ITEMS.map((i) => (
-								<MenuItem key={i.label} href={i.href} label={i.label} />
+								<MenuItem
+									key={i.label}
+									href={i.href}
+									label={i.label}
+									icon={<TableIcon table={i.table} className="size-5!" />}
+								/>
 							))}
 						</div>
 						<div className="space-y-1">
 							{EXPLORE_RIGHT_ITEMS.map((i) => (
-								<MenuItem key={i.label} href={i.href} label={i.label} />
+								<MenuItem
+									key={i.label}
+									href={i.href}
+									label={i.label}
+									icon={<TableIcon table={i.table} className="size-5!" />}
+								/>
 							))}
 						</div>
 					</div>

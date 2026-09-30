@@ -7,7 +7,7 @@ import AssaysCard from "@/app/components/assay/AssaysCard";
 import DataDisplay from "@/app/components/explore/DataDisplay";
 import TableMetadata from "@/types/tableMetadata";
 import StatCard from "@/app/components/explore/StatCard";
-import { LocationIcon, AnalysisIcon, FishIcon, EyeIcon } from "@/app/components/icons";
+import { ProjectIcon, SampleIcon, AnalysisIcon, TaxonomyIcon, OccurrenceIcon } from "@/app/components/icons";
 import Image from "next/image";
 import { DepthCoverageCard, DepthCoverageCardSkeleton } from "@/app/components/dataSummary/DepthCoverageCard";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
@@ -402,11 +402,12 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				<div className="flex flex-wrap gap-2 items-center min-w-0">
 					<TitleHoverTooltip tooltip={TableMetadata.project.description}>
 						<h1
-							className={`text-4xl font-semibold text-primary mb-0 ${
+							className={`flex items-center gap-2 text-4xl font-semibold text-primary mb-0 ${
 								project.imageFileUrl_ODE ? "drop-shadow-sm [html[data-theme='light']_&]:drop-shadow-md" : ""
 							}`}
 						>
-							{project_id}
+							<ProjectIcon className="size-8! shrink-0" />
+							<span className="min-w-0 wrap-anywhere">{project_id}</span>
 						</h1>
 					</TitleHoverTooltip>
 					<EditHistory editHistory={editHistory} />
@@ -469,7 +470,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				<StatCard
 					title="Samples"
 					value={Samples.length}
-					icon={<LocationIcon />}
+					icon={<SampleIcon />}
 					link={`/search?table=sample&advanced=[[${advancedProjStr}]]`}
 					tooltip="View as Search"
 					layout="horizontal"
@@ -487,7 +488,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				<StatCard
 					title="Taxonomies"
 					value={sortedTaxa.length}
-					icon={<FishIcon />}
+					icon={<TaxonomyIcon />}
 					link={`/search?table=taxonomy&advanced=[["project",${advancedProjStr}]]`}
 					tooltip="View as Search"
 					layout="horizontal"
@@ -496,7 +497,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				<StatCard
 					title="Occurrences"
 					value={Analyses.reduce((sum, a) => sum + a.Assignments.length, 0)}
-					icon={<EyeIcon />}
+					icon={<OccurrenceIcon />}
 					link={`/search?table=occurrence&advanced=[["project",${advancedProjStr}]]`}
 					tooltip="View as Search"
 					layout="horizontal"

@@ -28,7 +28,7 @@ export default function DocsPageSection<P extends DocsPage>({
 	subsections
 }: DocsGenericProps<P> & {
 	header: ReactNode;
-	subsections?: { id: string; title: string; content: ReactNode }[];
+	subsections?: { id: string; title: string; content: ReactNode; icon?: ReactNode }[];
 }) {
 	const prev = getNextDocsSection({ page, section, dir: -1 });
 	const next = getNextDocsSection({ page, section });
@@ -56,7 +56,7 @@ export default function DocsPageSection<P extends DocsPage>({
 
 			{subsections ? (
 				subsections.map((sect) => (
-					<DocsPageSubsection key={sect.id} id={sect.id} title={sect.title}>
+					<DocsPageSubsection key={sect.id} id={sect.id} title={sect.title} icon={sect.icon}>
 						{sect.content}
 					</DocsPageSubsection>
 				))
@@ -116,10 +116,23 @@ export default function DocsPageSection<P extends DocsPage>({
 	);
 }
 
-function DocsPageSubsection({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+function DocsPageSubsection({
+	id,
+	title,
+	icon,
+	children
+}: {
+	id: string;
+	title: string;
+	icon?: ReactNode;
+	children: ReactNode;
+}) {
 	return (
 		<div id={id} className="pt-16">
-			<h2 className="text-3xl font-semibold tracking-tight text-base-content mb-2">{title}</h2>
+			<h2 className="mb-2 flex items-center gap-3 text-3xl font-semibold tracking-tight text-base-content">
+				{icon}
+				{title}
+			</h2>
 			<div className={docContentProseClassName}>{children}</div>
 		</div>
 	);

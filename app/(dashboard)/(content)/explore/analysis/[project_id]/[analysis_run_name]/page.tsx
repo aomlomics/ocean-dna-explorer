@@ -9,7 +9,7 @@ import AssaysCard from "@/app/components/assay/AssaysCard";
 import type { AnalysisModel } from "@/app/generated/prisma/models/Analysis";
 import AnalysisTag from "@/app/components/tags/AnalysisTag";
 import StatCard from "@/app/components/explore/StatCard";
-import { EyeIcon, FishIcon, LocationIcon } from "@/app/components/icons";
+import { AnalysisIcon, OccurrenceIcon, AssignmentIcon, SampleIcon } from "@/app/components/icons";
 import TaxaGrid from "@/app/components/paginated/grid/TaxaGrid";
 import AlphaDiversityDisplay from "@/app/components/charts/wrappers/AlphaDiversityDisplay";
 import TaxonomyVisualize from "@/app/components/charts/wrappers/TaxonomyVisualize";
@@ -170,7 +170,10 @@ export default async function Project_id_Analysis_run_name({
 			<header>
 				<div className="flex gap-2 items-center">
 					<TitleHoverTooltip tooltip={TableMetadata.analysis.description}>
-						<h1 className="text-4xl font-semibold text-primary mb-2">{analysis_run_name}</h1>
+						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+							<AnalysisIcon className="size-8! shrink-0" />
+							<span className="min-w-0 wrap-anywhere">{analysis_run_name}</span>
+						</h1>
 					</TitleHoverTooltip>
 					<EditHistory editHistory={editHistory} />
 					{analysis.trusted && <div className="badge badge-primary text-neutral-content p-3 select-none">Trusted</div>}
@@ -242,7 +245,7 @@ export default async function Project_id_Analysis_run_name({
 							<StatCard
 								title="Occurrences"
 								value={_count.Occurrences}
-								icon={<EyeIcon />}
+								icon={<OccurrenceIcon />}
 								link={`/search?table=occurrence&advanced=[["analysis_run_name","equals","${analysis_run_name}"]]`}
 								tooltip="View as Search"
 							/>
@@ -250,7 +253,7 @@ export default async function Project_id_Analysis_run_name({
 							<StatCard
 								title="Assignments"
 								value={_count.Assignments}
-								icon={<FishIcon />}
+								icon={<AssignmentIcon />}
 								link={`/search?table=assignment&advanced=[["analysis_run_name","equals","${analysis_run_name}"]]`}
 								tooltip="View as Search"
 							/>
@@ -273,7 +276,7 @@ export default async function Project_id_Analysis_run_name({
 										}
 									})
 								}
-								icon={<LocationIcon />}
+								icon={<SampleIcon />}
 								link={`/search?table=sample&advanced=[["analysis","analysis_run_name","equals","${analysis_run_name}"]]`}
 								tooltip="View as Search"
 							/>

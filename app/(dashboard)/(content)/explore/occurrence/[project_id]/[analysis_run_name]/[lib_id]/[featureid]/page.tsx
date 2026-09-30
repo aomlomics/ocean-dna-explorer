@@ -4,7 +4,7 @@ import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
-import { AnalysisIcon, LocationIcon, ProjectIcon } from "@/app/components/icons";
+import { AnalysisIcon, FeatureIcon, LibraryIcon, OccurrenceIcon, ProjectIcon, SampleIcon } from "@/app/components/icons";
 import { TaxonomicRanks } from "@/types/objects";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
@@ -48,25 +48,6 @@ export async function generateMetadata({
 			title: "Occurrence not found"
 		};
 	}
-}
-
-function MaskSvgIcon({ src, className }: { src: string; className?: string }) {
-	return (
-		<span
-			aria-hidden="true"
-			className={`inline-block h-10 w-10 bg-current ${className ?? ""}`}
-			style={{
-				WebkitMaskImage: `url('${src}')`,
-				maskImage: `url('${src}')`,
-				WebkitMaskRepeat: "no-repeat",
-				maskRepeat: "no-repeat",
-				WebkitMaskPosition: "center",
-				maskPosition: "center",
-				WebkitMaskSize: "contain",
-				maskSize: "contain"
-			}}
-		/>
-	);
 }
 
 export default async function OccurrencePage({
@@ -142,7 +123,7 @@ export default async function OccurrencePage({
 			<Link href={exploreUrl({ table: "feature", featureid })} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-primary">
-						<MaskSvgIcon src="/images/icons/feature_icon.svg" />
+						<FeatureIcon className="h-10! w-10!" />
 					</div>
 					<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
 						<div className="font-medium text-primary tabular-nums leading-tight text-sm whitespace-nowrap">
@@ -156,11 +137,11 @@ export default async function OccurrencePage({
 			</Link>
 			<Link href={exploreUrl({ table: "library", project_id, lib_id })} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
-					<div className="text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">
-						<MaskSvgIcon src="/images/icons/library_icon.svg" />
+					<div className="text-primary">
+						<LibraryIcon className="h-10! w-10!" />
 					</div>
 					<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
-						<div className="font-medium text-emerald-300 [html[data-theme='light']_&]:text-emerald-700 tabular-nums leading-tight text-sm whitespace-nowrap">
+						<div className="font-medium text-primary tabular-nums leading-tight text-sm whitespace-nowrap">
 							{lib_id}
 						</div>
 						<div className="text-xs font-sans font-medium text-base-content/70 uppercase tracking-wider whitespace-nowrap">
@@ -171,11 +152,11 @@ export default async function OccurrencePage({
 			</Link>
 			<Link href={exploreUrl({ table: "analysis", project_id, analysis_run_name })} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
-					<div className="text-amber-300 [html[data-theme='light']_&]:text-amber-700">
-						<AnalysisIcon className="h-10 w-10" />
+					<div className="text-primary">
+						<AnalysisIcon className="h-10! w-10!" />
 					</div>
 					<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
-						<div className="font-medium text-amber-300 [html[data-theme='light']_&]:text-amber-700 tabular-nums leading-tight text-sm whitespace-nowrap">
+						<div className="font-medium text-primary tabular-nums leading-tight text-sm whitespace-nowrap">
 							{analysis_run_name}
 						</div>
 						<div className="text-xs font-sans font-medium text-base-content/70 uppercase tracking-wider whitespace-nowrap">
@@ -186,11 +167,11 @@ export default async function OccurrencePage({
 			</Link>
 			<Link href={exploreUrl({ table: "project", project_id })} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
-					<div className="text-purple-300 [html[data-theme='light']_&]:text-purple-700">
-						<ProjectIcon className="h-10 w-10" />
+					<div className="text-primary">
+						<ProjectIcon className="h-10! w-10!" />
 					</div>
 					<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
-						<div className="font-medium text-purple-300 [html[data-theme='light']_&]:text-purple-700 tabular-nums leading-tight text-sm whitespace-nowrap">
+						<div className="font-medium text-primary tabular-nums leading-tight text-sm whitespace-nowrap">
 							{project_id}
 						</div>
 						<div className="text-xs font-sans font-medium text-base-content/70 uppercase tracking-wider whitespace-nowrap">
@@ -250,11 +231,14 @@ export default async function OccurrencePage({
 			<header>
 				<div className="flex gap-2 items-center">
 					<TitleHoverTooltip tooltip={TableMetadata.occurrence.description}>
-						<h1 className="mb-2 text-2xl sm:text-3xl font-semibold text-base-content/55 wrap-anywhere">
-							<span className="text-primary">{featureid}</span> in{" "}
-							<span className="text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">{lib_id}</span> (
-							<span className="text-amber-300 [html[data-theme='light']_&]:text-amber-700">{analysis_run_name}</span> in{" "}
-							<span className="text-purple-300 [html[data-theme='light']_&]:text-purple-700">{project_id}</span>)
+						<h1 className="mb-2 flex items-center gap-2 text-2xl sm:text-3xl font-semibold text-base-content/55 wrap-anywhere">
+							<OccurrenceIcon className="size-8! shrink-0 text-primary" />
+							<span className="min-w-0">
+								<span className="text-primary">{featureid}</span> in{" "}
+								<span className="text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">{lib_id}</span> (
+								<span className="text-amber-300 [html[data-theme='light']_&]:text-amber-700">{analysis_run_name}</span>{" "}
+								in <span className="text-purple-300 [html[data-theme='light']_&]:text-purple-700">{project_id}</span>)
+							</span>
 						</h1>
 					</TitleHoverTooltip>
 				</div>
@@ -369,7 +353,7 @@ export default async function OccurrencePage({
 								className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105"
 							>
 								<div className="text-primary">
-									<LocationIcon className="h-10 w-10" />
+									<SampleIcon className="h-10! w-10!" />
 								</div>
 								<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
 									<div className="truncate font-medium text-base-content tabular-nums leading-tight text-sm">

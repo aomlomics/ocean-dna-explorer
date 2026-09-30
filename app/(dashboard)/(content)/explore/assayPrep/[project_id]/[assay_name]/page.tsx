@@ -3,7 +3,7 @@ import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
 import DataDisplay from "@/app/components/explore/DataDisplay";
 import { trustedPrisma } from "@/app/helpers/prisma";
-import { ProjectIcon } from "@/app/components/icons";
+import { AssayPrepIcon, ProjectIcon } from "@/app/components/icons";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
@@ -91,7 +91,10 @@ export default async function Project_id_Assay_name({
 			<header>
 				<div className="flex gap-2 items-center">
 					<TitleHoverTooltip tooltip={TableMetadata.assayPrep.description}>
-						<h1 className="text-4xl font-semibold text-primary mb-2">{assayPrep.assay_name}</h1>
+						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+							<AssayPrepIcon className="size-8! shrink-0" />
+							<span className="min-w-0 wrap-anywhere">{assayPrep.assay_name}</span>
+						</h1>
 					</TitleHoverTooltip>
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">

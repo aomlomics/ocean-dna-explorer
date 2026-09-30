@@ -3,7 +3,7 @@ import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
 import DataDisplay from "@/app/components/explore/DataDisplay";
 import { trustedPrisma } from "@/app/helpers/prisma";
-import { AssayIcon, LocationIcon } from "@/app/components/icons";
+import { LibraryIcon, AssayIcon, SampleIcon } from "@/app/components/icons";
 import StatCard from "@/app/components/explore/StatCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
@@ -86,7 +86,10 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 			<header>
 				<div className="flex gap-2 items-center">
 					<TitleHoverTooltip tooltip={TableMetadata.library.description}>
-						<h1 className="text-4xl font-semibold text-primary mb-2">{library.lib_id}</h1>
+						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+							<LibraryIcon className="size-8! shrink-0" />
+							<span className="min-w-0 wrap-anywhere">{library.lib_id}</span>
+						</h1>
 					</TitleHoverTooltip>
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
@@ -131,7 +134,7 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 					<div className="space-y-4 flex flex-col">
 						<StatCard
 							title="Sample"
-							icon={<LocationIcon />}
+							icon={<SampleIcon />}
 							link={exploreUrl({ table: "sample", project_id, samp_name: sample.samp_name })}
 							value={sample.samp_name}
 							className="w-2/3"

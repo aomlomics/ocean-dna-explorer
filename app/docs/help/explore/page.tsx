@@ -1,4 +1,5 @@
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
+import { TableIcon } from "@/app/components/icons";
 import Link from "next/link";
 import type { Metadata } from "next";
 import TrustedToggle from "@/app/components/header/TrustedToggle";
@@ -59,6 +60,7 @@ export default function HelpExplorePage() {
 				{
 					id: "projects",
 					title: "Projects",
+					icon: <TableIcon table="project" className="size-8! text-primary" />,
 					content: (
 						<>
 							<p className="mb-4">
@@ -99,6 +101,7 @@ export default function HelpExplorePage() {
 				{
 					id: "samples",
 					title: "Samples",
+					icon: <TableIcon table="sample" className="size-8! text-primary" />,
 					content: (
 						<>
 							<p className="mb-4">
@@ -126,6 +129,7 @@ export default function HelpExplorePage() {
 				{
 					id: "assays",
 					title: "Assays",
+					icon: <TableIcon table="assay" className="size-8! text-primary" />,
 					content: (
 						<>
 							<p className="mb-4">
@@ -164,6 +168,7 @@ export default function HelpExplorePage() {
 				{
 					id: "assay-preps",
 					title: "AssayPreps",
+					icon: <TableIcon table="assayPrep" className="size-8! text-primary" />,
 					content: (
 						<>
 							<p className="mb-4">
@@ -184,6 +189,7 @@ export default function HelpExplorePage() {
 				{
 					id: "libraries",
 					title: "Libraries",
+					icon: <TableIcon table="library" className="size-8! text-primary" />,
 					content: (
 						<>
 							<p className="mb-4">
@@ -208,6 +214,7 @@ export default function HelpExplorePage() {
 				{
 					id: "analyses",
 					title: "Analyses",
+					icon: <TableIcon table="analysis" className="size-8! text-primary" />,
 					content: (
 						<>
 							<p className="mb-4">
@@ -256,6 +263,7 @@ export default function HelpExplorePage() {
 				{
 					id: "occurrences",
 					title: "Occurrences",
+					icon: <TableIcon table="occurrence" className="size-8! text-primary" />,
 					content: (
 						<>
 							<p className="mb-4">
@@ -281,6 +289,7 @@ export default function HelpExplorePage() {
 				{
 					id: "features",
 					title: "Features",
+					icon: <TableIcon table="feature" className="size-8! text-primary" />,
 					content: (
 						<>
 							<p className="mb-4">
@@ -309,6 +318,7 @@ export default function HelpExplorePage() {
 				{
 					id: "assignments",
 					title: "Assignments",
+					icon: <TableIcon table="assignment" className="size-8! text-primary" />,
 					content: (
 						<>
 							<p className="mb-4">
@@ -333,6 +343,7 @@ export default function HelpExplorePage() {
 				{
 					id: "taxonomies",
 					title: "Taxonomies",
+					icon: <TableIcon table="taxonomy" className="size-8! text-primary" />,
 					content: (
 						<>
 							<p className="mb-4">

@@ -1,5 +1,6 @@
 import type { FilterConfig } from "./filters/filterHelpers";
 import TableMetadata, { type ModelName } from "@/types/tableMetadata";
+import { TableIcon } from "@/app/components/icons";
 import ExploreControls from "./ExploreControls";
 import TableInfo from "../TableInfo";
 
@@ -21,10 +22,13 @@ export default function ExplorePage({
 		<div className="py-4">
 			<header>
 				<div className="flex flex-wrap items-center gap-2">
-					<h1 className="text-4xl font-normal text-base-content">
-						<span className="">Explore</span>{" "}
-						<span className="text-base-content text-2xl align-middle font-normal">❯</span>{" "}
-						<span className="text-primary font-normal">{TableMetadata[table].plural}</span>
+					<h1 className="flex flex-wrap items-center gap-2 text-4xl font-normal text-base-content">
+						<span>Explore</span>
+						<span className="text-base-content text-2xl font-normal">❯</span>
+						<span className="inline-flex items-center gap-2 text-primary font-normal">
+							<TableIcon table={table} className="size-8!" />
+							{TableMetadata[table].plural}
+						</span>
 					</h1>
 					<TableInfo table={table} />
 				</div>

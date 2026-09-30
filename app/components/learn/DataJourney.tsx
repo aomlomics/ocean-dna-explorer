@@ -12,6 +12,7 @@ const OceanGlobe = dynamic(() => import("@/app/components/learn/OceanGlobe"), {
 
 import TaxonomyLaptop from "@/app/components/learn/TaxonomyLaptop";
 import AnalysisLaptop from "@/app/components/learn/AnalysisLaptop";
+import { TableIcon } from "@/app/components/icons";
 import TableMetadata, { type DataTableNames } from "@/types/tableMetadata";
 
 // Tables that appear in the data journey (have descriptions in TableMetadata)
@@ -39,6 +40,7 @@ function TableBlurb({
 	return (
 		<div className={`rounded-2xl p-4 sm:p-5 ${className}`}>
 			<div className={`flex flex-wrap items-center gap-2 mb-2 ${centerTitle ? "justify-center" : ""}`}>
+				{table ? <TableIcon table={table} className="size-7! text-primary" /> : null}
 				<h3 className="text-xl sm:text-2xl font-semibold text-primary">{title}</h3>
 				<span className="rounded-full bg-primary/15 text-primary px-2.5 py-0.5 text-xs font-medium">
 					Database table

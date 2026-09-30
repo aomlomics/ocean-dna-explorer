@@ -9,6 +9,7 @@ import PhyloPic from "@/app/components/images/PhyloPic";
 import GcDonut from "@/app/components/charts/GcDonut";
 import Table from "@/app/components/paginated/table/Table";
 import AssaysCard from "@/app/components/assay/AssaysCard";
+import { FeatureIcon } from "@/app/components/icons";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import Map from "@/app/components/map/Map";
 import CopyButton from "@/app/components/CopyButton";
@@ -211,7 +212,10 @@ export default async function Featureid({
 			<header>
 				<div className="flex gap-2 items-center">
 					<TitleHoverTooltip tooltip={TableMetadata.feature.description}>
-						<h1 className="text-4xl font-semibold text-primary mb-2">{feature.featureid}</h1>
+						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+							<FeatureIcon className="size-8! shrink-0" />
+							<span className="min-w-0 wrap-anywhere">{feature.featureid}</span>
+						</h1>
 					</TitleHoverTooltip>
 				</div>
 				<p className="text-lg text-base-content/70 max-w-3xl">
