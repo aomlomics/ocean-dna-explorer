@@ -23,7 +23,7 @@ export default function ClusterControl({
 	}
 
 	return (
-		<LeafletControl click className="leaflet-bar border-none!">
+		<LeafletControl click className="leaflet-bar border-none! hidden lg:block">
 			<CollapsibleMapContainer dir="left" defaultCollapse hiddenText="Show cluster control">
 				<div className="w-35 pl-2 pr-1 pt-1 pb-2 flex flex-col gap-1">
 					<div className="flex justify-between">

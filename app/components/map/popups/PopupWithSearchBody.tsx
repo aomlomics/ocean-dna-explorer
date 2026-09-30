@@ -150,7 +150,7 @@ export default function PopupWithSearchBody({
 								</Link>
 							)}
 						</div>
-						<div className="flex flex-col overflow-y-scroll overscroll-contain [:where(&)]:pr-2">
+						<div className="flex flex-col overflow-y-scroll overscroll-contain mt-2 [:where(&)]:pr-3">
 							{legendInfo
 								? valuesWithLegend!.map(({ loc, legendValue }, i) => {
 										const lUrl =
@@ -176,7 +176,7 @@ export default function PopupWithSearchBody({
 													></div>
 													<Link
 														href={`/explore/${table}/${lUrl}`}
-														className="cursor-pointer! link-primary! link-hover!  leading-[1.3]! text-xs"
+														className="cursor-pointer! link-primary! link-hover!  leading-[1.3]! text-xs break-all"
 													>
 														{lUrl}
 													</Link>
@@ -194,7 +194,7 @@ export default function PopupWithSearchBody({
 											<Link
 												key={lUrl}
 												href={`/explore/${table}/${lUrl}`}
-												className="cursor-pointer! link-primary! link-hover! border-none! leading-[1.3]! text-xs"
+												className="cursor-pointer! link-primary! link-hover! border-none! leading-[1.3]! text-xs break-all"
 											>
 												{lUrl}
 											</Link>
@@ -222,7 +222,7 @@ export default function PopupWithSearchBody({
 									></div>
 									<Link
 										href={`/explore/${table}/${locUrl}`}
-										className="cursor-pointer! link-primary! link-hover! border-none! leading-[1.3]! text-xs"
+										className="cursor-pointer! link-primary! link-hover! border-none! leading-[1.3]! text-xs break-all"
 									>
 										{locUrl}
 									</Link>
@@ -231,7 +231,7 @@ export default function PopupWithSearchBody({
 						) : (
 							<Link
 								href={`/explore/${table}/${locUrl}`}
-								className="cursor-pointer! link-primary! link-hover! border-none! leading-[1.3]! text-xs"
+								className="cursor-pointer! link-primary! link-hover! border-none! leading-[1.3]! text-xs break-all"
 							>
 								{locUrl}
 							</Link>

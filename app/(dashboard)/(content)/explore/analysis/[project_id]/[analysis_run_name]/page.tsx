@@ -214,7 +214,7 @@ export default async function Project_id_Analysis_run_name({
 						where={{ analysis_run_name }}
 						cluster
 						draw
-						className="w-full h-110"
+						className="w-full lg:h-110"
 						legend
 						legendOmit={["project_id"]}
 						defaultLegendField="expedition_id"

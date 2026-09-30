@@ -193,8 +193,8 @@ export default function ResizableMapContainer({
 	}
 
 	const handle = (
-		<div className={`flex justify-center items-center ${handleContainerClassName}`} onMouseDownCapture={handleDrag}>
-			<div className={`bg-gray-400 rounded-full ${handleClassName}`}></div>
+		<div className={`justify-center items-center flex ${handleContainerClassName}`} onMouseDownCapture={handleDrag}>
+			<div className={`bg-gray-400 rounded-full hidden lg:block ${handleClassName}`}></div>
 		</div>
 	);
 	return (

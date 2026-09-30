@@ -241,7 +241,7 @@ export default async function Featureid({
 							}
 							cluster
 							legend
-							className="w-full min-h-96 flex-1 rounded-xl"
+							className="w-full lg:min-h-96 flex-1 rounded-xl"
 						/>
 
 						{/* DNA sequence card */}
