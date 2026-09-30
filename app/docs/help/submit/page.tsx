@@ -489,7 +489,7 @@ abc12d6cd12a574f2183f003593d3940  -`}
 					content: (
 						<>
 							<p className="mb-0">
-								<Link className="link link-primary" href="https://github.com/baydenwillms/edna2obis-3.0/tree/main">
+								<Link className="link link-primary" href="https://github.com/aomlomics/edna2obis">
 									edna2obis
 								</Link>{" "}
 								reads the same file layout you use for Ocean DNA Explorer and converts it to Darwin Core for submission
