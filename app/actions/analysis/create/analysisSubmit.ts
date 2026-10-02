@@ -11,7 +11,7 @@ import {
 	PRISMA_PARAM_LIMIT
 } from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
-import { RolePermissions } from "@/types/objects";
+import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";
 
@@ -41,9 +41,7 @@ async function doSubmit(
 		if (!parseResult) {
 			return;
 		}
-	} catch (err) {
-		const error = err as Error;
-		await analysisChannel.stream.error(error.message);
+	} catch {
 		return;
 	}
 
@@ -361,14 +359,15 @@ async function doSubmit(
 
 		return true;
 	} catch (err: any) {
+		console.error(err);
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			await analysisChannel.stream.error(prismaErr.error);
 			await assignmentsChannel.stream.error(prismaErr.error);
 			await occurrencesChannel.stream.error(prismaErr.error);
 		} else {
-			console.error(err);
-			const message = "An unknown server error occurred.";
+			const message = err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR;
 			await analysisChannel.stream.error(message);
 			await assignmentsChannel.stream.error(message);
 			await occurrencesChannel.stream.error(message);
@@ -387,11 +386,15 @@ export default async function analysisSubmitAction(
 	const assignmentsStream = createProgressStream();
 	const occurrencesStream = createProgressStream();
 
-	const validBlobs = await validateBlobs([analysisFileUrl, assignmentsFileUrl, occurrencesFileUrl]);
-	if (!validBlobs) {
-		analysisStream.error("Files are not valid");
-		assignmentsStream.error("Files are not valid");
-		occurrencesStream.error("Files are not valid");
+	try {
+		await validateBlobs([analysisFileUrl, assignmentsFileUrl, occurrencesFileUrl]);
+	} catch (err) {
+		console.error(err);
+
+		const message = err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR;
+		analysisStream.error(message);
+		assignmentsStream.error(message);
+		occurrencesStream.error(message);
 
 		analysisStream.close();
 		assignmentsStream.close();

@@ -3,7 +3,7 @@
 import type { ProjectModel } from "@/app/generated/prisma/models/Project";
 import { prisma } from "@/app/helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { RolePermissions } from "@/types/objects";
+import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { type Channel, createProgressStream } from "@/app/helpers/progress";
 import { parseProjectFiles } from "@/app/helpers/actions/project";
 import { addToHistory } from "@/app/helpers/actions/actions";
@@ -410,13 +410,16 @@ async function doEdit(
 
 		return true;
 	} catch (err: any) {
+		console.error(err);
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			await globalStream.error(prismaErr.error);
+		} else if (err instanceof AppError) {
+			await globalStream.error(err.message);
+		} else {
+			await globalStream.error(GLOBAL_SERVER_ERROR);
 		}
-
-		console.error(err);
-		return { statusMessage: "error", error: "An unknown server error occurred." };
 	}
 }
 
@@ -436,16 +439,12 @@ export default async function projectEditAction({
 	const sampleStream = createProgressStream();
 	const libraryStream = createProgressStream();
 
-	let errorMsg;
-	const urls = [projectFileUrl, sampleFileUrl, libraryFileUrl].filter(Boolean) as string[];
-	const validBlobs = await validateBlobs(urls);
-	if (!urls.length) {
-		errorMsg = "Must provide at least one new file.";
-	} else if (!validBlobs) {
-		errorMsg = "Files are not valid";
-	}
-	if (errorMsg) {
-		globalStream.error(errorMsg);
+	try {
+		await validateBlobs([projectFileUrl, sampleFileUrl, libraryFileUrl].filter(Boolean) as string[]);
+	} catch (err) {
+		console.error(err);
+
+		globalStream.error(err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR);
 
 		globalStream.close();
 		projectStream.close();

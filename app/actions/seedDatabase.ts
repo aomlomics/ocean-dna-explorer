@@ -17,5 +17,6 @@ export default async function seedDatabaseAction() {
 		await seedAssays(prisma);
 	} catch (err) {
 		console.error(err);
+		throw err;
 	}
 }

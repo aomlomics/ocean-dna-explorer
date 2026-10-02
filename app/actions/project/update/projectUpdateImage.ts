@@ -15,7 +15,7 @@ import {
 	ImageOptionalDefaultsSchema
 } from "@/prismaImages/generated/zod";
 import type { NetworkPacket } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";
 
@@ -24,9 +24,11 @@ export default async function projectUpdateImageAction(
 	imageInfo: { image: ImageOptionalDefaults; attribution?: AttributionOptionalDefaults } | null
 ): Promise<NetworkPacket> {
 	if (imageInfo) {
-		const validBlob = await validateBlobs([imageInfo.image.url]);
-		if (!validBlob) {
-			return { statusMessage: "error", error: "File is invalid" };
+		try {
+			await validateBlobs([imageInfo.image.url]);
+		} catch (err) {
+			console.error(err);
+			return { statusMessage: "error", error: err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR };
 		}
 	}
 
@@ -128,8 +130,14 @@ export default async function projectUpdateImageAction(
 			});
 		}
 	} catch (err: any) {
-		const error = err as Error;
-		return { statusMessage: "error", error: error.message };
+		console.error(err);
+
+		const prismaErr = handlePrismaError(err);
+		if (prismaErr) {
+			return prismaErr;
+		}
+
+		return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 	}
 
 	try {
@@ -150,6 +158,8 @@ export default async function projectUpdateImageAction(
 
 		return { statusMessage: "success" };
 	} catch (err: any) {
+		console.error(err);
+
 		if (imageInfo?.image.url) {
 			await del(imageInfo.image.url);
 		}
@@ -187,7 +197,6 @@ export default async function projectUpdateImageAction(
 			return prismaErr;
 		}
 
-		console.error(err);
-		return { statusMessage: "error", error: "An unknown server error occurred." };
+		return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 	}
 }

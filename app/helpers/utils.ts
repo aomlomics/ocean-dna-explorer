@@ -24,27 +24,15 @@ import type {
 	SampleModel,
 	TaxonomyModel
 } from "@/app/generated/prisma/models";
+import { AppError } from "@/types/objects";
 
 export async function fetcher(url: string): Promise<NetworkPacket> {
 	const res = await fetch(url);
-	if (!res.ok) {
-		throw new Error(res.statusText);
-	}
 	return res.json();
 }
 
 export async function fetcherAll(urls: string[]): Promise<NetworkPacket[]> {
 	return Promise.all(urls.map((url) => fetcher(url)));
-}
-
-export async function fetcherAllSuccess(urls: string[]): Promise<SuccessPacket[]> {
-	const results = await Promise.all(urls.map(fetcher));
-	for (const result of results) {
-		if (result.statusMessage === "error") {
-			throw new Error(result.error);
-		}
-	}
-	return results as SuccessPacket[];
 }
 
 export function parseNestedJson(json: string) {
@@ -275,23 +263,23 @@ function stringToPolygon(poly: string): Polygon {
 	//format: <lat>/<lng>,<lat>/<lng>,...
 	const polyArr = poly.split(",");
 	if (polyArr.length < 3) {
-		throw new Error("Polygon must have at least 3 points.");
+		throw new AppError("Polygon must have at least 3 points.");
 	}
 
 	const points = polyArr.map((p) => {
 		const split = p.split("/");
 		if (!split[0] || !split[1]) {
-			throw new Error(`Invalid LatLng format: "${p}". Format must be <lat>/<lng>.`);
+			throw new AppError(`Invalid LatLng format: "${p}". Format must be <lat>/<lng>.`);
 		}
 		const pnt = {
 			lat: parseFloat(split[0]),
 			lng: parseFloat(split[1])
 		};
 		if (isNaN(pnt.lat) || Math.abs(pnt.lat) > 90) {
-			throw new Error(`Invalid format for Lat: "${pnt.lat}". Lat must be a number between -90 and 90.`);
+			throw new AppError(`Invalid format for Lat: "${pnt.lat}". Lat must be a number between -90 and 90.`);
 		}
 		if (isNaN(pnt.lng) || Math.abs(pnt.lat) > 180) {
-			throw new Error(`Invalid format for Lng: "${pnt.lng}". Lng must be a number between -180 and 180.`);
+			throw new AppError(`Invalid format for Lng: "${pnt.lng}". Lng must be a number between -180 and 180.`);
 		}
 
 		return pnt;
@@ -316,29 +304,29 @@ function stringToCircle(circle: string): Circle {
 	//format: <lat>/<lng>,<radius>
 	const split = circle.split(",");
 	if (!split[0] || !split[1]) {
-		throw new Error(
+		throw new AppError(
 			`Invalid circle format: "${circle}". Circle must have a center followed by a radius, separated by a comma.`
 		);
 	}
 
 	const centerSplit = split[0].split("/");
 	if (!centerSplit[0] || !centerSplit[1]) {
-		throw new Error(`Invalid center format: "${split[0]}". Format must be <lat>/<lng>.`);
+		throw new AppError(`Invalid center format: "${split[0]}". Format must be <lat>/<lng>.`);
 	}
 	const center = {
 		lat: parseFloat(centerSplit[0]),
 		lng: parseFloat(centerSplit[1])
 	};
 	if (isNaN(center.lat) || Math.abs(center.lat) > 90) {
-		throw new Error(`Invalid format for Lat: "${center.lat}". Lat must be a number between -90 and 90.`);
+		throw new AppError(`Invalid format for Lat: "${center.lat}". Lat must be a number between -90 and 90.`);
 	}
 	if (isNaN(center.lng) || Math.abs(center.lat) > 180) {
-		throw new Error(`Invalid format for Lng: "${center.lng}". Lng must be a number between -180 and 180.`);
+		throw new AppError(`Invalid format for Lng: "${center.lng}". Lng must be a number between -180 and 180.`);
 	}
 
 	const radius = parseFloat(split[1]);
 	if (isNaN(radius)) {
-		throw new Error(`Invalid format for radius: "${split[1]}". Radius must be a number.`);
+		throw new AppError(`Invalid format for radius: "${split[1]}". Radius must be a number.`);
 	}
 
 	return {

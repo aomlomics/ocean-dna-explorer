@@ -2,9 +2,10 @@
 
 import type { TagModel } from "@/app/generated/prisma/models/Tag";
 import { prisma } from "@/app/helpers/prisma";
+import { handlePrismaError } from "@/app/helpers/queries";
 import { TagOptionalDefaultsSchema } from "@/prisma/generated/zod";
 import type { NetworkPacket } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import { GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 
 export default async function addTagAction(tag: Omit<TagModel, "id">): Promise<NetworkPacket> {
@@ -27,8 +28,14 @@ export default async function addTagAction(tag: Omit<TagModel, "id">): Promise<N
 		});
 
 		return { statusMessage: "success" };
-	} catch (err) {
-		const error = err as Error;
-		return { statusMessage: "error", error: error.message };
+	} catch (err: any) {
+		console.error(err);
+
+		const prismaErr = handlePrismaError(err);
+		if (prismaErr) {
+			return prismaErr;
+		}
+
+		return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 	}
 }

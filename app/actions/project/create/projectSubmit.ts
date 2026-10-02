@@ -2,7 +2,7 @@
 
 import { prisma } from "@/app/helpers/prisma";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { RolePermissions } from "@/types/objects";
+import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { parseProjectFiles } from "@/app/helpers/actions/project";
 import { type Channel, createProgressStream } from "@/app/helpers/progress";
 import type { UserMetadata } from "@/types/globals";
@@ -126,52 +126,52 @@ async function doSubmit(
 
 	await projectChannel.stream.message("All checks successful.", 85);
 
-	try {
-		if (imageInfo) {
-			try {
-				for (const k in imageInfo.image) {
-					const key = k as keyof typeof imageInfo.image;
-					if (imageInfo.image[key] === "") {
-						delete imageInfo.image[key];
-					}
+	if (imageInfo) {
+		try {
+			for (const k in imageInfo.image) {
+				const key = k as keyof typeof imageInfo.image;
+				if (imageInfo.image[key] === "") {
+					delete imageInfo.image[key];
 				}
-				if (imageInfo.image.homePage) {
-					await globalStream.error("Not allowed to submit home page images.");
-					return;
-				} else {
-					imageInfo.image.homePage = false;
-				}
-				imageInfo.image.userId = userId;
-				const parsedImage = ImageOptionalDefaultsSchema.parse(imageInfo.image);
-
-				const parsedAttribution =
-					imageInfo.attribution && AttributionOptionalDefaultsSchema.parse(imageInfo.attribution);
-
-				await prismaImages.$transaction([
-					...(parsedAttribution
-						? [
-								prismaImages.attribution.create({
-									data: parsedAttribution
-								})
-							]
-						: []),
-					prismaImages.image.create({
-						data: parsedImage
-					})
-				]);
-			} catch (err: any) {
-				const prismaErr = handlePrismaError(err);
-				if (prismaErr) {
-					await globalStream.error(prismaErr.error);
-				}
-
-				console.error(err);
-				await globalStream.error("An unknown server error occurred.");
-
-				return;
 			}
-		}
+			if (imageInfo.image.homePage) {
+				await globalStream.error("Not allowed to submit home page images.");
+				return;
+			} else {
+				imageInfo.image.homePage = false;
+			}
+			imageInfo.image.userId = userId;
+			const parsedImage = ImageOptionalDefaultsSchema.parse(imageInfo.image);
 
+			const parsedAttribution = imageInfo.attribution && AttributionOptionalDefaultsSchema.parse(imageInfo.attribution);
+
+			await prismaImages.$transaction([
+				...(parsedAttribution
+					? [
+							prismaImages.attribution.create({
+								data: parsedAttribution
+							})
+						]
+					: []),
+				prismaImages.image.create({
+					data: parsedImage
+				})
+			]);
+		} catch (err: any) {
+			console.error(err);
+
+			const prismaErr = handlePrismaError(err);
+			if (prismaErr) {
+				await globalStream.error(prismaErr.error);
+			}
+
+			await globalStream.error(GLOBAL_SERVER_ERROR);
+
+			return;
+		}
+	}
+
+	try {
 		//submission
 		await prisma.$transaction([
 			prisma.project.create({
@@ -211,12 +211,13 @@ async function doSubmit(
 
 		return true;
 	} catch (err: any) {
+		console.error(err);
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			await globalStream.error(prismaErr.error);
 		} else {
-			console.error(err);
-			await globalStream.error("An unknown server error occurred.");
+			await globalStream.error(GLOBAL_SERVER_ERROR);
 		}
 
 		if (imageInfo) {
@@ -251,11 +252,14 @@ export default async function projectSubmitAction(
 	const sampleStream = createProgressStream();
 	const libraryStream = createProgressStream();
 
-	const validBlobs = await validateBlobs(
-		[projectFileUrl, sampleFileUrl, libraryFileUrl, imageInfo?.image.url].filter(Boolean) as string[]
-	);
-	if (!validBlobs) {
-		globalStream.error("Files are not valid");
+	try {
+		await validateBlobs(
+			[projectFileUrl, sampleFileUrl, libraryFileUrl, imageInfo?.image.url].filter(Boolean) as string[]
+		);
+	} catch (err) {
+		console.error(err);
+
+		globalStream.error(err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR);
 
 		globalStream.close();
 		projectStream.close();

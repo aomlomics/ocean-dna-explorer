@@ -14,7 +14,7 @@ import {
 	type ImagePartial
 } from "@/prismaImages/generated/zod";
 import type { NetworkPacket } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import type { PrismaPromise } from "@prisma/client/runtime/client";
 import { del } from "@vercel/blob";
@@ -109,9 +109,7 @@ export default async function submitSpotlightAction(
 				return { statusMessage: "error", error: "File URL is missing from image." };
 			}
 
-			if (!(await validateBlobs([image.url]))) {
-				return { statusMessage: "error", error: "File is not valid." };
-			}
+			await validateBlobs([image.url]);
 
 			deleteImageOnError = true;
 
@@ -148,6 +146,8 @@ export default async function submitSpotlightAction(
 
 		return { statusMessage: "success" };
 	} catch (err: any) {
+		console.error(err);
+
 		await handleImageDelete();
 
 		const prismaErr = handlePrismaError(err);
@@ -155,7 +155,10 @@ export default async function submitSpotlightAction(
 			return { statusMessage: "error", error: prismaErr.error };
 		}
 
-		console.error(err);
-		return { statusMessage: "error", error: "An unknown server error occurred." };
+		if (err instanceof AppError) {
+			return { statusMessage: "error", error: err.message };
+		}
+
+		return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 	}
 }

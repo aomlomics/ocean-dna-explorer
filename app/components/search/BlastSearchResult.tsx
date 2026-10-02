@@ -1,8 +1,6 @@
 "use client";
 
 import type { BlastQueryModel, BlastQueryResultModel } from "@/app/generated/prisma/models";
-import { blastCookieHasBlast, parseBlastRequest } from "@/app/helpers/blast";
-import { getClientSideCookie } from "@/app/helpers/utils";
 import { BlastQueryResultScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
@@ -72,11 +70,7 @@ export default function BlastSearchResult({
 
 	return (
 		<div className={`break-all flex flex-col items-center ${className}`}>
-			{existingBlastDate &&
-			!blastCookieHasBlast(
-				parseBlastRequest(new URLSearchParams(searchParams), { safe: true }),
-				getClientSideCookie("savedBlasts")
-			) ? (
+			{existingBlastDate ? (
 				<>
 					<div className="text-warning">Using existing blast query ran on {existingBlastDate.toString()}</div>
 					{searchParams.get("blastSave") === "true" ? (

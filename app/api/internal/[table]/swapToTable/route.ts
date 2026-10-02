@@ -2,6 +2,7 @@ import { parseApiQuery } from "@/app/helpers/api";
 import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { getTableName } from "@/app/helpers/schema";
 import type { NetworkPacket } from "@/types/globals";
+import { AppError, GLOBAL_SERVER_ERROR } from "@/types/objects";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -24,6 +25,11 @@ export async function GET(
 		return NextResponse.json({ statusMessage: "success", result });
 	} catch (err) {
 		console.error(err);
-		return NextResponse.json({ statusMessage: "error", error: "An unknown server error occurred." });
+
+		if (err instanceof AppError) {
+			return NextResponse.json({ statusMessage: "error", error: err.message }, { status: err.statusCode });
+		}
+
+		return NextResponse.json({ statusMessage: "error", error: GLOBAL_SERVER_ERROR }, { status: 500 });
 	}
 }

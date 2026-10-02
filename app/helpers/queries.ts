@@ -13,14 +13,13 @@ import { getImplicitJoinTable } from "./withDb";
 import type { AssignmentModel, OccurrenceModel, ProjectModel } from "../generated/prisma/models";
 import type { $ZodIssue, ParseContext } from "zod/v4/core";
 import type { ZodError } from "zod";
+import { AppError } from "@/types/objects";
 
 //Prisma prepared statements have a limit of 32,767 parameters
 export const PRISMA_PARAM_LIMIT = 30000;
 
 export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): ErrorPacket | undefined {
 	if (err.constructor?.name === Prisma.PrismaClientKnownRequestError.name) {
-		console.error(err);
-
 		try {
 			if (err.code === "P2002") {
 				const meta = TableMetadata[err.meta!.modelName as ModelName];
@@ -170,7 +169,7 @@ export async function updateManyRaw(
 	}
 
 	if (fieldsWithId.size > PRISMA_PARAM_LIMIT) {
-		throw new Error(`A singular row has more than the parameter limit of ${PRISMA_PARAM_LIMIT}.`);
+		throw new AppError(`A singular row has more than the parameter limit of ${PRISMA_PARAM_LIMIT}.`);
 	}
 
 	const fields = Array.from(fieldsWithId) as string[];
@@ -179,7 +178,7 @@ export async function updateManyRaw(
 	if (typeof id === "string") {
 		const keyIndex = fields.indexOf(id);
 		if (keyIndex === -1) {
-			throw new Error(
+			throw new AppError(
 				`No field named "${id}" found for raw update on table named "${table}" for ${data.length} entries.`
 			);
 		} else {
@@ -189,7 +188,7 @@ export async function updateManyRaw(
 		for (const i of id) {
 			const keyIndex = fields.indexOf(i);
 			if (keyIndex === -1) {
-				throw new Error(
+				throw new AppError(
 					`No field named "${i}" found in data for raw update on table named "${table}" for ${data.length} entries.`
 				);
 			} else {

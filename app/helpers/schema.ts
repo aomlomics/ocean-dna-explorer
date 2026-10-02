@@ -2,7 +2,7 @@ import { DeadBooleanToEnum, DeadValueEnum } from "@/types/enums";
 import { ZodArray, ZodBoolean, ZodDate, ZodEnum, ZodLazy, ZodNumber, ZodOptional, ZodString } from "zod";
 import type { Prisma } from "@/app/generated/prisma/browser";
 import TableMetadata, { DataTableNames, type ModelName, TableNames } from "@/types/tableMetadata";
-import { TypeSeparators } from "@/types/objects";
+import { AppError, TypeSeparators } from "@/types/objects";
 import type { DbType } from "@/types/globals";
 
 //handles converting numbers from 0 to 99
@@ -134,6 +134,7 @@ export function getZodType(
 	error?: string
 ): { type: DbType; optional?: boolean; values?: string[] } {
 	const found = TableMetadata[table].enumSchema.options.find((f) => f.toLowerCase() === field.toLowerCase());
+
 	if (found) {
 		const result = getTypeRecursive(TableMetadata[table].schema.shape[found]);
 		if (result.type) {
@@ -141,11 +142,7 @@ export function getZodType(
 		}
 	}
 
-	if (error) {
-		throw new Error(error);
-	}
-
-	throw new Error(`Could not find type of "${field}" on table named ${table}.`);
+	throw new AppError(error || `Could not find type of "${field}" on table named ${table}.`);
 }
 
 //parse a field value into a given object only if it exists in the schema
@@ -177,7 +174,7 @@ export function parseSchemaToObject(
 
 				//check if there are exactly 2 dates
 				if (!start || !end || rest.length) {
-					throw new Error(
+					throw new AppError(
 						`Invalid format for the field "${field}". Field must be either one ISO 8601 date, or two dates separated with a "${TypeSeparators[type]}". The provided value was "${value}".`
 					);
 				}
@@ -187,14 +184,14 @@ export function parseSchemaToObject(
 					!TableMetadata[table].enumSchema.options.includes(field + "_Midpoint_ODE") ||
 					!TableMetadata[table].enumSchema.options.includes(field + "_End_ODE")
 				) {
-					throw new Error(
+					throw new AppError(
 						`Invalid format for the field "${field}". The value can't be a range. The provided value was "${value}".`
 					);
 				}
 
 				//check if either date is dead value
 				if (start.toLowerCase() in DeadValueEnum || end.toLowerCase() in DeadValueEnum) {
-					throw new Error(
+					throw new AppError(
 						`Invalid format for the field "${field}". If providing two dates, neither can be a dead value. The provided value was "${value}".`
 					);
 				}
@@ -203,21 +200,21 @@ export function parseSchemaToObject(
 
 				//check if first date is invalid
 				if (isNaN(startDate.valueOf())) {
-					throw new Error(
+					throw new AppError(
 						`Invalid format for the field "${field}". The first value must be a valid ISO 8601 date. The provided value for the first date was "${start}". The provided value for the second date was "${end}".`
 					);
 				}
 
 				//check if second date is invalid
 				if (isNaN(endDate.valueOf())) {
-					throw new Error(
+					throw new AppError(
 						`Invalid format for the field "${field}". The second value must be a valid ISO 8601 date. The provided value for the first date was "${start}". The provided value for the second date was "${end}".`
 					);
 				}
 
 				//check if dates are in correct order
 				if (startDate.getTime() >= endDate.getTime()) {
-					throw new Error(
+					throw new AppError(
 						`Invalid format for the field "${field}". The first date must be before second date. The provided value for the first date was "${start}". The provided value for the second date was "${end}".`
 					);
 				}
@@ -254,14 +251,14 @@ export function parseSchemaToObject(
 					!TableMetadata[table].enumSchema.options.includes(field + "_Midpoint_ODE") ||
 					!TableMetadata[table].enumSchema.options.includes(field + "_End_ODE")
 				) {
-					throw new Error(
+					throw new AppError(
 						`Invalid format for the field "${field}". The value can't be a range. The provided value was "${value}".`
 					);
 				}
 
 				//check if either number is dead value
 				if (start.toLowerCase() in DeadValueEnum || end.toLowerCase() in DeadValueEnum) {
-					throw new Error(
+					throw new AppError(
 						`Invalid format for the field "${field}". If providing two ${type}s, neither can be a dead value. The first provided value was "${start}". The second provided value was "${end}".`
 					);
 				}
@@ -270,21 +267,21 @@ export function parseSchemaToObject(
 
 				//check if first number is invalid
 				if (!Number.isFinite(parsedStart) || (type === "integer" && !Number.isInteger(parsedStart))) {
-					throw new Error(
+					throw new AppError(
 						`Invalid format for the field "${field}". First value must be a valid ${type}. The first provided value was "${start}". The second provided value was "${end}".`
 					);
 				}
 
 				//check if second number is invalid
 				if (!Number.isFinite(parsedEnd) || (type === "integer" && !Number.isInteger(parsedEnd))) {
-					throw new Error(
+					throw new AppError(
 						`Invalid format for the field "${field}". Second value must be a valid ${type}. The first provided value was "${start}". The second provided value was "${end}".`
 					);
 				}
 
 				//check if numbers are in correct order
 				if (parsedStart >= parsedEnd) {
-					throw new Error(
+					throw new AppError(
 						`Invalid format for the field "${field}". First ${type} must be before second ${type}. The first provided value was "${start}". The second provided value was "${end}".`
 					);
 				}
@@ -299,14 +296,14 @@ export function parseSchemaToObject(
 			} else if (start && !end && !rest.length) {
 				const parsed = Number(start);
 				if (!Number.isFinite(parsed) || (type === "integer" && !Number.isInteger(parsed))) {
-					throw new Error(
+					throw new AppError(
 						`Invalid format for the field "${field}". Field must be a number. The provided value was "${value}".`
 					);
 				}
 
 				obj[field] = parsed;
 			} else {
-				throw new Error(
+				throw new AppError(
 					`Invalid format for the field "${field}". Field must be either one ${type}, or two ${type}s separated with a "${TypeSeparators[type]}". The provided value was "${value}".`
 				);
 			}
@@ -318,24 +315,20 @@ export function parseSchemaToObject(
 }
 
 export function getTableName(table: string, err?: string) {
-	const found = TableNames.find(
-		(t) => t.toLowerCase() === table.toLowerCase() || TableMetadata[t].plural.toLowerCase() === table.toLowerCase()
-	);
+	const found = getTableNameSafe(table);
 
 	if (!found) {
-		throw new Error(err || `Invalid table name: "${table}".`);
+		throw new AppError(err || `Invalid table name: "${table}".`);
 	}
 
 	return found;
 }
 
 export function getDataTableName(table: string, err?: string) {
-	const found = DataTableNames.find(
-		(t) => t.toLowerCase() === table.toLowerCase() || TableMetadata[t].plural.toLowerCase() === table.toLowerCase()
-	);
+	const found = getDataTableNameSafe(table);
 
 	if (!found) {
-		throw new Error(err || `Invalid table name: "${table}".`);
+		throw new AppError(err || `Invalid table name: "${table}".`);
 	}
 
 	return found;

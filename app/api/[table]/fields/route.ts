@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NetworkPacket } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
 import { getTableName, getZodType } from "@/app/helpers/schema";
+import { AppError, GLOBAL_SERVER_ERROR } from "@/types/objects";
 
 export async function GET(
 	request: Request,
@@ -23,6 +24,11 @@ export async function GET(
 		return NextResponse.json({ statusMessage: "success", result });
 	} catch (err) {
 		console.error(err);
-		return NextResponse.json({ statusMessage: "error", error: "An unknown server error occurred." });
+
+		if (err instanceof AppError) {
+			return NextResponse.json({ statusMessage: "error", error: err.message }, { status: err.statusCode });
+		}
+
+		return NextResponse.json({ statusMessage: "error", error: GLOBAL_SERVER_ERROR }, { status: 500 });
 	}
 }

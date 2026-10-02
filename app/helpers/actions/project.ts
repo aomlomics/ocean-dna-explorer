@@ -27,6 +27,7 @@ import type {
 } from "@/app/generated/prisma/models";
 import { get } from "@vercel/blob";
 import { getSchemaParseError, schemaParseErrorFunction } from "../queries";
+import { GLOBAL_SERVER_ERROR } from "@/types/objects";
 
 async function parseProjectFile({
 	channel,
@@ -244,7 +245,7 @@ async function parseProjectFile({
 		};
 	} catch (err) {
 		console.error(err);
-		await channel.stream.error("An unknown server error occurred.");
+		await channel.stream.error(GLOBAL_SERVER_ERROR);
 		throw err;
 	}
 }
@@ -356,7 +357,7 @@ async function parseLibraryFile({
 		return { libraries, libraryMd5 };
 	} catch (err) {
 		console.error(err);
-		await channel.stream.error("An unknown server error occurred.");
+		await channel.stream.error(GLOBAL_SERVER_ERROR);
 		throw err;
 	}
 }
@@ -466,7 +467,7 @@ async function parseSampleFile({
 		return { samples, sampleMd5 };
 	} catch (err) {
 		console.error(err);
-		await channel.stream.error("An unknown server error occurred.");
+		await channel.stream.error(GLOBAL_SERVER_ERROR);
 		throw err;
 	}
 }

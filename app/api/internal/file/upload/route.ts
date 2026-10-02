@@ -1,6 +1,6 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { auth } from "@clerk/nextjs/server";
-import { RolePermissions } from "@/types/objects";
+import { AppError, RolePermissions } from "@/types/objects";
 import { NextResponse } from "next/server";
 import { prismaImages } from "@/app/helpers/prismaImages";
 
@@ -18,9 +18,12 @@ export async function POST(request: Request) {
 				const { userId, sessionClaims } = await auth();
 				const role = sessionClaims?.metadata.role;
 
-				if (!userId || !role || !RolePermissions[role].includes("contribute")) {
-					console.log("Blob upload unauthorized");
-					throw new Error("Unauthorized");
+				if (!userId) {
+					throw new AppError("Unauthorized", 401);
+				}
+
+				if (!role || !RolePermissions[role].includes("contribute")) {
+					throw new AppError("Must have contributor role to upload files", 403);
 				}
 
 				return {
@@ -42,11 +45,17 @@ export async function POST(request: Request) {
 				}
 
 				// Run any logic after the file upload completed
-				const { userId } = JSON.parse(tokenPayload);
+				const payload = JSON.parse(tokenPayload) as {
+					userId?: string;
+				};
+				if (!payload.userId) {
+					throw new Error("Missing user ID in token payload");
+				}
+
 				await prismaImages.blobFile.create({
 					data: {
 						url: blob.url,
-						userId: userId as string
+						userId: payload.userId
 					}
 				});
 			}
@@ -54,10 +63,12 @@ export async function POST(request: Request) {
 
 		return NextResponse.json(jsonResponse);
 	} catch (err) {
-		const error = err as Error;
-		return NextResponse.json(
-			{ error: error.message }
-			// The webhook will retry 5 times waiting for a 200
-		);
+		console.error(err);
+
+		if (err instanceof AppError) {
+			return NextResponse.json({ error: err.message }, { status: err.statusCode });
+		}
+
+		return NextResponse.json({ error: "Internal server error" }, { status: 500 });
 	}
 }

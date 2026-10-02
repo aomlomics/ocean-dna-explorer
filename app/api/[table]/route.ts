@@ -3,11 +3,11 @@ import { parseApiQuery } from "@/app/helpers/api";
 import { getTableName } from "@/app/helpers/schema";
 import { deepMerge, getLocationsInsideShapes } from "@/app/helpers/utils";
 import type { NetworkPacket } from "@/types/globals";
-import { cookies } from "next/headers";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { fetchBlast } from "@/app/helpers/blast";
 import { prisma, trustedPrisma } from "@/app/helpers/prisma";
+import { AppError, GLOBAL_SERVER_ERROR } from "@/types/objects";
 
 export async function GET(
 	request: Request,
@@ -17,8 +17,6 @@ export async function GET(
 
 	const { sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata?.role;
-
-	const cookieStore = await cookies();
 
 	try {
 		const model = getTableName(table);
@@ -40,11 +38,10 @@ export async function GET(
 		let BlastQueryResults;
 		let existingBlastDate;
 		if (blast) {
-			({ BlastQueryResults, existingBlastDate } = await fetchBlast(
-				blast,
-				{ role, token: await getToken({ expiresInSeconds: 60 }) },
-				cookieStore
-			));
+			({ BlastQueryResults, existingBlastDate } = await fetchBlast(blast, {
+				role,
+				token: await getToken({ expiresInSeconds: 60 })
+			}));
 
 			const baseFeatureWhere = {
 				featureid: {
@@ -99,13 +96,21 @@ export async function GET(
 
 			return NextResponse.json({ statusMessage: "success", result, BlastQueryResults, existingBlastDate });
 		} else {
-			return NextResponse.json({
-				statusMessage: "error",
-				error: `No ${model} matching the search parameters could be found.`
-			});
+			return NextResponse.json(
+				{
+					statusMessage: "error",
+					error: `No ${model} matching the search parameters could be found.`
+				},
+				{ status: 400 }
+			);
 		}
 	} catch (err) {
 		console.error(err);
-		return NextResponse.json({ statusMessage: "error", error: "An unknown server error occurred." });
+
+		if (err instanceof AppError) {
+			return NextResponse.json({ statusMessage: "error", error: err.message }, { status: err.statusCode });
+		}
+
+		return NextResponse.json({ statusMessage: "error", error: GLOBAL_SERVER_ERROR }, { status: 500 });
 	}
 }

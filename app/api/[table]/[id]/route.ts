@@ -2,6 +2,7 @@ import { parseApiQuery } from "@/app/helpers/api";
 import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { getTableName } from "@/app/helpers/schema";
 import type { NetworkPacket } from "@/types/globals";
+import { AppError, GLOBAL_SERVER_ERROR } from "@/types/objects";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -13,9 +14,9 @@ export async function GET(
 	try {
 		const model = getTableName(table);
 
-		const parsedId = parseInt(id);
-		if (Number.isNaN(parsedId)) {
-			return NextResponse.json({ statusMessage: "error", error: `Invalid ID: ${parsedId}.` });
+		const parsedId = Number(id);
+		if (!Number.isInteger(parsedId)) {
+			return NextResponse.json({ statusMessage: "error", error: `Invalid ID: ${parsedId}.` }, { status: 400 });
 		}
 
 		const { searchParams } = new URL(request.url);
@@ -38,13 +39,21 @@ export async function GET(
 		if (result) {
 			return NextResponse.json({ statusMessage: "success", result });
 		} else {
-			return NextResponse.json({
-				statusMessage: "error",
-				error: `No ${model} matching the search parameters could be found.`
-			});
+			return NextResponse.json(
+				{
+					statusMessage: "error",
+					error: `No ${model} matching the search parameters could be found.`
+				},
+				{ status: 404 }
+			);
 		}
 	} catch (err) {
 		console.error(err);
-		return NextResponse.json({ statusMessage: "error", error: "An unknown server error occurred." });
+
+		if (err instanceof AppError) {
+			return NextResponse.json({ statusMessage: "error", error: err.message }, { status: err.statusCode });
+		}
+
+		return NextResponse.json({ statusMessage: "error", error: GLOBAL_SERVER_ERROR }, { status: 500 });
 	}
 }

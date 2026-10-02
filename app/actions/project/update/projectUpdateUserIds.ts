@@ -5,7 +5,7 @@ import { prisma } from "@/app/helpers/prisma";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { ProjectSchema } from "@/prisma/generated/zod";
 import type { NetworkPacket, Role } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import { GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
 export default async function projectUpdateUserIdsAction(
@@ -72,12 +72,13 @@ export default async function projectUpdateUserIdsAction(
 
 		return { statusMessage: "success" };
 	} catch (err: any) {
+		console.error(err);
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			return prismaErr;
 		}
 
-		console.error(err);
-		return { statusMessage: "error", error: "An unknown server error occurred." };
+		return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 	}
 }

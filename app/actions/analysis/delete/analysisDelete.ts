@@ -6,7 +6,7 @@ import { prisma } from "@/app/helpers/prisma";
 import { disconnectFeatsFromSamples, disconnectTaxaFromSamples, handlePrismaError } from "@/app/helpers/queries";
 import { AnalysisSchema } from "@/prisma/generated/zod";
 import type { NetworkPacket } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";
 import z from "zod";
@@ -122,12 +122,17 @@ export default async function analysisDeleteAction(
 
 		return { statusMessage: "success" };
 	} catch (err: any) {
+		console.error(err);
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			return prismaErr;
 		}
 
-		console.error(err);
-		return { statusMessage: "error", error: "An unknown server error occurred." };
+		if (err instanceof AppError) {
+			return { statusMessage: "error", error: err.message };
+		}
+
+		return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 	}
 }

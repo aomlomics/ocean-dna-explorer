@@ -15,7 +15,7 @@ import {
 } from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
 import type { ProgressStream } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";
 
@@ -71,9 +71,7 @@ async function doEdit(
 			if (!parseResult) {
 				return;
 			}
-		} catch (err) {
-			const error = err as Error;
-			await stream.error(error.message);
+		} catch {
 			return;
 		}
 
@@ -329,13 +327,16 @@ async function doEdit(
 			return true;
 		}
 	} catch (err: any) {
+		console.error(err);
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			await stream.error(prismaErr.error);
+		} else if (err instanceof AppError) {
+			await stream.error(err.message);
+		} else {
+			await stream.error(GLOBAL_SERVER_ERROR);
 		}
-
-		console.error(err);
-		return { statusMessage: "error", error: "An unknown server error occurred." };
 	}
 }
 
@@ -348,9 +349,11 @@ export default async function assignEditAction(
 	const stream = createProgressStream();
 
 	if (url) {
-		const validBlob = await validateBlobs([url]);
-		if (!validBlob) {
-			stream.error("File is not valid");
+		try {
+			await validateBlobs([url]);
+		} catch (err) {
+			console.error(err);
+			stream.error(err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR);
 			stream.close();
 			return stream.readable;
 		}

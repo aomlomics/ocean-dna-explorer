@@ -1,11 +1,11 @@
 "use client";
 
-import { fetcherAllSuccess } from "@/app/helpers/utils";
+import { fetcherAll } from "@/app/helpers/utils";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
 import { TaxonomicRanks } from "@/types/objects";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
-import type { SuccessPacket } from "@/types/globals";
+import type { NetworkPacket, SuccessPacket } from "@/types/globals";
 import type {
 	AssignmentModel,
 	LibraryModel,
@@ -69,7 +69,7 @@ export default function TaxonomyData({ pathnamePrefix }: { pathnamePrefix: strin
 			`/api/internal/taxonomy/swapToTable?fields=taxonomy,${TaxonomicRanks.join(",")}&trusted=${trusted}&${stringParams}`,
 			`/api/internal/sample/swapToTable?relations=Libraries&relationsFields=library,id,lib_id&trusted=${trusted}&${stringParams}`
 		],
-		fetcherAllSuccess,
+		fetcherAll,
 		{ revalidateOnFocus: false }
 	);
 
@@ -82,7 +82,17 @@ export default function TaxonomyData({ pathnamePrefix }: { pathnamePrefix: strin
 			};
 		}
 
-		const [assignmentData, taxonomyData, sampleData] = data as [SuccessPacket, SuccessPacket, SuccessPacket];
+		const [assignmentData, taxonomyData, sampleData] = data as [NetworkPacket, NetworkPacket, NetworkPacket];
+
+		if (assignmentData.statusMessage === "error") {
+			throw new Error("Assignments query failed: " + assignmentData.error);
+		}
+		if (taxonomyData.statusMessage === "error") {
+			throw new Error("Taxonomies query failed: " + taxonomyData.error);
+		}
+		if (sampleData.statusMessage === "error") {
+			throw new Error("Samples query failed: " + sampleData.error);
+		}
 
 		//parse responses to properly type objects
 		const assignments: {

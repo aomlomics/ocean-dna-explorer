@@ -1,7 +1,7 @@
 import type { NetworkPacket, UserObject } from "@/types/globals";
 import { NextResponse } from "next/server";
 import { auth, clerkClient, type User } from "@clerk/nextjs/server";
-import { RolePermissions } from "@/types/objects";
+import { GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 
 function getUsersResult(users: User[], emails?: boolean): UserObject[] {
 	return users.map((u) => ({
@@ -18,7 +18,7 @@ function getUsersResult(users: User[], emails?: boolean): UserObject[] {
 }
 
 export async function GET(request: Request): Promise<NextResponse<NetworkPacket>> {
-	const { sessionClaims } = await auth();
+	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
 	const { searchParams } = new URL(request.url);
@@ -27,11 +27,26 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 	const query = searchParams.get("query");
 	const ids = searchParams.get("userIds");
 
-	if (emails && (!role || !RolePermissions[role].includes("manageUsers"))) {
-		return NextResponse.json({
-			statusMessage: "error",
-			error: "Unauthorized"
-		});
+	if (emails) {
+		if (!userId) {
+			return NextResponse.json(
+				{
+					statusMessage: "error",
+					error: "Unauthorized"
+				},
+				{ status: 401 }
+			);
+		}
+
+		if (!role || !RolePermissions[role].includes("manageUsers")) {
+			return NextResponse.json(
+				{
+					statusMessage: "error",
+					error: "Must have manageUsers role to see user emails"
+				},
+				{ status: 403 }
+			);
+		}
 	}
 
 	const client = await clerkClient();
@@ -54,6 +69,6 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 		});
 	} catch (err) {
 		console.error(err);
-		return NextResponse.json({ statusMessage: "error", error: "An unknown server error occurred." });
+		return NextResponse.json({ statusMessage: "error", error: GLOBAL_SERVER_ERROR }, { status: 500 });
 	}
 }

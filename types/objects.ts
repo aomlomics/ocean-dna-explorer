@@ -98,3 +98,14 @@ export const TypeSeparators = {
 	float: "/",
 	integer: "/"
 };
+
+export const GLOBAL_SERVER_ERROR = "An unknown server error occurred.";
+
+export class AppError extends Error {
+	constructor(
+		message: string,
+		public statusCode = 400
+	) {
+		super(message);
+	}
+}

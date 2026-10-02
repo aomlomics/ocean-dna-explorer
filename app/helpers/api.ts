@@ -13,6 +13,7 @@ import {
 } from "./utils";
 import { DeadValueEnum, DeadValueNumbers, DeadValues } from "@/types/enums";
 import { insertBlastIntoQuery, parseBlastRequest } from "./blast";
+import { AppError } from "@/types/objects";
 
 export function buildParams(searchParams: URLSearchParams, query: URLSearchParams, ignoreParams?: string[]) {
 	const tempParams = new URLSearchParams(searchParams);
@@ -62,7 +63,7 @@ export function deepWhere(
 			return {};
 		}
 	} else {
-		throw new Error(`No path found from table "${start}" to table "${target}".`);
+		throw new AppError(`No path found from table "${start}" to table "${target}".`);
 	}
 }
 
@@ -83,7 +84,7 @@ const queryModes = [
 	"deadValue",
 	"boolean"
 ];
-export function parseToQuery(
+function parseToQuery(
 	table: Uncapitalize<ModelName>,
 	queryArr: [string, string] | ParamsArrayField | ParamsArrayRelation,
 	options: { swapTo?: Uncapitalize<ModelName>; invalidFieldError?: string }
@@ -124,11 +125,11 @@ export function parseToQuery(
 
 	if (mode) {
 		if (!queryModes.includes(mode)) {
-			throw new Error(`Query mode "${mode}" not supported.`);
+			throw new AppError(`Query mode "${mode}" not supported.`);
 		}
 
 		if ((mode === "null" || mode === "notNull") && queryArr[2] != null) {
-			throw new Error('Modes "null" and "notNull" do not support values.');
+			throw new AppError('Modes "null" and "notNull" do not support values.');
 		}
 	}
 
@@ -154,14 +155,14 @@ export function parseToQuery(
 				};
 			}
 		} else {
-			throw new Error(`Mode may not be null or notNull, as field named "${field}" is not optional.`);
+			throw new AppError(`Mode may not be null or notNull, as field named "${field}" is not optional.`);
 		}
 	} else if (mode === "in" || mode === "notIn") {
 		//uncompress if necessary
 		if (typeof value === "string" && value.startsWith(COMPRESSION_FORMAT)) {
 			value = JSON.parse(decompressURIComponent(value));
 			if (!Array.isArray(value) || !value.every((v) => typeof v !== "object")) {
-				throw new Error(`If value is string, it must be an array of primitives in ${COMPRESSION_FORMAT} format.`);
+				throw new AppError(`If value is string, it must be an array of primitives in ${COMPRESSION_FORMAT} format.`);
 			}
 		}
 
@@ -172,10 +173,10 @@ export function parseToQuery(
 		};
 	} else if (zodType.type === "boolean") {
 		if (mode && mode !== "boolean") {
-			throw new Error(`Mode must be boolean, but is ${mode}.`);
+			throw new AppError(`Mode must be boolean, but is ${mode}.`);
 		}
 		if (typeof value !== "boolean") {
-			throw new Error(`Value must be boolean, but was provided ${typeof value}.`);
+			throw new AppError(`Value must be boolean, but was provided ${typeof value}.`);
 		}
 
 		//TODO: test if booleans work properly
@@ -188,7 +189,7 @@ export function parseToQuery(
 		if (mode) {
 			if (mode === "deadValue") {
 				if (!DeadValues.includes(typedVal) && typedVal.toLowerCase() !== "any") {
-					throw new Error(`Invalid deadValue option "${typedVal}".`);
+					throw new AppError(`Invalid deadValue option "${typedVal}".`);
 				}
 
 				if (typedVal.toLowerCase() === "any") {
@@ -240,7 +241,7 @@ export function parseToQuery(
 			const typedVal = value as string;
 
 			if (!DeadValues.includes(typedVal) && typedVal.toLowerCase() !== "any") {
-				throw new Error(`Invalid deadValue option "${typedVal}".`);
+				throw new AppError(`Invalid deadValue option "${typedVal}".`);
 			}
 
 			if (typedVal.toLowerCase() === "any") {
@@ -293,7 +294,7 @@ export function parseToQuery(
 			const typedVal = value as string;
 
 			if (!DeadValues.includes(typedVal) && typedVal.toLowerCase() !== "any") {
-				throw new Error(`Invalid deadValue option "${typedVal}".`);
+				throw new AppError(`Invalid deadValue option "${typedVal}".`);
 			}
 
 			if (typedVal.toLowerCase() === "any") {
@@ -321,7 +322,7 @@ export function parseToQuery(
 
 			const dateVal = new Date(typedVal);
 			if (isNaN(dateVal.valueOf())) {
-				throw new Error(`The field "${field}" is a date field, but "${typedVal}" is not a date.`);
+				throw new AppError(`The field "${field}" is a date field, but "${typedVal}" is not a date.`);
 			}
 
 			let lteOffset;
@@ -393,7 +394,7 @@ function advancedRecurse(
 	return { OR: paramsE.map((child) => advancedRecurse(table, child)) };
 }
 
-export function parseAdvancedQuery(
+function parseAdvancedQuery(
 	table: Uncapitalize<ModelName>,
 	paramsArray: ParamsArray,
 	swapTo?: Uncapitalize<ModelName>
@@ -401,7 +402,7 @@ export function parseAdvancedQuery(
 	return { AND: paramsArray.map((e) => advancedRecurse(table, e, swapTo)) };
 }
 
-export function parseSearchQuery(table: Uncapitalize<ModelName>, search: string) {
+function parseSearchQuery(table: Uncapitalize<ModelName>, search: string) {
 	//search entire table for value
 	const ors = [] as { [field: string]: { contains: string; mode: "insensitive" } }[];
 	for (const field of TableMetadata[table].enumSchema.options) {
@@ -417,7 +418,7 @@ export function parseSearchQuery(table: Uncapitalize<ModelName>, search: string)
 	if (ors.length) {
 		return { OR: ors };
 	} else {
-		throw new Error("Table has no string fields to search.");
+		throw new AppError("Table has no string fields to search.");
 	}
 }
 
@@ -470,7 +471,7 @@ export function parseApiQuery(
 	//blast query
 	const blast = parseBlastRequest(newParams);
 	if (blast && !options?.extras?.blast && !ignoreExtraOptions) {
-		throw new Error("The blastQuery option is not allowed on this route.");
+		throw new AppError("The blastQuery option is not allowed on this route.");
 	}
 
 	//construct shapes
@@ -478,7 +479,7 @@ export function parseApiQuery(
 	newParams.delete("polygon");
 	newParams.delete("circle");
 	if (shapes && !options?.extras?.shapes) {
-		throw new Error("The polygon and circle options are not allowed on this route.");
+		throw new AppError("The polygon and circle options are not allowed on this route.");
 	}
 	const hasLocationData =
 		TableMetadata[table].enumSchema.options.includes("decimalLatitude") &&
@@ -490,7 +491,7 @@ export function parseApiQuery(
 	if (orderByStr != null) {
 		if (options?.features && !options.features.orderBy) {
 			if (!ignoreExtraOptions) {
-				throw new Error("The orderBy option is not allowed on this route.");
+				throw new AppError("The orderBy option is not allowed on this route.");
 			}
 		} else {
 			const [field, order] = orderByStr.split(",");
@@ -506,10 +507,10 @@ export function parseApiQuery(
 						}
 					};
 				} else {
-					throw new Error("The orderBy option must be a field or a -to-many relation.");
+					throw new AppError("The orderBy option must be a field or a -to-many relation.");
 				}
 			} else {
-				throw new Error("The orderBy option must be a field and order separated by a comma.");
+				throw new AppError("The orderBy option must be a field and order separated by a comma.");
 			}
 		}
 	}
@@ -520,7 +521,7 @@ export function parseApiQuery(
 	if (fields != null) {
 		if (options?.features && !options.features.fields) {
 			if (!ignoreExtraOptions) {
-				throw new Error("The fields option is not allowed on this route.");
+				throw new AppError("The fields option is not allowed on this route.");
 			}
 		} else {
 			const split = fields.split(",").reduce(
@@ -541,7 +542,7 @@ export function parseApiQuery(
 	if (distinct != null) {
 		if (options?.features && !options.features.distinct) {
 			if (!ignoreExtraOptions) {
-				throw new Error("The distinct option is not allowed on this route.");
+				throw new AppError("The distinct option is not allowed on this route.");
 			}
 		} else {
 			const split = distinct.split(",");
@@ -556,7 +557,7 @@ export function parseApiQuery(
 	if (relCounts != null) {
 		if (options?.features && !options.features.relCounts) {
 			if (!ignoreExtraOptions) {
-				throw new Error("The relCounts option is not allowed on this route.");
+				throw new AppError("The relCounts option is not allowed on this route.");
 			}
 		} else {
 			const countQuery = {
@@ -593,15 +594,15 @@ export function parseApiQuery(
 	if (relations != null) {
 		if (options?.features && !options.features.relations) {
 			if (!ignoreExtraOptions) {
-				throw new Error("The relations option is not allowed on this route.");
+				throw new AppError("The relations option is not allowed on this route.");
 			}
 		} else {
 			const relTables = new Set() as Set<Uncapitalize<ModelName>>;
 			for (const r of relations.split(",")) {
-				const relTableArr = getTableName(r.trim().toLowerCase());
-				if (!relTableArr) {
-					throw new Error(`Relation with name "${r}" does not exist in database.`);
-				}
+				const relTableArr = getTableName(
+					r.trim().toLowerCase(),
+					`Relation with name "${r}" does not exist in database.`
+				);
 				relTables.add(relTableArr);
 			}
 
@@ -610,7 +611,7 @@ export function parseApiQuery(
 
 			if (relationsAllFields != null) {
 				if (relationsFields.length) {
-					throw new Error("Only one of relationsFields and relationsAllFields may be specified.");
+					throw new AppError("Only one of relationsFields and relationsAllFields may be specified.");
 				}
 
 				const relAllLower = relationsAllFields.toLowerCase();
@@ -629,14 +630,14 @@ export function parseApiQuery(
 							);
 
 							if (!allFieldsArr) {
-								throw new Error(
+								throw new AppError(
 									`Invalid relationsAllFields: "${relationsAllFields}". The relationsAllFields option must be "true", "false", or a relation provided in the "relations" field. Value was "${r}".`
 								);
 							}
 
 							const relTable = allFieldsArr[0] as Uncapitalize<ModelName>;
 							if (!relTables.has(relTable)) {
-								throw new Error(
+								throw new AppError(
 									`The relation "${relTable}" in the relationsAllFields option must be included in the relations option.`
 								);
 							}
@@ -652,14 +653,14 @@ export function parseApiQuery(
 					const [relTable, ...fields] = rfs.split(",").map((e) => e.trim());
 
 					if (!relTable || !fields.length) {
-						throw new Error(
+						throw new AppError(
 							`Invalid relationsFields: "${rfs}". The relationsFields option must be a table name and a list of fields, all separated by commas.`
 						);
 					}
 
 					const relModel = getTableName(relTable, `Invalid table name for relationsFields: "${relTable}".`);
 					if (!relTables.has(relModel)) {
-						throw new Error(
+						throw new AppError(
 							`The relation "${relModel}" in the relationsFields option must be included in the relations option.`
 						);
 					}
@@ -673,7 +674,7 @@ export function parseApiQuery(
 			for (const rt of relTables) {
 				const path = TableMetadata[table].relationPaths[rt];
 				if (!path) {
-					throw new Error(`No path exists from ${table} to ${rt}.`);
+					throw new AppError(`No path exists from ${table} to ${rt}.`);
 				}
 
 				let add = true;
@@ -745,11 +746,11 @@ export function parseApiQuery(
 		}
 	} else {
 		if (relationsFields.length) {
-			throw new Error("The relationsFields option requires the relations option.");
+			throw new AppError("The relationsFields option requires the relations option.");
 		}
 
 		if (relationsAllFields != null) {
-			throw new Error("The relationsAllFields option requires the relations option.");
+			throw new AppError("The relationsAllFields option requires the relations option.");
 		}
 	}
 
@@ -765,23 +766,23 @@ export function parseApiQuery(
 	if (tempLimit != null) {
 		if (!options?.extras?.limit) {
 			if (!ignoreExtraOptions) {
-				throw new Error("The limit option is not allowed on this route.");
+				throw new AppError("The limit option is not allowed on this route.");
 			}
 		} else {
 			parsedLimit = Number(tempLimit);
 			if (!Number.isInteger(parsedLimit) || parsedLimit < 1) {
-				throw new Error(`Invalid limit: "${tempLimit}". The limit option must be a positive integer.`);
+				throw new AppError(`Invalid limit: "${tempLimit}". The limit option must be a positive integer.`);
 			}
 
 			if (page != null) {
 				parsedPage = Number(page);
 				if (!Number.isInteger(parsedPage) || parsedPage < 1) {
-					throw new Error(`Invalid page: "${page}". The page option must be a positive integer.`);
+					throw new AppError(`Invalid page: "${page}". The page option must be a positive integer.`);
 				}
 			}
 		}
 	} else if (page != null && !ignoreExtraOptions) {
-		throw new Error("The page option requires the limit option.");
+		throw new AppError("The page option requires the limit option.");
 	}
 
 	//get deep relation data
@@ -791,7 +792,7 @@ export function parseApiQuery(
 	if (deepRelations != null) {
 		if (!options?.extras?.deepRelations) {
 			if (!ignoreExtraOptions) {
-				throw new Error("The deepRelations option is not allowed on this route.");
+				throw new AppError("The deepRelations option is not allowed on this route.");
 			}
 		} else {
 			if (deepRelations.toLowerCase() !== "false") {
@@ -819,7 +820,7 @@ export function parseApiQuery(
 					const path = TableMetadata[table].relationPaths[dr];
 
 					if (!path) {
-						throw new Error(`No path exists from "${table}" to "${dr}".`);
+						throw new AppError(`No path exists from "${table}" to "${dr}".`);
 					}
 
 					if (!path.some((p) => p.type.endsWith("many"))) {
@@ -857,7 +858,7 @@ export function parseApiQuery(
 	const getSamples = newParams.get("getSamples")?.toLowerCase() === "true";
 	newParams.delete("getSamples");
 	if (getSamples && !options?.extras?.shapes && !ignoreExtraOptions) {
-		throw new Error("The getSamples option is not allowed on this route.");
+		throw new AppError("The getSamples option is not allowed on this route.");
 	}
 
 	//searching
@@ -869,11 +870,11 @@ export function parseApiQuery(
 		//advanced search
 		if (options?.features && !options.features.advanced) {
 			if (!ignoreExtraOptions) {
-				throw new Error("The advanced option is not allowed on this route.");
+				throw new AppError("The advanced option is not allowed on this route.");
 			}
 		} else {
 			if (Array.from(newParams).length) {
-				throw new Error("Advanced search may not include other filter parameters.");
+				throw new AppError("Advanced search may not include other filter parameters.");
 			}
 
 			const parsed = JSON.parse(advanced) as ParamsArray;
@@ -900,11 +901,11 @@ export function parseApiQuery(
 			//list of ids
 			if (options?.features && !options.features.ids) {
 				if (!ignoreExtraOptions) {
-					throw new Error("The ids option is not allowed on this route.");
+					throw new AppError("The ids option is not allowed on this route.");
 				}
 			} else {
 				if (Array.from(newParams).length) {
-					throw new Error("Filtering with a list of ids may not include other filter parameters.");
+					throw new AppError("Filtering with a list of ids may not include other filter parameters.");
 				}
 
 				const parsedIds = [] as number[];
@@ -912,7 +913,7 @@ export function parseApiQuery(
 					if (id) {
 						const parsed = parseInt(id);
 						if (Number.isNaN(parsed)) {
-							throw new Error(`Invalid ID: "${id}". ID must be an integer.`);
+							throw new AppError(`Invalid ID: "${id}". ID must be an integer.`);
 						}
 						parsedIds.push(parsed);
 					}
@@ -928,11 +929,11 @@ export function parseApiQuery(
 			//string search
 			if (options?.features && !options.features.search) {
 				if (!ignoreExtraOptions) {
-					throw new Error("The search option is not allowed on this route.");
+					throw new AppError("The search option is not allowed on this route.");
 				}
 			} else {
 				if (Array.from(newParams).length) {
-					throw new Error("Search may not include other filter parameters.");
+					throw new AppError("Search may not include other filter parameters.");
 				}
 
 				query.where = parseSearchQuery(table, search);
@@ -967,7 +968,7 @@ export function parseApiQuery(
 			if (Object.keys(tempWhere).length) {
 				if (options?.features && !options.features.filters) {
 					if (!ignoreExtraOptions) {
-						throw new Error("Field filtering is not allowed on this route.");
+						throw new AppError("Field filtering is not allowed on this route.");
 					}
 				} else {
 					query.where = tempWhere;

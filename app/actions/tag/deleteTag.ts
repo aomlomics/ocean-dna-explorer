@@ -2,8 +2,9 @@
 
 import type { TagModel } from "@/app/generated/prisma/models/Tag";
 import { prisma } from "@/app/helpers/prisma";
+import { handlePrismaError } from "@/app/helpers/queries";
 import type { NetworkPacket } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import { GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 
 export default async function deleteTagAction(id: TagModel["id"]): Promise<NetworkPacket> {
@@ -26,8 +27,14 @@ export default async function deleteTagAction(id: TagModel["id"]): Promise<Netwo
 		});
 
 		return { statusMessage: "success" };
-	} catch (err) {
-		const error = err as Error;
-		return { statusMessage: "error", error: error.message };
+	} catch (err: any) {
+		console.error(err);
+
+		const prismaErr = handlePrismaError(err);
+		if (prismaErr) {
+			return prismaErr;
+		}
+
+		return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 	}
 }

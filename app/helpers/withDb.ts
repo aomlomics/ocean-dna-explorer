@@ -6,16 +6,25 @@ import { prisma } from "./prisma";
 import type { ModelName } from "@/types/tableMetadata";
 import { capitalizeTable } from "./utils";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
+import { AppError, RolePermissions } from "@/types/objects";
 
 export async function validateBlobs(urls: BlobFileModel["url"][]) {
 	//skip check in development only, because onUploadCompleted does not trigger
 	if (process.env.NODE_ENV === "development") {
-		return true;
+		return;
 	}
 
-	const { userId } = await auth();
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata.role;
 	if (!userId) {
-		return false;
+		throw new AppError("Must be signed in to submit files.", 401);
+	}
+	if (!role || (!RolePermissions[role].includes("contribute") && !RolePermissions[role].includes("manageDatabase"))) {
+		throw new AppError("Invalid permissions for submitting files.", 403);
+	}
+
+	if (!urls.length) {
+		throw new AppError("Must provide at least one file.");
 	}
 
 	try {
@@ -25,7 +34,7 @@ export async function validateBlobs(urls: BlobFileModel["url"][]) {
 			let attempts = 0;
 			while (!found) {
 				if (++attempts > 10) {
-					return false;
+					throw new AppError(`Could not find the submitted file with url "${url}" in the database.`, 400);
 				}
 
 				found = !!(await prismaImages.blobFile.findUnique({
@@ -51,14 +60,12 @@ export async function validateBlobs(urls: BlobFileModel["url"][]) {
 				})
 			)
 		);
-
-		return true;
 	} catch (err) {
 		// return false only if a blobFile to delete was not found, otherwise raise the error
 		if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2025") {
-			return false;
+			throw new AppError("One or more files could not be deleted from the database.", 400);
 		} else {
-			throw err;
+			throw new AppError("An unexpected error occurred while validating the submitted files.", 500);
 		}
 	}
 }
@@ -179,7 +186,7 @@ export async function getImplicitJoinTable({
 			(join.left.table === capsTo && join.right.table === capsFrom)
 	);
 	if (!found) {
-		throw new Error(`No implicit join table found between ${from} and ${to}.`);
+		throw new AppError(`No implicit join table found between ${from} and ${to}.`);
 	}
 
 	return {

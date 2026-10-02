@@ -29,9 +29,11 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 
 		return NextResponse.json({ statusMessage: "success" });
 	} catch (err: any) {
+		console.error(err);
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
-			return NextResponse.json(prismaErr);
+			return NextResponse.json(prismaErr, { status: 400 });
 		}
 
 		const error = err as Error;

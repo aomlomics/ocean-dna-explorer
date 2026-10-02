@@ -7,7 +7,7 @@ import {
 	type ImagePartial
 } from "@/prismaImages/generated/zod";
 import type { NetworkPacket } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import { del } from "@vercel/blob";
@@ -48,12 +48,12 @@ export default async function addImageAction({
 		return { statusMessage: "error", error: "File URL is missing from image." };
 	}
 
-	if (!(await validateBlobs([image.url]))) {
-		return { statusMessage: "error", error: "File is not valid." };
-	}
-
 	let deleteDbImageOnError = false;
 	try {
+		if (image.url) {
+			await validateBlobs([image.url]);
+		}
+
 		const parsedImage = ImageOptionalDefaultsSchema.parse({ ...image, userId });
 		let parsedAttribution;
 		if (attribution) {
@@ -72,6 +72,8 @@ export default async function addImageAction({
 		}
 		deleteDbImageOnError = true;
 	} catch (err: any) {
+		console.error(err);
+
 		await del(image.url);
 
 		if (deleteDbImageOnError) {
@@ -91,8 +93,11 @@ export default async function addImageAction({
 			return prismaErr;
 		}
 
-		console.error(err);
-		return { statusMessage: "error", error: "An unknown server error occurred." };
+		if (err instanceof AppError) {
+			return { statusMessage: "error", error: err.message };
+		}
+
+		return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 	}
 
 	if (target) {
@@ -107,6 +112,8 @@ export default async function addImageAction({
 				}
 			});
 		} catch (err: any) {
+			console.error(err);
+
 			await prismaImages.$transaction(async (tx) => {
 				if (attribution) {
 					await tx.attribution.delete({
@@ -128,8 +135,7 @@ export default async function addImageAction({
 				return prismaErr;
 			}
 
-			console.error(err);
-			return { statusMessage: "error", error: "An unknown server error occurred." };
+			return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 		}
 	}
 

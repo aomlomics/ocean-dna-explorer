@@ -25,5 +25,6 @@ export default async function remakeBlastDatabaseAction(formData?: FormData) {
 		});
 	} catch (err) {
 		console.error(err);
+		throw err;
 	}
 }

@@ -1,21 +1,22 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { RolePermissions } from "@/types/objects";
+import { GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import type { NetworkPacket } from "@/types/globals";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import { del } from "@vercel/blob";
 import { prisma } from "@/app/helpers/prisma";
+import { handlePrismaError } from "@/app/helpers/queries";
 
 export default async function deleteImageAction(id: number): Promise<NetworkPacket> {
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata?.role;
+
+	if (!userId || !role) {
+		return { statusMessage: "error", error: "Unauthorized" };
+	}
+
 	try {
-		const { userId, sessionClaims } = await auth();
-		const role = sessionClaims?.metadata?.role;
-
-		if (!userId || !role) {
-			return { statusMessage: "error", error: "Unauthorized" };
-		}
-
 		// Find image to get its blob URL
 		const image = await prismaImages.image.findUnique({
 			where: {
@@ -38,6 +39,7 @@ export default async function deleteImageAction(id: number): Promise<NetworkPack
 				userIds: true
 			}
 		});
+
 		//TODO: check taxonomy spotlights
 		if (projects.length) {
 			if (!RolePermissions[role].includes("contribute")) {
@@ -58,8 +60,14 @@ export default async function deleteImageAction(id: number): Promise<NetworkPack
 		await prismaImages.image.delete({ where: { id } });
 
 		return { statusMessage: "success" };
-	} catch (err) {
+	} catch (err: any) {
 		console.error(err);
-		return { statusMessage: "error", error: "An unknown server error occurred." };
+
+		const prismaErr = handlePrismaError(err);
+		if (prismaErr) {
+			return prismaErr;
+		}
+
+		return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 	}
 }

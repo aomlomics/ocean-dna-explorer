@@ -21,6 +21,7 @@ import { parseSchemaToObject } from "../schema";
 import type { Channel } from "../progress";
 import { get } from "@vercel/blob";
 import { getSchemaParseError, schemaParseErrorFunction } from "../queries";
+import { AppError, GLOBAL_SERVER_ERROR } from "@/types/objects";
 
 export async function parseAnalysisFile({
 	channel,
@@ -126,7 +127,13 @@ export async function parseAnalysisFile({
 		return { analysis: parsedAnalysis.data, analysisMd5 };
 	} catch (err) {
 		console.error(err);
-		await channel.stream.error("An unknown server error occurred.");
+
+		if (err instanceof AppError) {
+			await channel.stream.error(err.message);
+		} else {
+			await channel.stream.error(GLOBAL_SERVER_ERROR);
+		}
+
 		throw err;
 	}
 }
@@ -279,7 +286,13 @@ export async function parseAssignmentsFile({
 		return { features, taxonomies, assignments, assignmentsMd5 };
 	} catch (err) {
 		console.error(err);
-		await channel.stream.error("An unknown server error occurred.");
+
+		if (err instanceof AppError) {
+			await channel.stream.error(err.message);
+		} else {
+			await channel.stream.error(GLOBAL_SERVER_ERROR);
+		}
+
 		throw err;
 	}
 }
@@ -404,7 +417,13 @@ export async function parseOccurrencesFile({
 		return { occurrences, occurrencesMd5, libIds, featureids };
 	} catch (err) {
 		console.error(err);
-		await channel.stream.error("An unknown server error occurred.");
+
+		if (err instanceof AppError) {
+			await channel.stream.error(err.message);
+		} else {
+			await channel.stream.error(GLOBAL_SERVER_ERROR);
+		}
+
 		throw err;
 	}
 }

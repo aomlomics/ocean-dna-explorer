@@ -1,6 +1,7 @@
 import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { getTableName } from "@/app/helpers/schema";
 import type { NetworkPacket } from "@/types/globals";
+import { AppError, GLOBAL_SERVER_ERROR } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { NextResponse } from "next/server";
 
@@ -12,12 +13,16 @@ export async function GET(
 
 	try {
 		const model = getTableName(table);
+
 		const parsedField = TableMetadata[model].enumSchema.safeParse(distinctField);
 		if (!parsedField.success) {
-			return NextResponse.json({
-				statusMessage: "error",
-				error: `The field named "${distinctField}" does not exist on the table named "${model}".`
-			});
+			return NextResponse.json(
+				{
+					statusMessage: "error",
+					error: `The field named "${distinctField}" does not exist on the table named "${model}".`
+				},
+				{ status: 400 }
+			);
 		}
 
 		const { searchParams } = new URL(request.url);
@@ -37,13 +42,21 @@ export async function GET(
 				result: result.map((e: { [distinctField]: string }) => e[distinctField])
 			});
 		} else {
-			return NextResponse.json({
-				statusMessage: "error",
-				error: `No ${model} matching the search parameters could be found.`
-			});
+			return NextResponse.json(
+				{
+					statusMessage: "error",
+					error: `No ${model} matching the search parameters could be found.`
+				},
+				{ status: 404 }
+			);
 		}
 	} catch (err) {
 		console.error(err);
-		return NextResponse.json({ statusMessage: "error", error: "An unknown server error occurred." });
+
+		if (err instanceof AppError) {
+			return NextResponse.json({ statusMessage: "error", error: err.message }, { status: err.statusCode });
+		}
+
+		return NextResponse.json({ statusMessage: "error", error: GLOBAL_SERVER_ERROR }, { status: 500 });
 	}
 }

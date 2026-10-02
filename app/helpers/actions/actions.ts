@@ -1,3 +1,4 @@
+import { AppError } from "@/types/objects";
 import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 
 export function addToHistory(
@@ -9,7 +10,7 @@ export function addToHistory(
 	//check if changes are valid
 	for (const cha of changes) {
 		if (!TableMetadata[table].enumSchema.options.includes(cha.field)) {
-			throw new Error(
+			throw new AppError(
 				`Invalid Change for editHistory. Field named "${cha.field}" does not exist on table named "${table}".`
 			);
 		}
