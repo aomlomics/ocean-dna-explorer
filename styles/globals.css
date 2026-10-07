@@ -578,7 +578,8 @@ body:has(.tour-layout-root) #main-content {
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.ambient-word-breathe {
+	.ambient-word-breathe,
+	.ambient-logo {
 		animation: none;
 	}
 }

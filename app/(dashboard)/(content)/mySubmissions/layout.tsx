@@ -69,14 +69,16 @@ export default async function MySubmissionsLayout({ children }: { children: Reac
 			{projects.length === 0 ? (
 				<div className="hidden lg:flex card bg-base-200 shadow-sm min-h-65 h-fit hover:shadow-sm transition-shadow overflow-hidden">
 					<div className="card-body">
-						<p className="text-base text-base-content mb-6">No Projects found. Submit a new project to get started.</p>
+						<p className="text-base text-base-content mb-6 max-w-xl pr-40">
+							No Projects found. Submit a new project to get started.
+						</p>
 						<div className="mt-auto">
 							<Link href="/submit/project" className="btn btn-primary">
 								Submit Project
 							</Link>
 						</div>
-						<div className="absolute bottom-5 right-0 w-3/4 h-60 translate-x-1/3 translate-y-1/3">
-							<ProjectIcon className="w-full h-full text-primary" />
+						<div className="absolute bottom-4 right-4 size-36 text-primary pointer-events-none">
+							<ProjectIcon className="size-full!" />
 						</div>
 					</div>
 				</div>

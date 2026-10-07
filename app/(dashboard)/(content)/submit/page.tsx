@@ -30,45 +30,49 @@ export default function Submit() {
 			</header>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-				<div className="card bg-base-200 shadow-sm min-h-65 relative overflow-hidden">
+				<div className="card bg-base-200 shadow-sm min-h-65">
 					<div className="card-body">
-						<div className="w-full h-full flex flex-col" style={{ zIndex: 1 }}>
-							<div>
-								<h2 className="text-2xl text-primary mb-4 font-normal">Project Submission</h2>
-								<p className="text-base text-base-content/80 mb-6">
-									Submit a complete eDNA dataset including sample metadata, environmental measurements, and sequencing
-									data.
-								</p>
+						<div className="grid h-full grid-cols-[minmax(0,1fr)_minmax(6.5rem,40%)] items-stretch gap-4">
+							<div className="flex min-w-0 flex-col">
+								<div>
+									<h2 className="text-2xl text-primary mb-4 font-normal">Project Submission</h2>
+									<p className="text-base text-base-content/80 mb-6">
+										Submit a complete eDNA dataset including sample metadata, environmental measurements, and sequencing
+										data.
+									</p>
+								</div>
+								<div className="mt-auto">
+									<Link href="/submit/project" className="btn btn-primary">
+										Start New Project
+									</Link>
+								</div>
 							</div>
-							<div className="mt-auto">
-								<Link href="/submit/project" className="btn btn-primary">
-									Start New Project
-								</Link>
+							<div className="flex items-end text-primary pointer-events-none">
+								<ProjectIcon className="h-auto! w-full!" />
 							</div>
-						</div>
-						<div className="absolute -bottom-10 right-5 w-2/5 h-4/5 text-primary pointer-events-none">
-							<ProjectIcon className="w-full h-full" />
 						</div>
 					</div>
 				</div>
-				<div className="card bg-base-200 shadow-sm min-h-65 relative overflow-hidden">
+				<div className="card bg-base-200 shadow-sm min-h-65">
 					<div className="card-body">
-						<div className="w-full h-full flex flex-col" style={{ zIndex: 1 }}>
-							<div>
-								<h2 className="text-2xl text-primary mb-4 font-normal">Analysis Submission</h2>
-								<p className="text-base text-base-content/80 mb-6">
-									Share your analysis of existing Ocean DNA Explorer data, including methods, parameters, and
-									interpretations.
-								</p>
+						<div className="grid h-full grid-cols-[minmax(0,1fr)_minmax(6.5rem,40%)] items-stretch gap-4">
+							<div className="flex min-w-0 flex-col">
+								<div>
+									<h2 className="text-2xl text-primary mb-4 font-normal">Analysis Submission</h2>
+									<p className="text-base text-base-content/80 mb-6">
+										Share your analysis of existing Ocean DNA Explorer data, including methods, parameters, and
+										interpretations.
+									</p>
+								</div>
+								<div className="mt-auto">
+									<Link href="/submit/analysis" className="btn btn-primary">
+										Start New Analysis
+									</Link>
+								</div>
 							</div>
-							<div className="mt-auto">
-								<Link href="/submit/analysis" className="btn btn-primary">
-									Start New Analysis
-								</Link>
+							<div className="flex items-end text-primary pointer-events-none">
+								<AnalysisIcon className="h-auto! w-full!" />
 							</div>
-						</div>
-						<div className="absolute -bottom-2 right-0 w-2/5 h-3/5 text-primary pointer-events-none">
-							<AnalysisIcon className="w-full h-full" />
 						</div>
 					</div>
 				</div>
