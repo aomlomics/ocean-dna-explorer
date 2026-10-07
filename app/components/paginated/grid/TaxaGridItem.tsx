@@ -1,22 +1,25 @@
+"use client";
+
 import Link from "next/link";
-import PhyloPicClient from "../../images/PhyloPicClient";
-import { Taxonomy } from "@/app/generated/prisma/client";
+import PhyloPicClient from "@/app/components/images/PhyloPicClient";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { useEffect, useMemo, useState } from "react";
 import { RanksBySpecificity } from "@/types/objects";
 import TaxonomyGridTooltip, { TAXONOMY_GRID_TOOLTIP_CLASS } from "./TaxonomyGridTooltip";
+import { exploreUrl } from "@/app/helpers/utils";
 
 const commonNameCache = new Map<string, string | null>();
 const COMMON_NAME_CACHE_VERSION = "en-v2";
 
 function getBestRank(
-	item: Taxonomy
+	item: TaxonomyModel
 ): { rank: (typeof RanksBySpecificity)[number]; label: string; value: string } | null {
 	for (const rank of RanksBySpecificity) {
 		const value = item[rank]?.toString().trim();
 		if (value) {
 			return {
 				rank,
-				label: rank[0].toUpperCase() + rank.slice(1),
+				label: rank.charAt(0).toUpperCase() + rank.slice(1),
 				value: value.replace(/_/g, " ")
 			};
 		}
@@ -24,7 +27,7 @@ function getBestRank(
 	return null;
 }
 
-function asGbifName(item: Taxonomy): string {
+function asGbifName(item: TaxonomyModel): string {
 	const best = getBestRank(item);
 	return best?.value || item.taxonomy.split(";").pop()?.replace(/_/g, " ") || item.taxonomy;
 }
@@ -51,7 +54,7 @@ function scoreEnglishVernacular(row: {
 	return score;
 }
 
-async function resolveGbifCommonName(item: Taxonomy): Promise<string | null> {
+async function resolveGbifCommonName(item: TaxonomyModel): Promise<string | null> {
 	const best = getBestRank(item);
 	const name = asGbifName(item);
 	if (!name) return null;
@@ -105,7 +108,13 @@ async function resolveGbifCommonName(item: Taxonomy): Promise<string | null> {
 	}
 }
 
-export default function TaxaGridItem({ item, showCommonName = true }: { item: Taxonomy; showCommonName?: boolean }) {
+export default function TaxaGridItem({
+	item,
+	showCommonName = true
+}: {
+	item: TaxonomyModel;
+	showCommonName?: boolean;
+}) {
 	const bestRank = useMemo(() => getBestRank(item), [item]);
 	const [commonName, setCommonName] = useState<string | null>(null);
 	const cacheKey = useMemo(() => `${COMMON_NAME_CACHE_VERSION}:${asGbifName(item)}`, [item]);
@@ -114,6 +123,7 @@ export default function TaxaGridItem({ item, showCommonName = true }: { item: Ta
 		if (!showCommonName) return;
 		if (!cacheKey) return;
 		if (commonNameCache.has(cacheKey)) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setCommonName(commonNameCache.get(cacheKey) ?? null);
 			return;
 		}
@@ -131,7 +141,7 @@ export default function TaxaGridItem({ item, showCommonName = true }: { item: Ta
 
 	return (
 		<Link
-			href={`/explore/taxonomy/${encodeURIComponent(item.taxonomy)}`}
+			href={exploreUrl({ table: "taxonomy", taxonomy: item.taxonomy })}
 			key={item.taxonomy}
 			className="card relative z-0 hover:z-50 bg-base-200 hover:bg-base-300 transition-colors duration-200 aspect-square overflow-visible"
 		>

@@ -1,6 +1,6 @@
 "use client";
 
-import { SelectGroupFilterConfig } from "../filterHelpers";
+import type { SelectGroupFilterConfig } from "../filterHelpers";
 import SelectGroupFilter from "./SelectGroupFilter";
 
 export default function SelectGroup({
@@ -8,9 +8,7 @@ export default function SelectGroup({
 	activeFilters
 }: {
 	config: SelectGroupFilterConfig;
-	activeFilters: {
-		[k: string]: string;
-	};
+	activeFilters: Record<string, string>;
 }) {
 	return (
 		<>
@@ -23,8 +21,8 @@ export default function SelectGroup({
 						typeof field === "string" && activeFilters[field] !== undefined
 							? activeFilters[field]
 							: typeof field === "object" &&
-							  activeFilters[field.rel] !== undefined &&
-							  JSON.parse(activeFilters[field.rel])[field.f]
+								activeFilters[field.rel] !== undefined &&
+								JSON.parse(activeFilters[field.rel]!)[field.f]
 					}
 					table={config.table}
 					group={config.group}

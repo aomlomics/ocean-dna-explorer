@@ -1,17 +1,17 @@
 "use client";
 
-import { BlastQuery, BlastQueryResult } from "@/app/generated/prisma/client";
-import { blastCookieHasBlast, parseBlastRequest } from "@/app/helpers/blast";
-import { getClientSideCookie } from "@/app/helpers/utils";
+import type { BlastQueryModel, BlastQueryResultModel } from "@/app/generated/prisma/models";
+import { BlastQueryResultScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import TableMetadata from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useState } from "react";
 
 const resultsFields = [] as string[];
 const omit = ["id", "queryId", "query", "sequence", "featureid", "queryEnd", "subjectEnd"];
 TableMetadata.blastQueryResult.fieldOrder?.forEach((f) => !omit.includes(f) && resultsFields.push(f));
-TableMetadata.blastQueryResult.enumSchema.options.forEach(
+BlastQueryResultScalarFieldEnumSchema.options.forEach(
 	(f) => !omit.includes(f) && !resultsFields.includes(f) && resultsFields.push(f)
 );
 
@@ -30,26 +30,14 @@ export default function BlastSearchResult({
 	existingBlastDate,
 	className
 }: {
-	blastResult: BlastQueryResult[] | undefined;
-	existingBlastDate: BlastQuery["dateCalculated"] | undefined;
+	blastResult: BlastQueryResultModel[] | undefined;
+	existingBlastDate: BlastQueryModel["dateCalculated"] | undefined;
 	className?: string;
 }) {
 	const searchParams = useSearchParams();
 
 	const [page, setPage] = useState(0);
-	const [loading, setLoading] = useState(false);
-
-	useEffect(() => {
-		if (searchParams.get("blastQuery")) {
-			setLoading(true);
-		}
-	}, [searchParams]);
-
-	useEffect(() => {
-		if (blastResult) {
-			setLoading(false);
-		}
-	}, [blastResult]);
+	const loading = !!searchParams.get("blastQuery") && !blastResult;
 
 	if (loading) {
 		return (
@@ -66,20 +54,11 @@ export default function BlastSearchResult({
 		return <></>;
 	}
 
-	const resultsBySequence = Object.values(
-		blastResult.reduce(
-			(acc, r) => {
-				if (acc[r.sequence]) {
-					acc[r.sequence].push(r);
-				} else {
-					acc[r.sequence] = [r];
-				}
-
-				return acc;
-			},
-			{} as Record<BlastQueryResult["sequence"], BlastQueryResult[]>
-		) || {}
-	);
+	const grouped = {} as Record<BlastQueryResultModel["sequence"], BlastQueryResultModel[]>;
+	for (const r of blastResult) {
+		(grouped[r.sequence] ??= []).push(r);
+	}
+	const resultsBySequence = Object.values(grouped);
 
 	if (!resultsBySequence.length) {
 		return (
@@ -91,11 +70,7 @@ export default function BlastSearchResult({
 
 	return (
 		<div className={`break-all flex flex-col items-center ${className}`}>
-			{existingBlastDate &&
-			!blastCookieHasBlast(
-				parseBlastRequest(new URLSearchParams(searchParams), { safe: true }),
-				getClientSideCookie("savedBlasts")
-			) ? (
+			{existingBlastDate ? (
 				<>
 					<div className="text-warning">Using existing blast query ran on {existingBlastDate.toString()}</div>
 					{searchParams.get("blastSave") === "true" ? (
@@ -110,6 +85,7 @@ export default function BlastSearchResult({
 			<div className="w-full h-full grid grid-cols-[auto_1fr_auto] justify-items-center items-center">
 				<button
 					className="btn btn-secondary rounded-full"
+					aria-label="Previous sequence"
 					onClick={() => setPage(page ? page - 1 : resultsBySequence.length - 1)}
 					disabled={resultsBySequence.length < 2}
 				>
@@ -117,31 +93,31 @@ export default function BlastSearchResult({
 				</button>
 
 				<div className="relative w-full h-full p-5 flex flex-col min-h-0">
-					<div className="grid grid-cols-[auto_1fr] gap-x-2 border-b border-primary pb-2">
-						{resultsBySequence[page][0].query ? (
+					<h1 className="grid grid-cols-[auto_1fr] gap-x-2 border-b border-primary pb-2">
+						{resultsBySequence[page]![0]!.query ? (
 							<>
-								<h1>Query:</h1>
-								<h1>{resultsBySequence[page][0].query}</h1>
+								<div>Query:</div>
+								<div>{resultsBySequence[page]![0]!.query}</div>
 							</>
 						) : (
 							<></>
 						)}
-						<h1>Sequence:</h1>
-						<h1>{resultsBySequence[page][0].sequence}</h1>
-					</div>
+						<div>Sequence:</div>
+						<div>{resultsBySequence[page]![0]!.sequence}</div>
+					</h1>
 
 					<div className="overflow-y-auto pr-3 py-2">
-						{resultsBySequence[page].map((r, i) => (
+						{resultsBySequence[page]!.map((r, i) => (
 							<div key={i} className="flex flex-col">
-								<div className="grid grid-cols-[auto_1fr] gap-x-2">
-									<h1>Target featureid:</h1>
+								<h2 className="grid grid-cols-[auto_1fr] gap-x-2">
+									<div>Target featureid:</div>
 									<Link
 										className="link link-primary link-hover"
-										href={`/explore/feature/${encodeURIComponent(r.featureid)}`}
+										href={exploreUrl({ table: "feature", featureid: r.featureid })}
 									>
 										{r.featureid}
 									</Link>
-								</div>
+								</h2>
 
 								<div className="w-full grid grid-cols-[auto_auto_1fr_auto_auto_auto] gap-x-2 px-15">
 									{resultsFields.map((f) => {
@@ -172,6 +148,7 @@ export default function BlastSearchResult({
 
 				<button
 					className="btn btn-secondary rounded-full"
+					aria-label="Next sequence"
 					onClick={() => setPage(page === resultsBySequence.length - 1 ? 0 : page + 1)}
 					disabled={resultsBySequence.length < 2}
 				>

@@ -1,10 +1,45 @@
 import Link from "next/link";
 import TableMetadata from "@/types/tableMetadata";
-import { prisma } from "@/app/helpers/prisma";
+import { exploreUrl } from "@/app/helpers/utils";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import GcDonut from "@/app/components/charts/GcDonut";
+import { AssignmentIcon } from "@/app/components/icons";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import { RanksBySpecificity } from "@/types/objects";
+
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{ project_id: string; analysis_run_name: string; featureid: string }>;
+}): Promise<Metadata> {
+	const { project_id, analysis_run_name, featureid } = await decodeRouteParams(params);
+
+	const assignment = await trustedPrisma.assignment.findUnique({
+		where: {
+			project_id_analysis_run_name_featureid: {
+				project_id,
+				analysis_run_name,
+				featureid
+			}
+		},
+		select: {
+			Taxonomy: true
+		}
+	});
+
+	if (assignment) {
+		return {
+			title: `${featureid} assigned ${assignment.Taxonomy[RanksBySpecificity.find((rank) => assignment.Taxonomy[rank]) || "taxonomy"]} | ${TableMetadata.assignment.plural}`
+		};
+	} else {
+		return {
+			title: "Assignment not found"
+		};
+	}
+}
 
 export default async function AssignmentPage({
 	params
@@ -13,7 +48,7 @@ export default async function AssignmentPage({
 }) {
 	const { project_id, analysis_run_name, featureid } = await decodeRouteParams(params);
 
-	const assignment = await prisma.assignment.findUnique({
+	const assignment = await trustedPrisma.assignment.findUnique({
 		where: {
 			project_id_analysis_run_name_featureid: {
 				project_id,
@@ -39,10 +74,7 @@ export default async function AssignmentPage({
 						</Link>
 					</li>
 					<li>
-						<Link
-							href={`/explore/project/${encodeURIComponent(project_id)}`}
-							className="text-primary hover:text-primary-focus"
-						>
+						<Link href={exploreUrl({ table: "project", project_id })} className="text-primary hover:text-primary-focus">
 							{project_id}
 						</Link>
 					</li>
@@ -53,7 +85,7 @@ export default async function AssignmentPage({
 					</li>
 					<li>
 						<Link
-							href={`/explore/analysis/${encodeURIComponent(analysis_run_name)}`}
+							href={exploreUrl({ table: "analysis", project_id, analysis_run_name })}
 							className="text-primary hover:text-primary-focus"
 						>
 							{analysis_run_name}
@@ -71,7 +103,10 @@ export default async function AssignmentPage({
 			<header>
 				<div className="flex gap-2 items-center">
 					<TitleHoverTooltip tooltip={TableMetadata.assignment.description}>
-						<h1 className="text-4xl font-semibold text-primary mb-2">Assignment</h1>
+						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+							<AssignmentIcon className="size-8! shrink-0" />
+							Assignment
+						</h1>
 					</TitleHoverTooltip>
 				</div>
 				<div className="mt-3 mb-4 inline-flex items-center gap-5 bg-base-200 rounded-xl px-5 py-4">
@@ -84,25 +119,21 @@ export default async function AssignmentPage({
 				<p className="text-lg text-base-content/90 max-w-3xl">
 					Assignment of feature{" "}
 					<Link
-						href={`/explore/feature/${encodeURIComponent(assignment.featureid)}`}
+						href={exploreUrl({ table: "feature", featureid })}
 						className="font-semibold text-primary hover:text-primary-focus break-all"
 					>
 						{assignment.featureid}
 					</Link>{" "}
 					to taxonomy{" "}
-					{assignment.taxonomy ? (
-						<Link
-							href={`/explore/taxonomy/${encodeURIComponent(assignment.taxonomy)}`}
-							className="font-semibold text-primary hover:text-primary-focus break-all"
-						>
-							{assignment.taxonomy}
-						</Link>
-					) : (
-						<span className="font-semibold text-base-content break-all">not specified</span>
-					)}{" "}
+					<Link
+						href={exploreUrl({ table: "taxonomy", taxonomy: assignment.taxonomy })}
+						className="font-semibold text-primary hover:text-primary-focus break-all"
+					>
+						{assignment.taxonomy}
+					</Link>{" "}
 					in analysis{" "}
 					<Link
-						href={`/explore/analysis/${encodeURIComponent(assignment.analysis_run_name)}`}
+						href={exploreUrl({ table: "analysis", project_id, analysis_run_name })}
 						className="font-semibold text-primary hover:text-primary-focus break-all"
 					>
 						{assignment.analysis_run_name}

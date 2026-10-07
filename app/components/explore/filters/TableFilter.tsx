@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import ActualTableFilter from "./ActualTableFilter";
-import { FilterConfig } from "./filterHelpers";
+import type { FilterConfig } from "./filterHelpers";
 
 export default function TableFilter({
 	tableConfig,
@@ -41,7 +41,7 @@ export default function TableFilter({
 						</div>
 					</div>
 
-					<div className="divide-y divide-base-300 p-5 pt-3 pb-6 min-h-[220px]"></div>
+					<div className="divide-y divide-base-300 p-5 pt-3 pb-6 min-h-55"></div>
 				</div>
 			}
 		>

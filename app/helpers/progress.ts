@@ -1,5 +1,10 @@
-import { NetworkProgressPacket, ProgressAction, ProgressActionMany, ProgressActionManyGlobal } from "@/types/globals";
-import { Dispatch, SetStateAction, ActionDispatch } from "react";
+import type {
+	NetworkProgressPacket,
+	ProgressAction,
+	ProgressActionMany,
+	ProgressActionManyGlobal
+} from "@/types/globals";
+import type { Dispatch, SetStateAction, ActionDispatch } from "react";
 
 export type Channel = { url: string; stream: ReturnType<typeof createProgressStream> };
 
@@ -130,26 +135,26 @@ async function handleReadable(readable: ReadableStream<any>, setter: (res: Netwo
 
 export async function doProgressActionMany(
 	action: ProgressActionMany,
-	setters: Dispatch<SetStateAction<NetworkProgressPacket>>[],
+	setters: ((res: NetworkProgressPacket) => void)[],
 	...args: any[]
 ) {
 	const readables = await action(...args);
 
 	for (let i = 0; i < readables.length; i++) {
-		handleReadable(readables[i], setters[i]);
+		handleReadable(readables[i]!, setters[i]!);
 	}
 }
 
 export async function doProgressActionManyGlobal(
 	action: ProgressActionManyGlobal,
-	setters: Dispatch<SetStateAction<NetworkProgressPacket>>[],
-	globalSetter: Dispatch<SetStateAction<NetworkProgressPacket>>,
+	setters: ((res: NetworkProgressPacket) => void)[],
+	globalSetter: (res: NetworkProgressPacket) => void,
 	...args: any[]
 ) {
 	const { global, readables } = await action(...args);
 
 	handleReadable(global, globalSetter);
 	for (let i = 0; i < readables.length; i++) {
-		handleReadable(readables[i], setters[i]);
+		handleReadable(readables[i]!, setters[i]!);
 	}
 }

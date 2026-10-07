@@ -1,11 +1,10 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
-import { Location, LocationWithValues } from "@/types/globals";
-import { DEFAULT_COLOR, getLegendColor, getLegendValue, LegendInfo, legendValueSort } from "../utils/mapUtils";
+import type { MapLocation, MapLocationWithValues } from "@/types/globals";
+import { DEFAULT_COLOR, getLegendColor, getLegendValue, type LegendInfo, legendValueSort } from "../utils/mapUtils";
 import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
-import TableMetadata, { TableMetadataValue } from "@/types/tableMetadata";
+import TableMetadata, { type ModelName, type TableMetadataValue } from "@/types/tableMetadata";
 import { capitalizeTable, compressURIComponent, MAX_UNCOMPRESSED_LENGTH } from "@/app/helpers/utils";
 import { getZodType } from "@/app/helpers/schema";
 
@@ -27,9 +26,9 @@ export default function PopupWithSearchBody({
 	href,
 	disableSearch
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
-	titleTable?: Uncapitalize<Prisma.ModelName>;
-	loc: LocationWithValues;
+	table: Uncapitalize<ModelName>;
+	titleTable?: Uncapitalize<ModelName>;
+	loc: MapLocationWithValues;
 	id: TableMetadataValue["titleField"];
 	legendInfo: LegendInfo;
 	userDefinedOptions: Set<string>;
@@ -41,7 +40,7 @@ export default function PopupWithSearchBody({
 
 	useEffect(() => {
 		if (loc.values) {
-			const tempFilteredValues = [] as Location[];
+			const tempFilteredValues = [] as MapLocation[];
 			const lowerFilter = filter.toLowerCase();
 			for (const l of loc.values) {
 				if (
@@ -72,14 +71,22 @@ export default function PopupWithSearchBody({
 				}
 			}
 
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setFilteredValues(tempFilteredValues);
 		}
-	}, [filter, loc.values]);
+	}, [filter, loc.values, legendInfo]);
 
 	const locUrl =
 		typeof id === "string" ? encodeURIComponent(loc[id]) : id.map((f) => encodeURIComponent(loc[f])).join("/");
 
-	let legendValueHeader = undefined as any;
+	let valuesWithLegend;
+	if (legendInfo) {
+		valuesWithLegend = filteredValues?.map((l) => ({
+			loc: l,
+			legendValue: getLegendValue(legendInfo.field, l, userDefinedOptions).toString()
+		})) as { loc: MapLocation; legendValue: string }[];
+	}
+
 	return (
 		<>
 			{titleTable && (
@@ -143,52 +150,56 @@ export default function PopupWithSearchBody({
 								</Link>
 							)}
 						</div>
-						<div className="flex flex-col overflow-y-scroll overscroll-contain [:where(&)]:pr-2">
-							{filteredValues.map((l) => {
-								const lUrl =
-									typeof id === "string"
-										? encodeURIComponent(l[id])
-										: id.map((f) => encodeURIComponent(l[f])).join("/");
+						<div className="flex flex-col overflow-y-scroll overscroll-contain mt-2 [:where(&)]:pr-3">
+							{legendInfo
+								? valuesWithLegend!.map(({ loc, legendValue }, i) => {
+										const lUrl =
+											typeof id === "string"
+												? encodeURIComponent(loc[id])
+												: id.map((f) => encodeURIComponent(loc[f])).join("/");
 
-								if (legendInfo) {
-									const lvh = getLegendValue(legendInfo.field, l, userDefinedOptions).toString();
-									let show = false;
-									if (legendValueHeader !== lvh) {
-										legendValueHeader = lvh;
-										show = true;
-									}
+										const { color } = getLegendColor(legendInfo, loc, userDefinedOptions);
 
-									const { color } = getLegendColor(legendInfo, l, userDefinedOptions);
+										return (
+											<Fragment key={lUrl}>
+												{legendValue !== (i > 0 ? valuesWithLegend![i - 1]!.legendValue : undefined) ? (
+													<h3 className="text-base-content text-md text-nowrap">{legendValue}</h3>
+												) : (
+													<></>
+												)}
+												<div className="flex gap-2 items-center">
+													<div
+														className="aspect-square w-[1em] h-[1em]"
+														style={{
+															backgroundColor: color ? color.hex() : DEFAULT_COLOR.hex()
+														}}
+													></div>
+													<Link
+														href={`/explore/${table}/${lUrl}`}
+														className="cursor-pointer! link-primary! link-hover!  leading-[1.3]! text-xs break-all"
+													>
+														{lUrl}
+													</Link>
+												</div>
+											</Fragment>
+										);
+									})
+								: filteredValues.map((loc) => {
+										const lUrl =
+											typeof id === "string"
+												? encodeURIComponent(loc[id])
+												: id.map((f) => encodeURIComponent(loc[f])).join("/");
 
-									return (
-										<Fragment key={lUrl}>
-											{show ? <h3 className="text-base-content text-md text-nowrap">{lvh}</h3> : <></>}
-											<div className="flex gap-2 items-center">
-												<div
-													className="aspect-square w-[1em] h-[1em]"
-													style={{ backgroundColor: color ? color.hex() : DEFAULT_COLOR.hex() }}
-												></div>
-												<Link
-													href={`/explore/${table}/${lUrl}`}
-													className="cursor-pointer! link-primary! link-hover!  leading-[1.3]! text-xs"
-												>
-													{lUrl}
-												</Link>
-											</div>
-										</Fragment>
-									);
-								} else {
-									return (
-										<Link
-											key={lUrl}
-											href={`/explore/${table}/${lUrl}`}
-											className="cursor-pointer! link-primary! link-hover! border-none! leading-[1.3]! text-xs"
-										>
-											{lUrl}
-										</Link>
-									);
-								}
-							})}
+										return (
+											<Link
+												key={lUrl}
+												href={`/explore/${table}/${lUrl}`}
+												className="cursor-pointer! link-primary! link-hover! border-none! leading-[1.3]! text-xs break-all"
+											>
+												{lUrl}
+											</Link>
+										);
+									})}
 						</div>
 					</>
 				) : (
@@ -211,7 +222,7 @@ export default function PopupWithSearchBody({
 									></div>
 									<Link
 										href={`/explore/${table}/${locUrl}`}
-										className="cursor-pointer! link-primary! link-hover! border-none! leading-[1.3]! text-xs"
+										className="cursor-pointer! link-primary! link-hover! border-none! leading-[1.3]! text-xs break-all"
 									>
 										{locUrl}
 									</Link>
@@ -220,7 +231,7 @@ export default function PopupWithSearchBody({
 						) : (
 							<Link
 								href={`/explore/${table}/${locUrl}`}
-								className="cursor-pointer! link-primary! link-hover! border-none! leading-[1.3]! text-xs"
+								className="cursor-pointer! link-primary! link-hover! border-none! leading-[1.3]! text-xs break-all"
 							>
 								{locUrl}
 							</Link>

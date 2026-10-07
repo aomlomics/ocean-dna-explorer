@@ -1,5 +1,5 @@
 import InfoButton from "../../InfoButton";
-import BoxWhiskerPlot from "../BoxWhiskerPlot";
+import BoxWhiskerPlot from "../custom/BoxWhiskerPlot";
 import { DEFAULT_HUE_FIELD, DEFAULT_X_FIELD } from "../wrappers/AlphaDiversityDisplay";
 import LoadingChartCopyButton from "./LoadingChartCopyButton";
 

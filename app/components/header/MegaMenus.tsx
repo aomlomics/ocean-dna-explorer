@@ -1,5 +1,7 @@
 "use client";
 
+import { TableIcon } from "@/app/components/icons";
+import { useTrusted } from "@/app/hooks/TrustedProvider";
 import DocsSections from "@/types/docsSections";
 import Image from "next/image";
 import Link from "next/link";
@@ -16,34 +18,34 @@ const MEGA_MENU_OPEN_DELAY_MS = 60; // Faster open reduces tab-to-tab flicker.
 const MEGA_MENU_CLOSE_DELAY_MS = 180; // Slightly slower close smooths hover transitions.
 
 const EXPLORE_LEFT_ITEMS = [
-	{ label: "Projects", href: "/explore/project" },
-	{ label: "Samples", href: "/explore/sample" },
-	{ label: "Assays", href: "/explore/assay" },
-	{ label: "AssayPreps", href: "/explore/assayPrep" },
-	{ label: "Libraries", href: "/explore/library" }
+	{ label: "Projects", href: "/explore/project", table: "project" },
+	{ label: "Samples", href: "/explore/sample", table: "sample" },
+	{ label: "Assays", href: "/explore/assay", table: "assay" },
+	{ label: "AssayPreps", href: "/explore/assayPrep", table: "assayPrep" },
+	{ label: "Libraries", href: "/explore/library", table: "library" }
 ];
 
 const EXPLORE_RIGHT_ITEMS = [
-	{ label: "Analyses", href: "/explore/analysis" },
-	{ label: "Occurrences", href: "/explore/occurrence" },
-	{ label: "Assignments", href: "/explore/assignment" },
-	{ label: "Features", href: "/explore/feature" },
-	{ label: "Taxonomies", href: "/explore/taxonomy" }
+	{ label: "Analyses", href: "/explore/analysis", table: "analysis" },
+	{ label: "Occurrences", href: "/explore/occurrence", table: "occurrence" },
+	{ label: "Features", href: "/explore/feature", table: "feature" },
+	{ label: "Assignments", href: "/explore/assignment", table: "assignment" },
+	{ label: "Taxonomies", href: "/explore/taxonomy", table: "taxonomy" }
 ];
 
 const LEARN_MEGA_MENU_ITEMS: { href: string; title: string; subtitle: string }[] = [
 	{
-		href: "/learn?section=edna101",
+		href: "/learn/edna101",
 		title: "eDNA 101",
 		subtitle: "Take the data journey from a sample to an eDNA dataset"
 	},
 	{
-		href: "/learn?section=impact",
+		href: "/learn/impact",
 		title: "Impact",
 		subtitle: "See how eDNA helps biodiversity research and conservation"
 	},
 	{
-		href: "/learn?section=discoveries",
+		href: "/learn/discoveries",
 		title: "Make your own Discoveries",
 		subtitle: "Leverage ODE's custom exploration features"
 	}
@@ -76,7 +78,7 @@ const VISUALIZE_ITEMS = [
 	},
 	{
 		label: "Taxonomy",
-		href: "/visualize/taxonomy",
+		href: "/visualize/taxonomy?chart=abundance",
 		subtitle: "Explore taxonomic distributions across datasets"
 	},
 	{
@@ -132,6 +134,7 @@ function MegaMenu({
 	const pathname = usePathname();
 	const [open, setOpen] = useState(false);
 	const [disableCloseAnimation, setDisableCloseAnimation] = useState(false);
+	const [prevPathname, setPrevPathname] = useState(pathname);
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const triggerRef = useRef<HTMLAnchorElement | null>(null);
 	const [panelRightStyle, setPanelRightStyle] = useState<{ right: number } | null>(null);
@@ -149,6 +152,13 @@ function MegaMenu({
 		setOpen(false);
 	}, MEGA_MENU_CLOSE_DELAY_MS);
 
+	if (pathname !== prevPathname) {
+		// Ensure dropdown/backdrop always closes after route transitions.
+		setPrevPathname(pathname);
+		setDisableCloseAnimation(false);
+		setOpen(false);
+	}
+
 	useEffect(() => {
 		return () => {
 			debouncedOpen.cancel();
@@ -157,11 +167,8 @@ function MegaMenu({
 	}, [debouncedOpen, debouncedClose]);
 
 	useEffect(() => {
-		// Ensure dropdown/backdrop always closes after route transitions.
 		debouncedOpen.cancel();
 		debouncedClose.cancel();
-		setDisableCloseAnimation(false);
-		setOpen(false);
 	}, [debouncedOpen, debouncedClose, pathname]);
 
 	useEffect(() => {
@@ -189,7 +196,6 @@ function MegaMenu({
 
 	useLayoutEffect(() => {
 		if (!open || !anchorPanelToTrigger) {
-			setPanelRightStyle(null);
 			return;
 		}
 		updatePanelRightFromTrigger();
@@ -295,7 +301,7 @@ function MegaMenu({
 					widthClass
 				].join(" ")}
 				style={
-					anchorPanelToTrigger && panelRightStyle
+					open && anchorPanelToTrigger && panelRightStyle
 						? { right: panelRightStyle.right }
 						: panelShiftRight
 							? { transform: `translateX(calc(-50% + ${panelShiftRight}))` }
@@ -353,15 +359,16 @@ function MenuSectionHeader({
 	);
 }
 
-function MenuItem({ href, label }: { href: string; label: string }) {
+function MenuItem({ href, label, icon }: { href: string; label: string; icon?: React.ReactNode }) {
 	const closeMegaMenuForNavigation = useMegaMenuNavigate();
 	return (
 		<Link
 			href={href}
 			prefetch={MENU_LINK_PREFETCH}
 			onClick={closeMegaMenuForNavigation ?? undefined}
-			className="block py-1 px-2 text-base text-base-content/80 hover:text-primary hover:bg-base-200/60 rounded-md"
+			className="flex items-center gap-2 py-1 px-2 text-base text-base-content/80 hover:text-primary hover:bg-base-200/60 rounded-md"
 		>
+			{icon ? <span className="inline-flex shrink-0 text-primary">{icon}</span> : null}
 			{label}
 		</Link>
 	);
@@ -457,12 +464,22 @@ export function ExploreMegaMenu() {
 					<div className="mt-4 grid grid-cols-2 gap-4">
 						<div className="space-y-1">
 							{EXPLORE_LEFT_ITEMS.map((i) => (
-								<MenuItem key={i.label} href={i.href} label={i.label} />
+								<MenuItem
+									key={i.label}
+									href={i.href}
+									label={i.label}
+									icon={<TableIcon table={i.table} className="size-5!" />}
+								/>
 							))}
 						</div>
 						<div className="space-y-1">
 							{EXPLORE_RIGHT_ITEMS.map((i) => (
-								<MenuItem key={i.label} href={i.href} label={i.label} />
+								<MenuItem
+									key={i.label}
+									href={i.href}
+									label={i.label}
+									icon={<TableIcon table={i.table} className="size-5!" />}
+								/>
 							))}
 						</div>
 					</div>
@@ -481,6 +498,7 @@ export function ExploreMegaMenu() {
 								sizes="240px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
+								quality={75}
 							/>
 							<Image
 								src="/images/taxonomy_explore_mega_menu_dark.webp"
@@ -489,6 +507,7 @@ export function ExploreMegaMenu() {
 								sizes="240px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
+								quality={75}
 							/>
 						</div>
 					}
@@ -548,6 +567,7 @@ export function DocsMegaMenu() {
 								sizes="240px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
+								quality={75}
 							/>
 							<Image
 								src="/images/docs_mega_menu_dark.webp"
@@ -556,6 +576,7 @@ export function DocsMegaMenu() {
 								sizes="240px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
+								quality={75}
 							/>
 						</div>
 					}
@@ -596,6 +617,7 @@ export function LearnMegaMenu() {
 								sizes="240px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
+								quality={75}
 							/>
 							<Image
 								src="/images/learn_page_mega_menu_dark.webp"
@@ -604,6 +626,7 @@ export function LearnMegaMenu() {
 								sizes="240px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
+								quality={75}
 							/>
 						</div>
 					}
@@ -618,6 +641,7 @@ export function LearnMegaMenu() {
 // -----------------------------
 
 export function SubmitMegaMenu() {
+	const { trusted } = useTrusted();
 	const [projectCount, setProjectCount] = useState<string>("—");
 	const [analysisCount, setAnalysisCount] = useState<string>("—");
 
@@ -626,8 +650,8 @@ export function SubmitMegaMenu() {
 		async function loadCounts() {
 			try {
 				const [projectsRes, analysesRes] = await Promise.all([
-					fetch("/api/project/count").then((r) => r.json()),
-					fetch("/api/analysis/count").then((r) => r.json())
+					fetch(`/api/project/count${trusted ? "?trusted=true" : ""}`).then((r) => r.json()),
+					fetch(`/api/analysis/count${trusted ? "?trusted=true" : ""}`).then((r) => r.json())
 				]);
 
 				if (!cancelled) {
@@ -679,6 +703,7 @@ export function SubmitMegaMenu() {
 								sizes="240px"
 								className="object-cover object-top-left origin-top-left scale-[1.3] [html[data-theme='dark']_&]:hidden"
 								priority={false}
+								quality={75}
 							/>
 							<Image
 								src="/images/submit_mega_menu_dark.webp"
@@ -698,11 +723,11 @@ export function SubmitMegaMenu() {
 
 export function VisualizeMegaMenu() {
 	return (
-		<MegaMenu tabName="Visualize" route="/visualize" widthClass="max-w-[41.5rem]">
+		<MegaMenu tabName="Visualize" route="/visualize/metadata" widthClass="max-w-[41.5rem]">
 			<div className="grid grid-cols-[1fr_15rem] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
-						href="/visualize"
+						href="/visualize/metadata"
 						title="Visualize"
 						subtitle="Build charts directly in your browser"
 						titleClassName="text-base-content group-hover:text-primary"
@@ -735,6 +760,7 @@ export function VisualizeMegaMenu() {
 								sizes="240px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
+								quality={75}
 							/>
 						</div>
 					}

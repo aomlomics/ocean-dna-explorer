@@ -1,23 +1,28 @@
 "use server";
 
-import { Analysis } from "@/app/generated/prisma/client";
+import type { AssignmentModel, OccurrenceModel } from "@/app/generated/prisma/models";
+import type { AnalysisModel } from "@/app/generated/prisma/models/Analysis";
 import { prisma } from "@/app/helpers/prisma";
-import { handlePrismaError } from "@/app/helpers/queries";
+import { disconnectFeatsFromSamples, disconnectTaxaFromSamples, handlePrismaError } from "@/app/helpers/queries";
 import { AnalysisSchema } from "@/prisma/generated/zod";
-import { NetworkPacket } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import type { NetworkPacket } from "@/types/globals";
+import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";
 import z from "zod";
 
 export default async function analysisDeleteAction(
-	targetProject: Analysis["project_id"],
-	targetAnalysis: Analysis["analysis_run_name"]
+	targetProject: AnalysisModel["project_id"],
+	targetAnalysis: AnalysisModel["analysis_run_name"]
 ): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
-	if (!userId || !role || !RolePermissions[role].includes("manageUsers")) {
+	if (
+		!userId ||
+		!role ||
+		!(RolePermissions[role].includes("contribute") || RolePermissions[role].includes("manageUsers"))
+	) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
@@ -61,21 +66,51 @@ export default async function analysisDeleteAction(
 		});
 
 		if (!analysis) {
-			throw new Error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
-		} else if (
-			!analysis.Project.userIds.includes(userId) &&
-			(!role || !RolePermissions[role].includes("manageUsers"))
-		) {
-			throw new Error("Unauthorized action.");
+			return { statusMessage: "error", error: `No Analysis with analysis_run_name of "${analysis_run_name}" found.` };
+		} else if (!analysis.Project.userIds.includes(userId) || !RolePermissions[role].includes("manageUsers")) {
+			return { statusMessage: "error", error: "Unauthorized action." };
 		}
 
-		await prisma.analysis.delete({
-			where: {
-				project_id_analysis_run_name: {
+		await prisma.$transaction(async (tx) => {
+			const occurrences = await tx.occurrence.findMany({
+				where: {
 					project_id,
 					analysis_run_name
+				},
+				select: {
+					lib_id: true,
+					featureid: true,
+					Assignment: {
+						select: {
+							taxonomy: true
+						}
+					}
 				}
-			}
+			});
+
+			const taxaByLibId = occurrences.reduce(
+				(acc, occ) => {
+					(acc[occ.lib_id] ??= new Set()).add(occ.Assignment.taxonomy);
+
+					return acc;
+				},
+				{} as Record<OccurrenceModel["lib_id"], Set<AssignmentModel["taxonomy"]>>
+			);
+
+			//remove Sample -> Feature relationships that don't exist in any analyses
+			await disconnectFeatsFromSamples(tx, project_id, analysis_run_name, occurrences);
+
+			//remove Sample -> Taxonomy relationships that don't exist in any analyses
+			await disconnectTaxaFromSamples(tx, project_id, analysis_run_name, taxaByLibId);
+
+			await tx.analysis.delete({
+				where: {
+					project_id_analysis_run_name: {
+						project_id,
+						analysis_run_name
+					}
+				}
+			});
 		});
 
 		await del([
@@ -87,12 +122,17 @@ export default async function analysisDeleteAction(
 
 		return { statusMessage: "success" };
 	} catch (err: any) {
+		console.error(err);
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			return prismaErr;
 		}
 
-		const error = err as Error;
-		return { statusMessage: "error", error: error.message };
+		if (err instanceof AppError) {
+			return { statusMessage: "error", error: err.message };
+		}
+
+		return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 	}
 }

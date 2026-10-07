@@ -1,11 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 
-const sharedTheme = {
-	// Shared theme values that will be applied to both themes
-	"map-colors": "#FF6B6B" // Map accents
-};
+import daisyui from "daisyui";
+import scrollbar from "tailwind-scrollbar";
 
-module.exports = {
+const config = {
 	darkMode: "class",
 	content: [
 		"./pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -81,8 +79,14 @@ module.exports = {
 			},
 			keyframes: {
 				"slide-in": {
-					"0%": { transform: "translateY(-20px)", opacity: "0" },
-					"100%": { transform: "translateY(0)", opacity: "1" }
+					"0%": {
+						transform: "translateY(-20px)",
+						opacity: "0"
+					},
+					"100%": {
+						transform: "translateY(0)",
+						opacity: "1"
+					}
 				},
 				"subtle-pan": {
 					"0%, 100%": {
@@ -113,7 +117,7 @@ module.exports = {
 			}
 		}
 	},
-	plugins: [require("daisyui"), require("tailwind-scrollbar")],
+	plugins: [daisyui, scrollbar],
 	daisyui: {
 		themes: [
 			{
@@ -165,3 +169,5 @@ module.exports = {
 		themeRoot: ":root"
 	}
 };
+
+export default config;

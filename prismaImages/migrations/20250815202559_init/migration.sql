@@ -2,7 +2,7 @@
 CREATE TABLE "Image" (
     "id" SERIAL NOT NULL,
     "dateSubmitted" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "name" TEXT NOT NULL,
+    "name" TEXT,
     "url" TEXT NOT NULL,
     "attributionTitle" TEXT,
     "description" TEXT,
@@ -22,9 +22,6 @@ CREATE TABLE "Attribution" (
 
     CONSTRAINT "Attribution_pkey" PRIMARY KEY ("id")
 );
-
--- CreateIndex
-CREATE UNIQUE INDEX "Image_name_key" ON "Image"("name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Image_url_key" ON "Image"("url");

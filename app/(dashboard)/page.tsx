@@ -1,4 +1,4 @@
-import { MainStats, MainStatsSkeleton, AssayStats } from "@/app/components/DataSummary";
+import { MainStats, MainStatsSkeleton, AssayStats } from "@/app/components/home/DataSummary";
 import Link from "next/link";
 import Image from "next/image";
 import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
@@ -8,7 +8,7 @@ import { Suspense } from "react";
 import ClientMap from "../components/map/ClientMap";
 // Temporarily disabled for merge to main until Featured Organisms is ready.
 // import DataSummaryHighlights, { FeaturedOrganismsSection } from "../components/DataSummaryHighlights";
-import DataSummaryHighlights from "../components/DataSummaryHighlights";
+import DataSummaryHighlights from "../components/home/DataSummaryHighlights";
 import DashCard from "../components/dataSummary/DashCard";
 import { DepthCoverageCard } from "../components/dataSummary/DepthCoverageCard";
 import {
@@ -17,14 +17,21 @@ import {
 	SamplesOverTimeCard,
 	TemporalCoverageCard,
 	WidgetCardSkeleton
-} from "../components/DashboardExtras";
+} from "../components/home/DashboardExtras";
+import { cookies } from "next/headers";
+import TrustedToggle, { TrustedLabel } from "../components/header/TrustedToggle";
+import InfoButton from "../components/InfoButton";
+import { TrustedModeExplanation } from "../components/TrustedFab";
 
 const heroPrimaryBtnClass =
 	"btn btn-md btn-secondary bg-primary/90 backdrop-blur-sm outline-none border-0 text-white font-normal hover:bg-primary transition-all duration-300 text-base px-6 py-3 min-h-12";
 
-export default function Home() {
+export default async function Home() {
+	const cookieStore = await cookies();
+	const trusted = cookieStore.get("trusted")?.value !== "false";
+
 	return (
-		<main className="relative flex flex-col grow bg-base-400 text-base-content">
+		<div className="relative flex flex-col grow bg-base-400 text-base-content">
 			<div className="absolute top-0 left-0 right-0 z-sticky bg-orange-500 text-white p-2 sm:p-4 text-center">
 				<p className="text-sm sm:text-base">
 					<span className="font-bold">BETA:</span> The Ocean DNA Explorer is under active development. Please report
@@ -43,7 +50,16 @@ export default function Home() {
 
 			<div className="relative w-full h-screen max-h-[68vh] min-h-80 sm:max-h-[64vh] bg-black overflow-hidden">
 				<Suspense fallback={<div className="absolute inset-0 overflow-hidden bg-base-100"></div>}>
-					<SuspenseCarousel />
+					<Carousel
+						images={await prismaImages.image.findMany({
+							where: {
+								homePage: true
+							},
+							include: {
+								Attribution: true
+							}
+						})}
+					/>
 				</Suspense>
 
 				<div className="absolute inset-0 flex items-center z-raised">
@@ -65,6 +81,20 @@ export default function Home() {
 										and analysis tool for ocean environmental DNA data
 									</span>
 								</div>
+
+								<div className="mb-5 flex flex-wrap items-center gap-x-1.5 text-2xl font-semibold leading-tight text-shadow-3xl sm:mb-6 sm:text-3xl">
+									<span className="inline-flex items-center gap-[0.3em]">
+										<TrustedToggle className={"h-[1.5em] w-[1.5em]"} />
+
+										<span className="font-semibold">Showing</span>
+										<span className="font-semibold text-primary">
+											<TrustedLabel />
+										</span>
+										<InfoButton dir="tooltip-bottom">
+											<TrustedModeExplanation />
+										</InfoButton>
+									</span>
+								</div>
 							</div>
 
 							<div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
@@ -74,7 +104,7 @@ export default function Home() {
 								<Link href="/explore/project" className={heroPrimaryBtnClass}>
 									Explore the Data
 								</Link>
-								<Link href="/learn?section=edna101" className={heroPrimaryBtnClass}>
+								<Link href="/learn/edna101" className={heroPrimaryBtnClass}>
 									What is eDNA?
 								</Link>
 							</div>
@@ -90,9 +120,11 @@ export default function Home() {
 					 * untouched on purpose — the user likes its current look,
 					 * animation and skeleton.
 					 */}
-					<Suspense fallback={<MainStatsSkeleton />}>
-						<MainStats />
-					</Suspense>
+					<div className="space-y-3">
+						<Suspense fallback={<MainStatsSkeleton />}>
+							<MainStats />
+						</Suspense>
+					</div>
 
 					{/*
 					 * Row 2 — Map on the left, three small stat cards stacked on
@@ -106,7 +138,8 @@ export default function Home() {
 							<div className="lg:col-span-8">
 								<div className="w-full">
 									<ClientMap
-										url={"/api/sample"}
+										key={trusted.toString()}
+										url={`/api/sample${trusted ? "?trusted=true" : ""}`}
 										legend
 										titleTable="project"
 										cluster
@@ -172,7 +205,7 @@ export default function Home() {
 							<div className="lg:col-span-8 flex flex-col gap-6">
 								<Suspense fallback={<WidgetCardSkeleton className="h-64" />}>{/* <TableCountsCard /> */}</Suspense>
 								<Suspense fallback={<WidgetCardSkeleton className="h-80" />}>
-									<SamplesOverTimeCard />
+									<SamplesOverTimeCard trusted={trusted} />
 								</Suspense>
 								<div className="w-full lg:w-[70%] lg:mr-auto">
 									<Suspense fallback={<WidgetCardSkeleton className="h-56" />}>
@@ -292,7 +325,7 @@ export default function Home() {
 								<ThemeAwareLogo
 									src="/images/ngi_msu_logo_FINAL.svg"
 									alt="Mississippi State University, Northern Gulf Institute Logo"
-									fill={true}
+									sizes="(max-width: 768px) 90vw, 617px"
 									className="object-contain"
 								/>
 							</Link>
@@ -300,34 +333,6 @@ export default function Home() {
 					</div>
 				</div>
 			</div>
-		</main>
+		</div>
 	);
-}
-
-async function SuspenseCarousel() {
-	const carouselImages = await prismaImages.image.findMany({
-		where: {
-			homePage: true
-		},
-		include: {
-			Attribution: true
-		}
-	});
-
-	let currentIndex = carouselImages.length;
-
-	// While there remain elements to shuffle...
-	while (currentIndex != 0) {
-		// Pick a remaining element...
-		let randomIndex = Math.floor(Math.random() * currentIndex);
-		currentIndex--;
-
-		// And swap it with the current element.
-		[carouselImages[currentIndex], carouselImages[randomIndex]] = [
-			carouselImages[randomIndex],
-			carouselImages[currentIndex]
-		];
-	}
-
-	return <Carousel images={carouselImages} />;
 }

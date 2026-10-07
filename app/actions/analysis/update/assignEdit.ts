@@ -1,14 +1,21 @@
 "use server";
 
-import { Assignment } from "@/app/generated/prisma/client";
+import type { AssignmentModel } from "@/app/generated/prisma/models/Assignment";
+import type { OccurrenceModel } from "@/app/generated/prisma/models/Occurrence";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseAssignmentsFile } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
-import { handlePrismaError, updateManyRaw } from "@/app/helpers/queries";
+import {
+	connectTaxaToSamples,
+	disconnectTaxaFromSamples,
+	handlePrismaError,
+	PRISMA_PARAM_LIMIT,
+	updateManyRaw
+} from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
-import { ProgressStream } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import type { ProgressStream } from "@/types/globals";
+import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";
 
@@ -16,8 +23,8 @@ async function doEdit(
 	stream: ProgressStream,
 	url: string,
 	editId: string,
-	project_id: Assignment["project_id"],
-	analysis_run_name: Assignment["analysis_run_name"]
+	project_id: AssignmentModel["project_id"],
+	analysis_run_name: AssignmentModel["analysis_run_name"]
 ) {
 	const { userId, sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -37,7 +44,11 @@ async function doEdit(
 			},
 			select: {
 				analysisMetadataFileChecksum_ODE: true,
-				Project: { select: { userIds: true } }
+				Project: {
+					select: {
+						userIds: true
+					}
+				}
 			}
 		});
 
@@ -49,22 +60,28 @@ async function doEdit(
 			return;
 		}
 
-		const parseResult = await parseAssignmentsFile({
-			channel: { stream, url },
-			project_id,
-			analysis_run_name,
-			oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
-		});
-		if (!parseResult) {
+		let parseResult;
+		try {
+			parseResult = await parseAssignmentsFile({
+				channel: { stream, url },
+				project_id,
+				analysis_run_name,
+				oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
+			});
+			if (!parseResult) {
+				return;
+			}
+		} catch {
 			return;
 		}
+
 		const { features, taxonomies, assignments, assignmentsMd5 } = parseResult;
 
 		await stream.message("Assignments successfully parsed into database format. Parsing data into database.", 75);
 
-		const assignFeatureids = assignments.map((a) => a.featureid);
+		const featureids = new Set(features.map((feat) => feat.featureid));
 
-		await prisma.$transaction(
+		const success = await prisma.$transaction(
 			async (tx) => {
 				//check if allowed
 				const dbAnalysis = await tx.analysis.findUnique({
@@ -88,14 +105,34 @@ async function doEdit(
 				});
 
 				if (!dbAnalysis) {
-					throw new Error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
+					stream.error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
+					return;
 				} else if (!dbAnalysis.Project.userIds.includes(userId)) {
-					throw new Error("Unauthorized action.");
+					stream.error("Unauthorized action.");
+					return;
 				} else if (!dbAnalysis.asvFileUrl_ODE || !dbAnalysis.asvFileChecksum_ODE) {
-					throw new Error("Invalid Analysis. Missing file for ASVs.");
+					stream.error("Invalid Analysis. Missing file for ASVs.");
+					return;
 				}
 
 				await stream.message("All checks passed.", 80);
+
+				//get existing occurrence -> assignment relationships before updating assignments
+				const oldOccurrences = await tx.occurrence.findMany({
+					where: {
+						project_id,
+						analysis_run_name
+					},
+					select: {
+						lib_id: true,
+						featureid: true,
+						Assignment: {
+							select: {
+								taxonomy: true
+							}
+						}
+					}
+				});
 
 				//add new
 				const newFeatures = await tx.feature.createManyAndReturn({
@@ -128,29 +165,45 @@ async function doEdit(
 				//update old
 				await updateManyRaw(
 					tx,
-					"Feature",
-					features.filter((feat) => !newFeatures.some((dbFeat) => dbFeat.featureid === feat.featureid)),
-					"featureid"
+					"feature",
+					features.filter((feat) => !new Set(newFeatures.map((f) => f.featureid)).has(feat.featureid))
 				);
 
 				await updateManyRaw(
 					tx,
-					"Taxonomy",
-					taxonomies.filter((taxa) => !newTaxonomies.some((dbTaxa) => dbTaxa.taxonomy === taxa.taxonomy)),
-					"taxonomy"
+					"taxonomy",
+					taxonomies.filter((taxa) => !new Set(newTaxonomies.map((t) => t.taxonomy)).has(taxa.taxonomy))
 				);
 
 				await updateManyRaw(
 					tx,
-					"Assignment",
-					assignments.filter(
-						(a) =>
-							!newAssignments.some(
-								(dbA) => dbA.analysis_run_name === a.analysis_run_name && dbA.featureid === a.featureid
-							)
-					),
-					["analysis_run_name", "featureid"]
+					"assignment",
+					assignments.filter((a) => !new Set(newAssignments.map((a) => a.featureid)).has(a.featureid))
 				);
+
+				const newTaxaByFeat = assignments.reduce(
+					(acc, assign) => {
+						acc[assign.featureid] = assign.taxonomy;
+						return acc;
+					},
+					{} as Record<AssignmentModel["featureid"], AssignmentModel["taxonomy"]>
+				);
+
+				const taxaByLibId = oldOccurrences.reduce(
+					(acc, occ) => {
+						const taxonomy = newTaxaByFeat[occ.featureid];
+
+						if (taxonomy) {
+							(acc[occ.lib_id] ??= new Set()).add(taxonomy);
+						}
+
+						return acc;
+					},
+					{} as Record<OccurrenceModel["lib_id"], Set<AssignmentModel["taxonomy"]>>
+				);
+
+				//connect new Sample -> Taxonomy relationships
+				await connectTaxaToSamples(tx, project_id, taxaByLibId);
 
 				await stream.message("Existing entries successfully updated in database.", 90);
 
@@ -167,8 +220,8 @@ async function doEdit(
 					}
 				});
 
-				const assignsToDelete = currAssigns.reduce((acc, assign) => {
-					if (!assignFeatureids.includes(assign.featureid)) {
+				const assignIdsToDelete = currAssigns.reduce((acc, assign) => {
+					if (!featureids.has(assign.featureid)) {
 						acc.push(assign.id);
 					}
 					return acc;
@@ -179,10 +232,28 @@ async function doEdit(
 						project_id,
 						analysis_run_name,
 						id: {
-							in: assignsToDelete
+							in: assignIdsToDelete
 						}
 					}
 				});
+
+				//map removed lib_id -> taxonomy relationships
+				const removedTaxaByLibId = oldOccurrences.reduce(
+					(acc, occ) => {
+						const oldTaxonomy = occ.Assignment.taxonomy;
+						const newTaxonomy = newTaxaByFeat[occ.featureid];
+
+						if (newTaxonomy !== oldTaxonomy) {
+							(acc[occ.lib_id] ??= new Set()).add(oldTaxonomy);
+						}
+
+						return acc;
+					},
+					{} as Record<OccurrenceModel["lib_id"], Set<AssignmentModel["taxonomy"]>>
+				);
+
+				//remove Sample -> Taxonomy relationships that are not in any other analyses
+				await disconnectTaxaFromSamples(tx, project_id, analysis_run_name, removedTaxaByLibId);
 
 				await stream.message("Removed entries successfully deleted in database.", 95);
 
@@ -210,36 +281,61 @@ async function doEdit(
 					data: {
 						editHistory,
 						asvFileUrl_ODE: url,
-						asvFileChecksum_ODE: assignmentsMd5
+						asvFileChecksum_ODE: assignmentsMd5,
+						Taxonomies: {
+							set: []
+						}
 					}
 				});
 
-				await stream.message("Analysis successfully updated with new file URL.", 99);
-			},
-			{ timeout: 1 * 60 * 1000 }
-		);
-
-		await stream.success("Success");
-
-		//update BLAST databases
-		fetch(
-			`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${project_id}/${analysis_run_name}/afterSubmission?delete=true&skipDiversities=true`,
-			{
-				method: "POST",
-				headers: {
-					Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+				//connect taxonomies in chunks
+				const connect = taxonomies.map((taxa) => ({ taxonomy: taxa.taxonomy }));
+				for (let i = 0; i < connect.length; i += PRISMA_PARAM_LIMIT) {
+					await tx.analysis.update({
+						where: {
+							project_id_analysis_run_name: {
+								project_id,
+								analysis_run_name
+							}
+						},
+						data: {
+							Taxonomies: {
+								connect: connect.slice(i, i + PRISMA_PARAM_LIMIT)
+							}
+						}
+					});
 				}
-			}
+
+				await stream.success("Success");
+				return true;
+			},
+			{ timeout: 5 * 60 * 1000 }
 		);
 
-		return true;
+		if (success) {
+			//update BLAST databases
+			fetch(
+				`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${project_id}/${analysis_run_name}/afterSubmission?delete=true&skipDiversities=true`,
+				{
+					method: "POST",
+					headers: {
+						Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+					}
+				}
+			);
+
+			return true;
+		}
 	} catch (err: any) {
+		console.error(err);
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			await stream.error(prismaErr.error);
+		} else if (err instanceof AppError) {
+			await stream.error(err.message);
 		} else {
-			const error = err as Error;
-			await stream.error(error.message);
+			await stream.error(GLOBAL_SERVER_ERROR);
 		}
 	}
 }
@@ -247,15 +343,17 @@ async function doEdit(
 export default async function assignEditAction(
 	url: string,
 	editId: string,
-	project_id: Assignment["project_id"],
-	analysis_run_name: Assignment["analysis_run_name"]
+	project_id: AssignmentModel["project_id"],
+	analysis_run_name: AssignmentModel["analysis_run_name"]
 ) {
 	const stream = createProgressStream();
 
 	if (url) {
-		const validBlob = await validateBlobs([url]);
-		if (!validBlob) {
-			stream.error("File is not valid");
+		try {
+			await validateBlobs([url]);
+		} catch (err) {
+			console.error(err);
+			stream.error(err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR);
 			stream.close();
 			return stream.readable;
 		}

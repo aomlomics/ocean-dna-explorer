@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { prisma } from "../helpers/prisma";
 import JSON5 from "json5";
@@ -18,12 +18,8 @@ export default async function unsafeConsoleAction(
 		const { userId, sessionClaims } = await auth();
 		const role = sessionClaims?.metadata?.role;
 
-		if (!userId) {
-			return { statusMessage: "error", error: "Must be logged in." };
-		}
-
-		if (!role || !RolePermissions[role].includes("manageDatabase")) {
-			return { statusMessage: "error", error: "Invalid role." };
+		if (!userId || !role || !RolePermissions[role].includes("manageDatabase")) {
+			return { statusMessage: "error", error: "Unauthorized" };
 		}
 
 		if (modelQuery && typeof modelQuery !== "string") {
@@ -39,12 +35,13 @@ export default async function unsafeConsoleAction(
 		}
 
 		JSON5.parse(query);
-		// await prisma[model][modelQuery](JSON.parse(query));
+		// @ts-expect-error dynamically accessing prisma client
+		await prisma[model][modelQuery](JSON.parse(query));
 
 		return { statusMessage: "success" };
 	} catch (err) {
+		console.error(err);
 		const error = err as Error;
-
 		return { statusMessage: "error", error: error.message };
 	}
 }

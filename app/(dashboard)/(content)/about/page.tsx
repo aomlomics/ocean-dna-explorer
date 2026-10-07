@@ -2,6 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import ThemeAwareLogo from "@/app/components/images/ThemeAwareLogo";
 import WorkshopVideoCallout, { OBON_HREF, WORKSHOP_PLAYLIST_HREF } from "@/app/components/WorkshopVideoCallout";
+import type { Metadata } from "next";
+
+const description = `The Ocean DNA Explorer empowers scientists and citizens to advance ocean discovery and conservation. We provide a unified, accessible platform for exploring, visualizing, and sharing standardized environmental DNA (eDNA) datasets.`;
+
+export const metadata: Metadata = {
+	title: "About Us",
+	description
+};
 
 const teamMembers = [
 	{
@@ -26,7 +34,7 @@ const teamMembers = [
 
 export default function AboutPage() {
 	return (
-		<main className="min-h-screen bg-base-100 text-base-content -mt-4">
+		<div className="min-h-screen bg-base-100 text-base-content -mt-4">
 			{/* Mission banner */}
 			<section id="mission" className="relative w-screen left-1/2 right-1/2 ml-[-50vw] mr-[-50vw] mb-28 bg-base-100">
 				<div className="relative h-100">
@@ -44,9 +52,7 @@ export default function AboutPage() {
 								Our Mission
 							</h1>
 							<p className="mt-6 max-w-2xl mx-auto text-base sm:text-lg text-base-content [html[data-theme='dark']_&]:text-base-content/90">
-								The Ocean DNA Explorer empowers scientists and citizens to advance ocean discovery and conservation. We
-								provide a unified, accessible platform for exploring, visualizing, and sharing standardized
-								environmental DNA (eDNA) datasets.
+								{description}
 							</p>
 						</div>
 					</div>
@@ -171,7 +177,7 @@ export default function AboutPage() {
 						<ThemeAwareLogo
 							src="/images/ngi_msu_logo_FINAL.svg"
 							alt="Mississippi State University, Northern Gulf Institute Logo"
-							fill={true}
+							sizes="(max-width: 768px) 90vw, 617px"
 							className="object-contain"
 						/>
 					</Link>
@@ -338,6 +344,6 @@ export default function AboutPage() {
 					Open an issue on GitHub <span>↗</span>
 				</Link>
 			</section>
-		</main>
+		</div>
 	);
 }

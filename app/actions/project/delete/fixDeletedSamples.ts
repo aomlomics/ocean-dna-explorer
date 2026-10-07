@@ -1,18 +1,22 @@
 "use server";
 
-import { Occurrence, Sample } from "@/app/generated/prisma/client";
+import type { OccurrenceModel, SampleModel } from "@/app/generated/prisma/models";
 import { prisma } from "@/app/helpers/prisma";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { ProjectSchema } from "@/prisma/generated/zod";
-import { NetworkPacket } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import type { NetworkPacket } from "@/types/globals";
+import { GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 
-export default async function fixDeletedSamplesAction(project_id: Sample["project_id"]): Promise<NetworkPacket> {
+export default async function fixDeletedSamplesAction(project_id: SampleModel["project_id"]): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
-	if (!userId) {
+	if (
+		!userId ||
+		!role ||
+		!(RolePermissions[role].includes("contribute") || RolePermissions[role].includes("manageUsers"))
+	) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
@@ -36,9 +40,9 @@ export default async function fixDeletedSamplesAction(project_id: Sample["projec
 			});
 
 			if (!project) {
-				throw new Error(`No Project with project_id of "${project_id}" found.`);
-			} else if (!project.userIds.includes(userId) && (!role || !RolePermissions[role].includes("manageUsers"))) {
-				throw new Error("Unauthorized action.");
+				return { statusMessage: "error", error: `No Project with project_id of "${project_id}" found.` };
+			} else if (!project.userIds.includes(userId) || !RolePermissions[role].includes("manageUsers")) {
+				return { statusMessage: "error", error: "Unauthorized action." };
 			}
 
 			//check if analyses with deleted samples were properly fixed
@@ -71,7 +75,10 @@ export default async function fixDeletedSamplesAction(project_id: Sample["projec
 				const lastSample = sampNames.pop();
 				const badAnalyses = Array.from(
 					badSamples.reduce((acc, samp) => {
-						for (const occ of samp.Libraries.reduce((occs, lib) => [...occs, ...lib.Occurrences], [] as Occurrence[])) {
+						for (const occ of samp.Libraries.reduce(
+							(occs, lib) => [...occs, ...lib.Occurrences],
+							[] as OccurrenceModel[]
+						)) {
 							acc.add(occ.analysis_run_name);
 						}
 						return acc;
@@ -80,11 +87,12 @@ export default async function fixDeletedSamplesAction(project_id: Sample["projec
 				const lastAnalysis = badAnalyses.pop();
 
 				if (!lastSample || !lastAnalysis) {
-					throw new Error("Unknown error when parsing Samples to delete.");
+					return { statusMessage: "error", error: "Unknown error when parsing Samples to delete." };
 				}
 
-				throw new Error(
-					`${
+				return {
+					statusMessage: "error",
+					error: `${
 						//plural Sample
 						sampNames.length ? "Samples" : "Sample"
 					} with the ${
@@ -123,7 +131,7 @@ export default async function fixDeletedSamplesAction(project_id: Sample["projec
 								: //exactly 1
 									""
 					} "${lastAnalysis}". Then, click the "Fix" button on the Project with project_id of "${project_id}".`
-				);
+				};
 			}
 
 			//delete samples
@@ -160,12 +168,13 @@ export default async function fixDeletedSamplesAction(project_id: Sample["projec
 
 		return { statusMessage: "success" };
 	} catch (err: any) {
+		console.error(err);
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			return prismaErr;
 		}
 
-		const error = err as Error;
-		return { statusMessage: "error", error: error.message };
+		return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 	}
 }

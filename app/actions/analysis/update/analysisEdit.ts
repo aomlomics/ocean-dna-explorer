@@ -1,22 +1,23 @@
 "use server";
 
-import { Analysis, Occurrence, Project, Tag } from "@/app/generated/prisma/client";
+import type { AnalysisModel, TagModel } from "@/app/generated/prisma/models";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseAnalysisFile } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
-import { AsyncReturnType, ProgressStream } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import type { LibraryWithRelations } from "@/prisma/generated/zod";
+import type { AsyncReturnType, ProgressStream } from "@/types/globals";
+import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";
 
 async function doEdit(
 	stream: ProgressStream,
 	editId: string,
-	project_id: Analysis["project_id"],
-	analysis_run_name: Analysis["analysis_run_name"],
+	project_id: AnalysisModel["project_id"],
+	analysis_run_name: AnalysisModel["analysis_run_name"],
 	{
 		url,
 		trusted,
@@ -24,7 +25,7 @@ async function doEdit(
 	}: {
 		url?: string;
 		trusted?: boolean;
-		tagNames?: Tag["tagName"][];
+		tagNames?: TagModel["tagName"][];
 	}
 ) {
 	const { userId, sessionClaims, getToken } = await auth();
@@ -36,7 +37,7 @@ async function doEdit(
 	}
 
 	try {
-		const dbAnalysisUntyped = await prisma.analysis.findUnique({
+		const dbAnalysis = await prisma.analysis.findUnique({
 			where: {
 				project_id_analysis_run_name: {
 					project_id,
@@ -65,23 +66,27 @@ async function doEdit(
 				Occurrences: trusted
 					? {
 							select: {
-								featureid: true,
-								Library: {
-									select: {
-										Occurrences: {
-											where: {
-												Analysis: {
-													trusted: true
-												},
-												analysis_run_name: {
-													not: analysis_run_name
-												}
-											},
-											select: {
-												featureid: true,
-												analysis_run_name: true
+								lib_id: true,
+								featureid: true
+							}
+						}
+					: false,
+				Libraries: trusted
+					? {
+							select: {
+								lib_id: true,
+								Occurrences: {
+									where: {
+										Analysis: {
+											trusted: true,
+											analysis_run_name: {
+												not: analysis_run_name
 											}
 										}
+									},
+									select: {
+										featureid: true,
+										analysis_run_name: true
 									}
 								}
 							}
@@ -90,45 +95,37 @@ async function doEdit(
 			}
 		});
 
-		if (!dbAnalysisUntyped) {
+		if (!dbAnalysis) {
 			await stream.error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
 			return;
-		} else if (!dbAnalysisUntyped.Project.userIds.includes(userId)) {
+		} else if (!dbAnalysis.Project.userIds.includes(userId)) {
 			await stream.error(
-				`Permission denied for editing analysis with Project with project_id of ${dbAnalysisUntyped.project_id}. Please contact submission owner with a request to be added to the Project.`
+				`Permission denied for editing analysis with Project with project_id of ${dbAnalysis.project_id}. Please contact submission owner with a request to be added to the Project.`
 			);
 			return;
 		}
 
-		const dbAnalysis = dbAnalysisUntyped as unknown as Omit<typeof dbAnalysisUntyped, "Occurrences"> & {
-			Occurrences?: {
-				featureid: Occurrence["featureid"];
-				Library: {
-					Occurrences: {
-						featureid: Occurrence["featureid"];
-						analysis_run_name: Occurrence["analysis_run_name"];
-					}[];
-				};
-			}[];
-		};
-
-		let parseResult = undefined as AsyncReturnType<typeof parseAnalysisFile>;
+		let parseResult: AsyncReturnType<typeof parseAnalysisFile>;
 		if (url) {
-			parseResult = await parseAnalysisFile({
-				channel: { stream, url },
-				assignmentsUrl: dbAnalysis.asvFileUrl_ODE,
-				occurrencesUrl: dbAnalysis.occurrenceFileUrl_ODE,
-				trusted,
-				oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
-			});
-			if (!parseResult) {
+			try {
+				parseResult = await parseAnalysisFile({
+					channel: { stream, url },
+					assignmentsUrl: dbAnalysis.asvFileUrl_ODE,
+					occurrencesUrl: dbAnalysis.occurrenceFileUrl_ODE,
+					trusted,
+					oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
+				});
+				if (!parseResult) {
+					return;
+				}
+			} catch {
 				return;
 			}
 		}
 
 		await stream.message("Analysis successfully parsed into database format. Parsing data into database.", 50);
 
-		await prisma.$transaction(
+		const success = await prisma.$transaction(
 			async (tx) => {
 				if (parseResult && parseResult.analysis.assay_name !== dbAnalysis.assay_name) {
 					//check if assay is valid
@@ -141,7 +138,8 @@ async function doEdit(
 						}
 					});
 					if (!dbAssay) {
-						throw new Error(`The Assay with assay_name of "${parseResult.analysis.assay_name}" does not exist.`);
+						stream.error(`The Assay with assay_name of "${parseResult.analysis.assay_name}" does not exist.`);
+						return;
 					}
 				}
 
@@ -166,14 +164,15 @@ async function doEdit(
 
 						if (invalidTagNames.length) {
 							if (invalidTagNames.length === 1) {
-								throw new Error(`A tag is invalid. The invalid tagName is "${invalidTagNames[0]}".`);
+								await stream.error(`A tag is invalid. The invalid tagName is "${invalidTagNames[0]}".`);
 							} else {
-								throw new Error(
+								stream.error(
 									`Some tags are invalid. The invalid tagNames are ${invalidTagNames
 										.map((tagName, i) => (i === invalidTagNames.length - 1 ? `and "${tagName}"` : `"${tagName}"`))
 										.join(", ")}.`
 								);
 							}
+							return;
 						}
 					}
 
@@ -219,22 +218,35 @@ async function doEdit(
 				});
 
 				if (trusted) {
-					const featureids = new Set(dbAnalysis.Occurrences!.map((occ) => occ.featureid));
-					const otherTrusted = [] as Analysis["analysis_run_name"][];
-					for (const ourOcc of dbAnalysis.Occurrences!) {
-						for (const otherOcc of ourOcc.Library!.Occurrences)
-							if (!otherTrusted.includes(otherOcc.analysis_run_name) && featureids.has(otherOcc.featureid)) {
-								otherTrusted.push(otherOcc.analysis_run_name);
-							}
+					const featureidsByLibId = {} as Record<string, Set<string>>;
+
+					for (const occ of dbAnalysis.Occurrences) {
+						const featureids = featureidsByLibId[occ.lib_id] ?? (new Set() as Set<string>);
+						featureids.add(occ.featureid);
+						featureidsByLibId[occ.lib_id] = featureids;
 					}
 
-					if (otherTrusted.length) {
+					const otherTrusted = new Set() as Set<AnalysisModel["analysis_run_name"]>;
+
+					for (const library of dbAnalysis.Libraries) {
+						const featureids = featureidsByLibId[library.lib_id];
+
+						if (featureids) {
+							for (const occ of (library as LibraryWithRelations).Occurrences) {
+								if (featureids.has(occ.featureid)) {
+									otherTrusted.add(occ.analysis_run_name);
+								}
+							}
+						}
+					}
+
+					if (otherTrusted.size) {
 						//remove trusted from other analyses
 						await tx.analysis.updateMany({
 							where: {
 								project_id,
 								analysis_run_name: {
-									in: otherTrusted
+									in: Array.from(otherTrusted)
 								}
 							},
 							data: {
@@ -245,39 +257,45 @@ async function doEdit(
 				}
 
 				await stream.success("Analysis file successfully updated in database.");
+				return true;
 			},
 			{ timeout: 0.5 * 60 * 1000 } //30 seconds
 		);
 
-		//only update assay BLAST database if assay has changed
-		if (parseResult && parseResult.analysis.assay_name !== dbAnalysis.assay_name) {
-			fetch(
-				`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${project_id}/${analysis_run_name}/afterSubmission${dbAnalysis.assay_name}?delete=true&skipDiversities=true&skipAllBlast=True`,
-				{
-					method: "POST",
-					headers: {
-						Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+		if (success) {
+			//only update assay BLAST database if assay has changed
+			if (parseResult && parseResult.analysis.assay_name !== dbAnalysis.assay_name) {
+				fetch(
+					`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${project_id}/${analysis_run_name}/afterSubmission${dbAnalysis.assay_name}?delete=true&skipDiversities=true&skipAllBlast=True`,
+					{
+						method: "POST",
+						headers: {
+							Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+						}
 					}
-				}
-			);
-		}
+				);
+			}
 
-		return true;
+			return true;
+		}
 	} catch (err: any) {
+		console.error(err);
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			await stream.error(prismaErr.error);
+		} else if (err instanceof AppError) {
+			await stream.error(err.message);
 		} else {
-			const error = err as Error;
-			await stream.error(error.message);
+			await stream.error(GLOBAL_SERVER_ERROR);
 		}
 	}
 }
 
 export default async function analysisEditAction(
 	editId: string,
-	project_id: Analysis["project_id"],
-	analysis_run_name: Analysis["analysis_run_name"],
+	project_id: AnalysisModel["project_id"],
+	analysis_run_name: AnalysisModel["analysis_run_name"],
 	{
 		url,
 		trusted,
@@ -285,15 +303,17 @@ export default async function analysisEditAction(
 	}: {
 		url?: string;
 		trusted?: boolean;
-		tagNames?: Tag["tagName"][];
+		tagNames?: TagModel["tagName"][];
 	}
 ) {
 	const stream = createProgressStream();
 
 	if (url) {
-		const validBlob = await validateBlobs([url]);
-		if (!validBlob) {
-			stream.error("File is not valid");
+		try {
+			await validateBlobs([url]);
+		} catch (err) {
+			console.error(err);
+			stream.error(err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR);
 			stream.close();
 			return stream.readable;
 		}

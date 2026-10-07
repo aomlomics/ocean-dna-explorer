@@ -14,9 +14,11 @@ import {
 import { parseSchemaToObject } from "../schema";
 import { md5 } from "js-md5";
 import { parse } from "csv-parse";
-import { Library, Project, Sample } from "@/app/generated/prisma/client";
-import { Channel } from "../progress";
-import {
+import type { Channel } from "../progress";
+import type {
+	LibraryModel,
+	ProjectModel,
+	SampleModel,
 	AssayCreateManyInput,
 	AssayPrepCreateManyInput,
 	LibraryCreateManyInput,
@@ -24,6 +26,8 @@ import {
 	SampleCreateManyInput
 } from "@/app/generated/prisma/models";
 import { get } from "@vercel/blob";
+import { getSchemaParseError, schemaParseErrorFunction } from "../queries";
+import { GLOBAL_SERVER_ERROR } from "@/types/objects";
 
 async function parseProjectFile({
 	channel,
@@ -34,11 +38,11 @@ async function parseProjectFile({
 	oldChecksum
 }: {
 	channel: Channel;
-	userIds: Project["userIds"];
-	sampleUrl: Project["sampleMetadataFileUrl_ODE"];
-	libraryUrl: Project["libraryMetadataFileUrl_ODE"];
-	imageFileUrl?: Project["imageFileUrl_ODE"];
-	oldChecksum?: Project["projectMetadataFileChecksum_ODE"];
+	userIds: ProjectModel["userIds"];
+	sampleUrl: ProjectModel["sampleMetadataFileUrl_ODE"];
+	libraryUrl: ProjectModel["libraryMetadataFileUrl_ODE"];
+	imageFileUrl?: ProjectModel["imageFileUrl_ODE"];
+	oldChecksum?: ProjectModel["projectMetadataFileChecksum_ODE"];
 }) {
 	try {
 		const projectCol = {} as Record<string, string>;
@@ -87,7 +91,9 @@ async function parseProjectFile({
 					return;
 				}
 
-				assayNames = fileHeaders.slice(fileHeaders.indexOf("project_level") + 1).filter(Boolean);
+				assayNames = fileHeaders
+					.slice(fileHeaders.indexOf("project_level") + 1)
+					.filter((assay_name) => !!assay_name.trim());
 				if (!assayNames.length) {
 					await channel.stream.error("No Assays found.");
 					return;
@@ -161,63 +167,69 @@ async function parseProjectFile({
 				libraryMetadataFileChecksum_ODE: ""
 			},
 			{
-				error: (iss) => {
-					return {
-						message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
-					};
-				}
+				error: schemaParseErrorFunction
 			}
 		);
 
 		if (!parsedProject.success) {
 			await channel.stream.error(
-				`Table: Project\n` +
-					`Key: ${projectCol.project_id}\n\n` +
-					`${parsedProject.error.issues.map((e) => e.message).join("\n\n")}`
+				getSchemaParseError(parsedProject.error, "Project", [projectCol.project_id ?? "Unknown projecT_id"])
 			);
 			return;
 		}
 
 		//unset all optional fields that were not provided
 		for (const field of ProjectScalarFieldEnumSchema.options) {
-			if (field !== "id" && field !== "dateSubmitted" && !(field in parsedProject.data)) {
-				//@ts-ignore
+			if (!(field in parsedProject.data)) {
+				//@ts-expect-error overriding never with null
 				parsedProject.data[field] = null;
 			}
 		}
+		delete parsedProject.data.id;
+		delete parsedProject.data.dateSubmitted;
 
 		const assays = [] as AssayCreateManyInput[];
 		const assayPreps = [] as AssayPrepCreateManyInput[];
 		for (const assay_name of assayNames) {
 			//assay
-			const parsedAssay = AssayOptionalDefaultsSchema.safeParse({
-				...projectCol,
-				...assayCols[assay_name],
-				assay_name
-			});
+			const parsedAssay = AssayOptionalDefaultsSchema.safeParse(
+				{
+					...projectCol,
+					...assayCols[assay_name],
+					assay_name
+				},
+				{
+					error: schemaParseErrorFunction
+				}
+			);
 			if (!parsedAssay.success) {
-				await channel.stream.error(
-					`Table: Assay\n` + `Key: ${assay_name}\n\n` + `${parsedAssay.error.issues.map((e) => e.message).join("\n\n")}`
-				);
+				await channel.stream.error(getSchemaParseError(parsedAssay.error, "Assay", [assay_name]));
 				return;
 			}
+
+			delete parsedAssay.data.id;
+
 			assays.push(parsedAssay.data);
 
 			//assayPrep
-			const parsedAssayPrep = AssayPrepOptionalDefaultsSchema.safeParse({
-				...projectCol,
-				...assayCols[assay_name],
-				assay_name,
-				project_id: projectCol.project_id
-			});
+			const parsedAssayPrep = AssayPrepOptionalDefaultsSchema.safeParse(
+				{
+					...projectCol,
+					...assayCols[assay_name],
+					assay_name,
+					project_id: projectCol.project_id
+				},
+				{
+					error: schemaParseErrorFunction
+				}
+			);
 			if (!parsedAssayPrep.success) {
-				await channel.stream.error(
-					`Table: AssayPrep\n` +
-						`Key: ${assay_name}\n\n` +
-						`${parsedAssayPrep.error.issues.map((e) => e.message).join("\n\n")}`
-				);
+				await channel.stream.error(getSchemaParseError(parsedAssayPrep.error, "AssayPrep", [assay_name]));
 				return;
 			}
+
+			delete parsedAssayPrep.data.id;
+
 			assayPreps.push(parsedAssayPrep.data);
 		}
 
@@ -232,9 +244,9 @@ async function parseProjectFile({
 			projectMd5
 		};
 	} catch (err) {
-		const error = err as Error;
-		await channel.stream.error(error.message);
-		throw error;
+		console.error(err);
+		await channel.stream.error(GLOBAL_SERVER_ERROR);
+		throw err;
 	}
 }
 
@@ -247,7 +259,7 @@ async function parseLibraryFile({
 	channel: Channel;
 	projectCol: Record<string, string>;
 	assayCols: Record<string, Record<string, string>>;
-	oldChecksum?: Project["libraryMetadataFileChecksum_ODE"];
+	oldChecksum?: ProjectModel["libraryMetadataFileChecksum_ODE"];
 }) {
 	try {
 		const libraries = [] as LibraryCreateManyInput[];
@@ -287,7 +299,7 @@ async function parseLibraryFile({
 			if (record.lib_id) {
 				i++;
 
-				const libraryRow = {} as Library;
+				const libraryRow = {} as LibraryModel;
 				const libraryUserDefined = {} as PrismaJson.UserDefinedType;
 
 				//iterate over each column
@@ -310,30 +322,24 @@ async function parseLibraryFile({
 						userDefined: Object.keys(libraryUserDefined).length ? libraryUserDefined : "JsonNull"
 					},
 					{
-						error: (iss) => {
-							return {
-								message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
-							};
-						}
+						error: schemaParseErrorFunction
 					}
 				);
 
 				if (!parsedLibrary.success) {
-					await channel.stream.error(
-						`Table: Library\n` +
-							`Key: ${libraryRow.lib_id}\n\n` +
-							`${parsedLibrary.error.issues.map((e) => e.message).join("\n\n")}`
-					);
+					await channel.stream.error(getSchemaParseError(parsedLibrary.error, "Library", [libraryRow.lib_id]));
 					return;
 				}
 
 				//unset all optional fields that were not provided
 				for (const field of LibraryScalarFieldEnumSchema.options) {
-					if (field !== "id" && !(field in parsedLibrary.data)) {
-						//@ts-ignore
+					if (!(field in parsedLibrary.data)) {
+						//@ts-expect-error overriding never with null
 						parsedLibrary.data[field] = null;
 					}
 				}
+				delete parsedLibrary.data.id;
+
 				libraries.push(parsedLibrary.data as LibraryCreateManyInput);
 
 				//add to progress bar every 10 percent
@@ -350,9 +356,9 @@ async function parseLibraryFile({
 
 		return { libraries, libraryMd5 };
 	} catch (err) {
-		const error = err as Error;
-		await channel.stream.error(error.message);
-		throw error;
+		console.error(err);
+		await channel.stream.error(GLOBAL_SERVER_ERROR);
+		throw err;
 	}
 }
 
@@ -363,7 +369,7 @@ async function parseSampleFile({
 }: {
 	channel: Channel;
 	projectCol: Record<string, string>;
-	oldChecksum?: Project["sampleMetadataFileChecksum_ODE"];
+	oldChecksum?: ProjectModel["sampleMetadataFileChecksum_ODE"];
 }) {
 	try {
 		const samples = [] as SampleCreateManyInput[];
@@ -403,7 +409,7 @@ async function parseSampleFile({
 			if (record.samp_name) {
 				i++;
 
-				const sampleRow = {} as Sample;
+				const sampleRow = {} as SampleModel;
 				const sampleUserDefined = {} as PrismaJson.UserDefinedType;
 
 				for (const [field, v] of Object.entries(record)) {
@@ -425,30 +431,25 @@ async function parseSampleFile({
 						userDefined: Object.keys(sampleUserDefined).length ? sampleUserDefined : "JsonNull"
 					},
 					{
-						error: (iss) => {
-							return {
-								message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
-							};
-						}
+						error: schemaParseErrorFunction
 					}
 				);
 
 				if (!parsedSample.success) {
-					await channel.stream.error(
-						`Table: Sample\n` +
-							`Key: ${sampleRow.samp_name}\n\n` +
-							`${parsedSample.error.issues.map((e) => e.message).join("\n\n")}`
-					);
+					await channel.stream.error(getSchemaParseError(parsedSample.error, "Sample", [sampleRow.samp_name]));
 					return;
 				}
 
 				//unset all optional fields that were not provided
 				for (const field of SampleScalarFieldEnumSchema.options) {
-					if (field !== "id" && !(field in parsedSample.data)) {
-						//@ts-ignore
+					if (!(field in parsedSample.data)) {
+						//@ts-expect-error overriding never with null
 						parsedSample.data[field] = null;
 					}
 				}
+				delete parsedSample.data.id;
+				delete parsedSample.data.deleted_ODE;
+
 				samples.push(parsedSample.data as SampleCreateManyInput);
 
 				//add to progress bar every 10 percent
@@ -465,9 +466,9 @@ async function parseSampleFile({
 
 		return { samples, sampleMd5 };
 	} catch (err) {
-		const error = err as Error;
-		await channel.stream.error(error.message);
-		throw error;
+		console.error(err);
+		await channel.stream.error(GLOBAL_SERVER_ERROR);
+		throw err;
 	}
 }
 
@@ -483,12 +484,12 @@ export async function parseProjectFiles({
 	projectChannel: Channel;
 	sampleChannel: Channel;
 	libraryChannel: Channel;
-	userIds: Project["userIds"];
-	imageFileUrl?: Project["imageFileUrl_ODE"];
+	userIds: ProjectModel["userIds"];
+	imageFileUrl?: ProjectModel["imageFileUrl_ODE"];
 	oldChecksums?: {
-		projectMd5?: Project["projectMetadataFileChecksum_ODE"];
-		sampleMd5?: Project["sampleMetadataFileChecksum_ODE"];
-		libraryMd5?: Project["libraryMetadataFileChecksum_ODE"];
+		projectMd5?: ProjectModel["projectMetadataFileChecksum_ODE"];
+		sampleMd5?: ProjectModel["sampleMetadataFileChecksum_ODE"];
+		libraryMd5?: ProjectModel["libraryMetadataFileChecksum_ODE"];
 	};
 }) {
 	const projectParseResult = await parseProjectFile({

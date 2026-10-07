@@ -24,7 +24,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
 				<div className="-mt-12">
 					<h1 className="text-4xl font-normal text-primary mb-2">Something went wrong!</h1>
 					<p className="text-base-content/80 mb-4">
-						We've encountered a unexpected issue. Please report the issue to the dev team at the{" "}
+						We&apos;ve encountered a unexpected issue. Please report the issue to the dev team at the{" "}
 						<a href="https://github.com/aomlomics/ocean-dna-explorer/issues" className="text-primary">
 							GitHub Issues tracker
 						</a>

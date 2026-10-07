@@ -1,6 +1,6 @@
 "use client";
 
-import { Taxonomy } from "@/app/generated/prisma/client";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { useEffect, useState } from "react";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 import { matchGbifForPhylopic } from "./matchGbifForPhylopic";
@@ -10,7 +10,7 @@ export default function PhyloPicClient({
 	taxonomy,
 	tooltipClassName
 }: {
-	taxonomy: Taxonomy;
+	taxonomy: TaxonomyModel;
 	tooltipClassName?: string;
 }) {
 	const [loading, setLoading] = useState(false);
@@ -68,7 +68,7 @@ export default function PhyloPicClient({
 					data-tip={"PhyloPic nodes: " + imageDetails}
 				>
 					<div className="relative h-full w-full">
-						<ThemeAwarePhyloPic src={imageUrl} alt="Image of taxonomy" fill className="object-contain" />
+						<ThemeAwarePhyloPic src={imageUrl} alt="Image of taxonomy" className="object-contain" />
 					</div>
 				</div>
 			) : loading ? (

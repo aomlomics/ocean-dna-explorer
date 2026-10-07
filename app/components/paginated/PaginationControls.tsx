@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 export default function PaginationControls({
 	page,
@@ -13,7 +13,7 @@ export default function PaginationControls({
 	count: number;
 	setPage: Dispatch<SetStateAction<number>>;
 	sideEffect?: () => void;
-	handlePageHover?: Function;
+	handlePageHover?: (dir?: 1 | -1) => void;
 }) {
 	return (
 		<div className="w-full flex justify-center flex-1">
@@ -21,6 +21,7 @@ export default function PaginationControls({
 				<div className="justify-self-end">
 					<button
 						className="btn btn-ghost"
+						aria-label="First page"
 						disabled={page === 1}
 						onClick={() => {
 							if (sideEffect) {
@@ -50,6 +51,7 @@ export default function PaginationControls({
 					</button>
 					<button
 						className="btn btn-ghost"
+						aria-label="Previous page"
 						disabled={page === 1}
 						onClick={() => {
 							if (sideEffect) {
@@ -85,6 +87,7 @@ export default function PaginationControls({
 				<div className="justify-self-start">
 					<button
 						className="btn btn-ghost"
+						aria-label="Next page"
 						disabled={page * take >= count}
 						onClick={() => {
 							if (sideEffect) {
@@ -113,6 +116,7 @@ export default function PaginationControls({
 					</button>
 					<button
 						className="btn btn-ghost"
+						aria-label="Last page"
 						disabled={page * take >= count}
 						onClick={() => {
 							if (sideEffect) {

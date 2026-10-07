@@ -1,5 +1,5 @@
 import { DeadValueEnum } from "@/types/enums";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
 
 export async function GET(): Promise<NextResponse<NetworkPacket>> {

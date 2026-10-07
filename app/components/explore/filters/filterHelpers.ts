@@ -1,6 +1,6 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
-import { ReadonlyURLSearchParams } from "next/navigation";
+import type { ModelName } from "@/types/tableMetadata";
+import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import type { ReadonlyURLSearchParams } from "next/navigation";
 
 export type FilterValue =
 	| string
@@ -22,7 +22,7 @@ export type SelectFilterConfig = {
 export type SelectGroupFilterConfig = {
 	type: "selectGroup";
 	group: ConfigField[];
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 };
 
 export type EnumFilterConfig = {
@@ -107,10 +107,7 @@ export function formatLabelFromField(fieldKey: string): string {
 	return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
 }
 
-export function buildActiveSummaries(
-	tableConfig: FilterConfig[],
-	activeFilters: Record<string, string>
-): string[] {
+export function buildActiveSummaries(tableConfig: FilterConfig[], activeFilters: Record<string, string>): string[] {
 	const summaries: string[] = [];
 	for (const config of tableConfig) {
 		if (config.type === "select" || config.type === "enum") {
@@ -180,9 +177,9 @@ export function buildActiveSummaries(
 export function getActiveFilters(searchParams: ReadonlyURLSearchParams, tableConfig: FilterConfig[]) {
 	const fields = [] as string[];
 
-	for (let config of tableConfig) {
+	for (const config of tableConfig) {
 		if (config.type === "selectGroup") {
-			for (let field of config.group) {
+			for (const field of config.group) {
 				fields.push(typeof field === "string" ? field : field.f);
 			}
 		} else {

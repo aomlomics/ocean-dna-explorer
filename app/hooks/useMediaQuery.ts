@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect } from "react";
 
 export function useMediaQuery(query: string) {
@@ -18,4 +19,4 @@ export function useMediaQuery(query: string) {
 	}, [query]);
 
 	return matches;
-} 
+}

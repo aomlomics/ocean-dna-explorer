@@ -1,30 +1,90 @@
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
-import Map from "@/app/components/map/Map";
-import Table from "@/app/components/paginated/Table";
-import DataDisplay from "@/app/components/DataDisplay";
-import EditHistory from "@/app/components/EditHistory";
+import MapComponent from "@/app/components/map/Map";
+import Table from "@/app/components/paginated/table/Table";
+import DataDisplay from "@/app/components/explore/DataDisplay";
+import EditHistory from "@/app/components/explore/EditHistory";
 import TableMetadata from "@/types/tableMetadata";
 import AssaysCard from "@/app/components/assay/AssaysCard";
-import { Analysis } from "@/app/generated/prisma/client";
+import type { AnalysisModel } from "@/app/generated/prisma/models/Analysis";
 import AnalysisTag from "@/app/components/tags/AnalysisTag";
 import StatCard from "@/app/components/explore/StatCard";
-import { EyeIcon, FishIcon, LocationIcon } from "@/app/components/icons";
+import { AnalysisIcon, OccurrenceIcon, AssignmentIcon, SampleIcon } from "@/app/components/icons";
 import TaxaGrid from "@/app/components/paginated/grid/TaxaGrid";
 import AlphaDiversityDisplay from "@/app/components/charts/wrappers/AlphaDiversityDisplay";
 import TaxonomyVisualize from "@/app/components/charts/wrappers/TaxonomyVisualize";
 import { TaxonomicRanks } from "@/types/objects";
 import LoadingAlphaDiversityDisplay from "@/app/components/charts/loading/LoadingAlphaDiversityDisplay";
-import LoadingTaxonomyVisualize from "@/app/components/charts/loading/LoadingTaxonomyVisualize";
-import { Suspense } from "react";
+import LoadingTaxaBarChart from "@/app/components/charts/loading/taxonomy/LoadingTaxaBarChart";
+import { Suspense, type ReactNode } from "react";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
+import { AnalysisFileDownloads, type DownloadFile } from "@/app/components/explore/ProjectFileDownloads";
 import { notFound, redirect } from "next/navigation";
 import { decodeRouteParams } from "@/app/helpers/utils";
+import { getBlobSizes } from "@/app/helpers/getBlobSizes";
+import { exploreUrl } from "@/app/helpers/utils";
+import type { Metadata } from "next";
+import type { TaxonomicRank } from "@/types/globals";
+import { FIRST_TAXONOMY_VISUALIZE_TAB, TAXONOMY_VISUALIZE_TABS } from "@/app/components/charts/taxonomy/tabs";
+
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{ project_id: string; analysis_run_name: string }>;
+}): Promise<Metadata> {
+	const { project_id, analysis_run_name } = await decodeRouteParams(params);
+
+	const analysis = await trustedPrisma.analysis.findUnique({
+		where: {
+			project_id_analysis_run_name: {
+				project_id,
+				analysis_run_name
+			}
+		},
+		select: {
+			assay_name: true
+		}
+	});
+
+	if (analysis) {
+		return {
+			title: `${analysis_run_name} | ${TableMetadata.analysis.plural}`,
+			description: `Explore the results of the ${analysis_run_name} analysis in the ${project_id} project, including associated samples, occurrences, taxonomic assignments, and diversity metrics using the ${analysis.assay_name} assay.`
+		};
+	} else {
+		return {
+			title: "Analysis not found"
+		};
+	}
+}
 
 const dataExplorerTabBase =
 	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
 
-export default async function Analysis_run_name({
+function AnalysisDownloadsSkeleton() {
+	return (
+		<div className="relative z-raised flex flex-wrap items-center gap-3" aria-hidden>
+			<div className="inline-flex items-center gap-3 rounded-lg bg-base-200 px-4 py-2">
+				<span className="skeleton h-8 w-8 shrink-0 rounded" />
+				<span className="flex flex-col gap-1">
+					<span className="skeleton h-4 w-48" />
+					<span className="skeleton h-3 w-14" />
+				</span>
+			</div>
+		</div>
+	);
+}
+
+async function AnalysisDownloadsBlock({ files }: { files: DownloadFile[] }) {
+	const sizeByUrl = await getBlobSizes(files.map((f) => f.href));
+	return (
+		<div className="relative z-raised">
+			<AnalysisFileDownloads files={files} sizeByUrl={sizeByUrl} />
+		</div>
+	);
+}
+
+export default async function Project_id_Analysis_run_name({
 	params,
 	searchParams
 }: {
@@ -35,10 +95,10 @@ export default async function Analysis_run_name({
 
 	const { view } = await searchParams;
 	if (view !== undefined) {
-		redirect(`/explore/analysis/${encodeURIComponent(analysis_run_name)}`);
+		redirect(exploreUrl({ table: "analysis", project_id, analysis_run_name }));
 	}
 
-	const analysis = await prisma.analysis.findUnique({
+	const analysis = await trustedPrisma.analysis.findUnique({
 		where: {
 			project_id_analysis_run_name: {
 				project_id,
@@ -75,7 +135,13 @@ export default async function Analysis_run_name({
 		}
 	});
 	if (!analysis) notFound();
-	const { _count: _, editHistory: __, Assay: ___, Tags: ____, AlphaDiversities: _____, ...justAnalysis } = analysis;
+	const { _count, editHistory, Assay, Tags, AlphaDiversities, ...justAnalysis } = analysis;
+
+	const analysisFiles = [
+		{ label: "analysisMetadata", href: analysis.analysisMetadataFileUrl_ODE },
+		{ label: "asv", href: analysis.asvFileUrl_ODE },
+		{ label: "occurrence", href: analysis.occurrenceFileUrl_ODE }
+	].filter((f) => Boolean(f.href));
 
 	return (
 		<div id="analysis" className="space-y-6">
@@ -83,20 +149,17 @@ export default async function Analysis_run_name({
 			<div className="text-base breadcrumbs">
 				<ul>
 					<li>
-						<Link href="/explore/project" className="text-primary hover:text-primary-focus">
+						<Link href="/explore/project" className="link link-primary link-hover">
 							Projects
 						</Link>
 					</li>
 					<li>
-						<Link
-							href={`/explore/project/${encodeURIComponent(analysis.project_id)}`}
-							className="text-primary hover:text-primary-focus"
-						>
-							{analysis.project_id}
+						<Link href={exploreUrl({ table: "project", project_id })} className="link link-primary link-hover">
+							{project_id}
 						</Link>
 					</li>
 					<li>
-						<Link href={`/explore/analysis`} className="text-primary hover:text-primary-focus">
+						<Link href={`/explore/analysis`} className="link link-primary link-hover">
 							Analyses
 						</Link>
 					</li>
@@ -107,36 +170,40 @@ export default async function Analysis_run_name({
 			<header>
 				<div className="flex gap-2 items-center">
 					<TitleHoverTooltip tooltip={TableMetadata.analysis.description}>
-						<h1 className="text-4xl font-semibold text-primary mb-2">{analysis_run_name}</h1>
+						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+							<AnalysisIcon className="size-8! shrink-0" />
+							<span className="min-w-0 wrap-anywhere">{analysis_run_name}</span>
+						</h1>
 					</TitleHoverTooltip>
-					<EditHistory editHistory={analysis.editHistory} />
-					{analysis.trusted && <div className="badge badge-primary p-3 select-none">Trusted</div>}
-					{analysis.Tags.map((t) => (
+					<EditHistory editHistory={editHistory} />
+					{analysis.trusted && <div className="badge badge-primary text-neutral-content p-3 select-none">Trusted</div>}
+					{Tags.map((t) => (
 						<AnalysisTag key={t.tagName} tag={t} />
 					))}
 				</div>
 				<p className="text-lg text-base-content/70">
 					Part of the{" "}
-					<Link
-						href={`/explore/project/${encodeURIComponent(analysis.project_id)}`}
-						className="text-primary hover:text-primary-focus"
-					>
-						{analysis.project_id}
+					<Link href={exploreUrl({ table: "project", project_id })} className="link link-primary link-hover">
+						{project_id}
 					</Link>{" "}
 					project
 				</p>
 			</header>
 
+			<Suspense fallback={<AnalysisDownloadsSkeleton />}>
+				<AnalysisDownloadsBlock files={analysisFiles} />
+			</Suspense>
+
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
 				{/* Left side content */}
 				<div className="lg:col-span-2 space-y-6">
-					<Map
+					<MapComponent
 						query={async () =>
-							await prisma.sample.findMany({
+							await trustedPrisma.sample.findMany({
 								where: {
 									Libraries: {
 										some: {
-											Occurrences: {
+											Analyses: {
 												some: {
 													project_id,
 													analysis_run_name
@@ -150,7 +217,7 @@ export default async function Analysis_run_name({
 						where={{ analysis_run_name }}
 						cluster
 						draw
-						className="w-full h-110"
+						className="w-full lg:h-110"
 						legend
 						legendOmit={["project_id"]}
 						defaultLegendField="expedition_id"
@@ -177,16 +244,16 @@ export default async function Analysis_run_name({
 						<div className="grid grid-cols-2 gap-4">
 							<StatCard
 								title="Occurrences"
-								value={analysis._count.Occurrences}
-								icon={<EyeIcon />}
+								value={_count.Occurrences}
+								icon={<OccurrenceIcon />}
 								link={`/search?table=occurrence&advanced=[["analysis_run_name","equals","${analysis_run_name}"]]`}
 								tooltip="View as Search"
 							/>
 
 							<StatCard
 								title="Assignments"
-								value={analysis._count.Assignments}
-								icon={<FishIcon />}
+								value={_count.Assignments}
+								icon={<AssignmentIcon />}
 								link={`/search?table=assignment&advanced=[["analysis_run_name","equals","${analysis_run_name}"]]`}
 								tooltip="View as Search"
 							/>
@@ -194,11 +261,11 @@ export default async function Analysis_run_name({
 							<StatCard
 								title="Samples"
 								query={async () =>
-									await prisma.sample.count({
+									await trustedPrisma.sample.count({
 										where: {
 											Libraries: {
 												some: {
-													Occurrences: {
+													Analyses: {
 														some: {
 															project_id,
 															analysis_run_name
@@ -209,7 +276,7 @@ export default async function Analysis_run_name({
 										}
 									})
 								}
-								icon={<LocationIcon />}
+								icon={<SampleIcon />}
 								link={`/search?table=sample&advanced=[["analysis","analysis_run_name","equals","${analysis_run_name}"]]`}
 								tooltip="View as Search"
 							/>
@@ -219,7 +286,7 @@ export default async function Analysis_run_name({
 					{/* Assay Card */}
 					<AssaysCard
 						title="Assays used in this Analysis"
-						assays={[{ assay_name: analysis.assay_name, target_gene: analysis.Assay.target_gene }]}
+						assays={[{ assay_name: analysis.assay_name, target_gene: Assay.target_gene }]}
 					/>
 				</div>
 			</div>
@@ -277,7 +344,7 @@ export default async function Analysis_run_name({
 						aria-label="Taxonomy"
 					/>
 					<div role="tabpanel" className="tab-content w-full mt-2">
-						<Suspense fallback={<LoadingTaxonomyVisualize />}>
+						<Suspense fallback={<LoadingTaxonomyVisualizeSuspense />}>
 							<TaxonomyVisualizeSuspense project_id={project_id} analysis_run_name={analysis_run_name} />
 						</Suspense>
 					</div>
@@ -291,7 +358,7 @@ export default async function Analysis_run_name({
 					/>
 					<div role="tabpanel" className="tab-content w-full mt-2">
 						<Suspense fallback={<LoadingAlphaDiversityDisplay />}>
-							<AlphaDiversityDisplay alphaDiversities={analysis.AlphaDiversities} sameAnalysis />
+							<AlphaDiversityDisplay alphaDiversities={AlphaDiversities} sameAnalysis />
 						</Suspense>
 					</div>
 				</div>
@@ -304,83 +371,116 @@ async function TaxonomyVisualizeSuspense({
 	project_id,
 	analysis_run_name
 }: {
-	project_id: Analysis["project_id"];
-	analysis_run_name: Analysis["analysis_run_name"];
+	project_id: AnalysisModel["project_id"];
+	analysis_run_name: AnalysisModel["analysis_run_name"];
 }) {
-	const { occurrences, assignments, taxonomies, samples } = await prisma.$transaction(
-		async (tx) => {
-			const occurrences = await tx.occurrence.findMany({
-				where: {
-					project_id,
-					analysis_run_name
-				},
-				select: {
-					lib_id: true,
-					featureid: true,
-					organismQuantity: true
-				}
-			});
-
-			const assignments = await tx.assignment.findMany({
-				where: {
-					project_id,
-					analysis_run_name
-				},
+	const analysis = await trustedPrisma.analysis.findUnique({
+		where: {
+			project_id_analysis_run_name: {
+				project_id,
+				analysis_run_name
+			}
+		},
+		select: {
+			Assignments: {
 				select: {
 					featureid: true,
-					Taxonomy: {
+					taxonomy: true,
+					percent_id: true,
+					Occurrences: {
 						select: {
-							id: true
-						}
-					}
-				}
-			});
-
-			const taxonomies = await tx.taxonomy.findMany({
-				where: {
-					Assignments: {
-						some: {
-							project_id,
-							analysis_run_name
-						}
-					}
-				},
-				select: TaxonomicRanks.reduce((acc, rank) => ({ ...acc, [rank]: true }), { id: true } as Record<
-					(typeof TaxonomicRanks)[number],
-					true
-				> & { id: true })
-			});
-
-			const samples = await tx.sample.findMany({
-				where: {
-					Libraries: {
-						some: {
-							Occurrences: {
-								some: {
-									project_id,
-									analysis_run_name
+							organismQuantity: true,
+							Library: {
+								select: {
+									id: true
 								}
 							}
 						}
 					}
-				},
-				include: {
-					Libraries: {
-						select: {
-							lib_id: true
-						}
-					}
 				}
-			});
-
-			return { occurrences, assignments, taxonomies, samples };
-		},
-		{
-			timeout: 3 * 60 * 1000
+			},
+			Taxonomies: {
+				select: TaxonomicRanks.reduce(
+					(acc, rank) => ({
+						...acc,
+						[rank]: true
+					}),
+					{ taxonomy: true } as Record<TaxonomicRank, true> & {
+						taxonomy: true;
+					}
+				)
+			},
+			Libraries: {
+				select: {
+					id: true,
+					lib_id: true,
+					Sample: true
+				}
+			}
 		}
-	);
+	});
+
+	if (!analysis) {
+		return <></>;
+	}
+
+	const taxonomiesByName = Object.fromEntries(analysis.Taxonomies.map((taxonomy) => [taxonomy.taxonomy, taxonomy]));
+	const libsWithSampleById = new Map(analysis.Libraries.map((lib) => [lib.id, { ...lib, Sample: lib.Sample }]));
 
 	return (
-		<TaxonomyVisualize occurrences={occurrences} assignments={assignments} taxonomies={taxonomies} samples={samples} />
+		<TaxonomyVisualize
+			assignsWithOccs={analysis.Assignments}
+			taxonomiesByName={taxonomiesByName}
+			libsWithSampleById={libsWithSampleById}
+		/>
+	);
+}
+
+function LoadingTaxonomyVisualizeSuspense() {
+	const currentTab = FIRST_TAXONOMY_VISUALIZE_TAB;
+
+	function getTab(
+		route: keyof typeof TAXONOMY_VISUALIZE_TABS,
+		t: (typeof TAXONOMY_VISUALIZE_TABS)[keyof typeof TAXONOMY_VISUALIZE_TABS],
+		i: number
+	) {
+		return (
+			<button
+				key={route}
+				disabled
+				className={`btn ${currentTab[i] === route ? "btn-primary text-primary-content" : "text-base-content"}`}
+			>
+				{t.title}
+			</button>
+		);
+	}
+
+	const tabRows: ReactNode[][] = [Object.entries(TAXONOMY_VISUALIZE_TABS).map(([route, t]) => getTab(route, t, 0))];
+
+	//show nested tabs if they exist for currently selected tab
+	let curr = TAXONOMY_VISUALIZE_TABS[currentTab[0]!]!;
+	let parentPath = [currentTab[0]!];
+	let i = 1;
+	while (curr.tabs) {
+		tabRows.push(Object.entries(curr.tabs).map(([route, t]) => getTab(route, t, 0)));
+
+		const selectedRoute = currentTab[i]!;
+		curr = curr.tabs[selectedRoute]!;
+		parentPath = [...parentPath, selectedRoute];
+		i++;
+	}
+
+	return (
+		<>
+			<div className="flex flex-col items-center gap-2">
+				{tabRows.map((row, i) => (
+					<div key={i} className="flex justify-center gap-2">
+						{row}
+					</div>
+				))}
+			</div>
+
+			<LoadingTaxaBarChart />
+		</>
 	);
 }

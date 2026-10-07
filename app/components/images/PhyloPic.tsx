@@ -1,8 +1,8 @@
-import { Taxonomy } from "@/app/generated/prisma/client";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 import { matchGbifForPhylopic } from "./matchGbifForPhylopic";
 
-export default async function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
+export default async function PhyloPic({ taxonomy }: { taxonomy: TaxonomyModel }) {
 	const errorImg = <>No Image</>;
 
 	const matched = await matchGbifForPhylopic(taxonomy);
@@ -20,7 +20,7 @@ export default async function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 	const imageUrl = phyloPic._embedded.primaryImage._links.vectorFile.href;
 	const title = phyloPic._embedded.primaryImage._links.self.title ?? "";
 	const rank = matched.rankMatched;
-	const rankLabel = rank ? rank[0].toUpperCase() + rank.slice(1) : "Taxon";
+	const rankLabel = rank ? rank[0]!.toUpperCase() + rank.slice(1) : "Taxon";
 
 	return (
 		<div className="w-full h-full relative flex flex-col items-center justify-center">
@@ -28,7 +28,7 @@ export default async function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 				className="tooltip tooltip-bottom tooltip-primary w-full h-full before:bg-base-100 before:text-base-content before:border before:border-base-300"
 				data-tip={`Image of ${rankLabel}: ${title}`}
 			>
-				<ThemeAwarePhyloPic src={imageUrl} alt="Image of taxonomy" priority={true} fill className="object-contain" />
+				<ThemeAwarePhyloPic src={imageUrl} alt="Image of taxonomy" priority className="object-contain" />
 			</div>
 		</div>
 	);

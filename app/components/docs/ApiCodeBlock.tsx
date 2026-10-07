@@ -1,41 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { fetcher } from "@/app/helpers/utils";
+import { useState } from "react";
+import useSWRImmutable from "swr/immutable";
+import { ThemedSyntaxHighlighter } from "./CodeBlock";
 
 export default function ApiCodeBlock({ language, url }: { language: string; url: string }) {
-	const [theme, setTheme] = useState("dark");
 	const [copied, setCopied] = useState(false);
-	const [code, setCode] = useState("Loading...");
 	const [isOpen, setIsOpen] = useState(false);
 
-	useEffect(() => {
-		async function doFetch() {
-			const response = await fetch(url);
-			if (!response.ok) {
-				setCode(response.statusText);
-			} else {
-				setCode(JSON.stringify(await response.json(), null, 2));
-			}
-		}
-		doFetch();
-
-		const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
-		setTheme(currentTheme);
-
-		const observer = new MutationObserver((mutations) => {
-			mutations.forEach((mutation) => {
-				if (mutation.attributeName === "data-theme") {
-					const newTheme = document.documentElement.getAttribute("data-theme") || "dark";
-					setTheme(newTheme);
-				}
-			});
-		});
-
-		observer.observe(document.documentElement, { attributes: true });
-		return () => observer.disconnect();
-	}, []);
+	const { data, error, isLoading } = useSWRImmutable(url, fetcher);
+	let code;
+	if (error) {
+		code = JSON.stringify(error, null, 2);
+	} else if (isLoading || !data) {
+		code = "Loading...";
+	} else if (data.statusMessage === "error") {
+		code = data.error;
+	} else if (data.statusMessage === "success") {
+		code = JSON.stringify(data.result, undefined, 2);
+	} else {
+		code = "Unexpected error occurred";
+	}
 
 	const handleCopy = async () => {
 		await navigator.clipboard.writeText(code);
@@ -43,40 +29,18 @@ export default function ApiCodeBlock({ language, url }: { language: string; url:
 		setTimeout(() => setCopied(false), 2000);
 	};
 
-	// Need to override theme / background color of the library I useds
-	const darkTheme = {
-		...oneDark,
-		'pre[class*="language-"]': {
-			...oneDark['pre[class*="language-"]'],
-			background: "transparent"
-		},
-		'code[class*="language-"]': {
-			...oneDark['code[class*="language-"]'],
-			background: "transparent"
-		}
-	};
-
-	const lightTheme = {
-		...oneLight,
-		'pre[class*="language-"]': {
-			...oneLight['pre[class*="language-"]'],
-			background: "transparent"
-		},
-		'code[class*="language-"]': {
-			...oneLight['code[class*="language-"]'],
-			background: "transparent"
-		}
-	};
+	const lines = code.split("\n");
+	//only clip the preview when there is more than the three lines we show
+	const clipPreview = lines.length > 3;
 
 	// Determine width class based on content
 	const getWidthClass = () => {
-		// Single line (like URLs)
-		if (!code.includes("\n")) {
-			return "w-fit min-w-[300px]";
+		// Single line (like a count)
+		if (lines.length === 1) {
+			return "w-fit";
 		}
 
 		// Short multiline (like small JSON)
-		const lines = code.split("\n");
 		const maxLineLength = Math.max(...lines.map((line) => line.length));
 		if (maxLineLength < 50 && lines.length < 8) {
 			return "w-fit max-w-xl";
@@ -150,33 +114,28 @@ export default function ApiCodeBlock({ language, url }: { language: string; url:
 				</div>
 			</div>
 			{isOpen ? (
-				<SyntaxHighlighter
+				<ThemedSyntaxHighlighter
 					language={language}
-					style={theme === "dark" ? darkTheme : lightTheme}
+					code={code}
 					customStyle={{
 						margin: 0,
 						padding: "1rem",
 						paddingTop: 0
 					}}
 					wrapLongLines={true}
-				>
-					{code}
-				</SyntaxHighlighter>
+				/>
 			) : (
-				<SyntaxHighlighter
+				<ThemedSyntaxHighlighter
 					language={language}
-					style={theme === "dark" ? darkTheme : lightTheme}
+					code={previewCode}
 					customStyle={{
 						margin: 0,
 						padding: "1rem",
 						paddingTop: 0,
-						height: "100px", // Limit height of the preview
-						overflow: "hidden"
+						...(clipPreview ? { height: "100px", overflow: "hidden" } : {})
 					}}
 					wrapLongLines={false}
-				>
-					{previewCode}
-				</SyntaxHighlighter>
+				/>
 			)}
 		</div>
 	);

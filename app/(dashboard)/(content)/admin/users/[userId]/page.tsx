@@ -1,0 +1,228 @@
+import analysisDeleteAction from "@/app/actions/analysis/delete/analysisDelete";
+import {
+	banUserAction,
+	deleteUserAction,
+	removeRoleAction,
+	setRoleAction,
+	unbanUserAction
+} from "@/app/actions/manageUsers/editUser";
+import projectDeleteAction from "@/app/actions/project/delete/projectDelete";
+import SubmissionDeleteButton from "@/app/components/mySubmissions/SubmissionDeleteButton";
+import WarningButton from "@/app/components/admin/WarningButton";
+import { prisma } from "@/app/helpers/prisma";
+import { exploreUrl } from "@/app/helpers/utils";
+import type { Role, UserMetadata } from "@/types/globals";
+import { RoleHeirarchy } from "@/types/objects";
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import type { EmailAddress } from "@clerk/nextjs/server";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ userId: string }> }): Promise<Metadata> {
+	const { userId } = await params;
+	const client = await clerkClient();
+
+	try {
+		const target = await client.users.getUser(userId);
+		return {
+			title: target.fullName
+		};
+	} catch {
+		return {
+			title: "User not found"
+		};
+	}
+}
+
+//TODO: figure out why it's POSTing with every refresh
+export default async function UserId({ params }: { params: Promise<{ userId: string }> }) {
+	const { userId: targetUserId } = await params;
+
+	const { userId, sessionClaims } = await auth();
+	if (userId === targetUserId) {
+		redirect("/admin/users");
+	}
+	const role = sessionClaims?.metadata.role;
+
+	const client = await clerkClient();
+	let target;
+	try {
+		target = await client.users.getUser(targetUserId);
+	} catch {
+		return <>Error: User not found</>;
+	}
+
+	const targetRole = (target.publicMetadata as UserMetadata).role;
+	const uneditable = !RoleHeirarchy[role!].includes(targetRole);
+
+	const projects = await prisma.project.findMany({
+		where: {
+			userIds: {
+				has: targetUserId
+			}
+		},
+		include: {
+			Analyses: true
+		}
+	});
+
+	return (
+		<div className="grow flex flex-col gap-5">
+			<header className="flex gap-5 items-center justify-between">
+				<div>
+					<p className="text-2xl text-primary">{target.fullName}</p>
+					<p className="text-lg text-base-content/70">
+						{
+							target.emailAddresses.find((email: EmailAddress) => email.id === target.primaryEmailAddressId)
+								?.emailAddress
+						}
+					</p>
+				</div>
+
+				{target.banned && <div className="text-error/90 italic text-4xl">User is Banned</div>}
+
+				<div className="flex gap-5">
+					{target.banned ? (
+						<WarningButton
+							value={target.id}
+							valueName="targetUserId"
+							buttonText="Unban User"
+							warningText="This will allow the banned user to log in again. All submissions previously made will remain."
+							confirmText="unban"
+							action={unbanUserAction}
+							disabled={uneditable}
+						/>
+					) : (
+						<WarningButton
+							value={target.id}
+							valueName="targetUserId"
+							buttonText="Ban User"
+							warningText="This will prevent the user from being able to log in. They may be unbanned in the future, and their submissions will remain."
+							confirmText="ban"
+							action={banUserAction}
+							disabled={uneditable}
+						/>
+					)}
+
+					<WarningButton
+						value={target.id}
+						valueName="targetUserId"
+						buttonText="Delete User"
+						warningText="This will permanently delete the user and all of their submissions."
+						action={deleteUserAction}
+						confirmText="delete"
+						redirectUrl="/admin"
+						disabled={uneditable}
+					/>
+				</div>
+			</header>
+
+			<div>
+				<div>
+					<span className="text-primary">Role:</span> {(target.publicMetadata.role as Role | undefined) || "No Role"}{" "}
+					{uneditable && <span className="pl-5 text-base-content/50 italic">You may not edit users of this role</span>}
+				</div>
+
+				<div className="flex gap-3">
+					{role === "admin" && (
+						<form action={setRoleAction}>
+							<input type="hidden" value={target.id} name="targetUserId" />
+							<input type="hidden" value="moderator" name="role" />
+							<button type="submit" className="btn" disabled={uneditable || target.publicMetadata.role === "moderator"}>
+								Make Moderator
+							</button>
+						</form>
+					)}
+
+					<form action={setRoleAction}>
+						<input type="hidden" value={target.id} name="targetUserId" />
+						<input type="hidden" value="contributor" name="role" />
+						<button type="submit" className="btn" disabled={uneditable || target.publicMetadata.role === "contributor"}>
+							Make Contributor
+						</button>
+					</form>
+
+					<form action={removeRoleAction}>
+						<input type="hidden" value={target.id} name="targetUserId" />
+						<button type="submit" className="btn" disabled={uneditable}>
+							Remove Role
+						</button>
+					</form>
+				</div>
+
+				{!!target.publicMetadata.roleApplication && (
+					<div>
+						<span className="text-primary">Role Application:</span>{" "}
+						{(target.publicMetadata as UserMetadata).roleApplication!.role}
+					</div>
+				)}
+			</div>
+
+			<div className="grid grid-cols-2 gap-5">
+				<div className="card bg-base-200 shadow-sm min-h-65 h-fit hover:shadow-sm transition-shadow overflow-hidden">
+					<div className="card-body">
+						<div className="w-full h-full flex flex-col relative">
+							<h2 className="text-2xl text-primary font-medium mb-4">Projects:</h2>
+							<div className="flex flex-col gap-3 mt-2">
+								{projects.map((proj) => (
+									<div key={proj.id} className="flex flex-col gap-3">
+										<div className="flex items-center justify-between p-3 bg-base-100 rounded-lg">
+											<Link
+												href={exploreUrl({ table: "project", project_id: proj.project_id })}
+												className="text-primary hover:text-info-focus hover:underline transition-colors"
+											>
+												{proj.project_id}
+											</Link>
+											<div className="flex gap-3">
+												<SubmissionDeleteButton
+													action={projectDeleteAction}
+													table="Project"
+													target={proj.project_id}
+													associatedTable="Analysis"
+													associated={proj.Analyses}
+												/>
+											</div>
+										</div>
+
+										<div className="flex flex-col gap-3 ml-20">
+											{!!proj.Analyses.length && (
+												<>
+													<h2 className="text-lg text-primary font-medium">Analyses:</h2>
+													{proj.Analyses.map((analysis) => (
+														<div
+															key={analysis.id}
+															className="flex items-center justify-between p-3 bg-base-100 rounded-lg"
+														>
+															<Link
+																href={exploreUrl({
+																	table: "analysis",
+																	project_id: proj.project_id,
+																	analysis_run_name: analysis.analysis_run_name
+																})}
+																className="text-primary hover:text-info-focus hover:underline transition-colors"
+															>
+																{analysis.analysis_run_name}
+															</Link>
+															<div className="flex gap-3">
+																<SubmissionDeleteButton
+																	action={analysisDeleteAction}
+																	table="Analysis"
+																	target={[proj.project_id, analysis.analysis_run_name]}
+																/>
+															</div>
+														</div>
+													))}
+												</>
+											)}
+										</div>
+									</div>
+								))}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}

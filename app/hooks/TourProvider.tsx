@@ -1,12 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { createContext, ReactNode, useEffect, useRef, useState } from "react";
+import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from "react";
 
 export type TourStep = { url: string; stepTime?: number };
 
-export const TourContext = createContext<(tourSteps: TourStep[], stepTime?: number) => void>(() => {});
 export const DEFAULT_TOUR_STEP_TIME = 5; //seconds
+
+const TourContext = createContext<(tourSteps: TourStep[], stepTime?: number) => void>(() => {});
 
 export default function TourProvider({ children }: { children: ReactNode }) {
 	const router = useRouter();
@@ -41,15 +42,25 @@ export default function TourProvider({ children }: { children: ReactNode }) {
 			const nextI = (step + 1) % tourSteps.length;
 
 			//next step navigation timeout
-			timeoutRef.current = setTimeout(() => setStep(nextI), (tourSteps[step].stepTime || stepTime) * 1000);
+			timeoutRef.current = setTimeout(() => setStep(nextI), (tourSteps[step]!.stepTime || stepTime) * 1000);
 
 			//prefetch next step
-			router.prefetch(tourSteps[nextI].url);
+			router.prefetch(tourSteps[nextI]!.url);
 
 			//navigate to current step
-			router.replace(tourSteps[step].url);
+			router.replace(tourSteps[step]!.url);
 		}
 	}, [step]);
 
 	return <TourContext.Provider value={startTour}>{children}</TourContext.Provider>;
+}
+
+export function useTour() {
+	const context = useContext(TourContext);
+
+	if (!context) {
+		throw new Error("useTour must be used inside TourProvider");
+	}
+
+	return context;
 }

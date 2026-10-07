@@ -17,6 +17,7 @@ model Project {
     Assignments           Assignment[]
     AlphaDiversities      AlphaDiversity[]
     AlphaDiversityIndexes AlphaDiversityIndex[]
+    TaxonomySpotlights    TaxonomySpotlight[]
 
     // Submission File URLs
     projectMetadataFileUrl_ODE      String
@@ -70,8 +71,10 @@ model Sample {
 
     // Relations
     project_id String
-    Project    Project   @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    Project    Project    @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     Libraries  Library[]
+    Features   Feature[]
+    Taxonomies Taxonomy[]
 
     deleted_ODE Boolean?
 
@@ -311,7 +314,7 @@ model AssayPrep {
     project_id String
     Project    Project   @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     assay_name String
-    Assay      Assay     @relation(fields: [assay_name], references: [assay_name])
+    Assay      Assay     @relation(fields: [assay_name], references: [assay_name], onDelete: Restrict)
     Libraries  Library[]
 
     thermocycler  String?
@@ -359,8 +362,9 @@ model Library {
     samp_name             String
     Sample                Sample                @relation(fields: [project_id, samp_name], references: [project_id, samp_name], onDelete: Cascade)
     assay_name            String
-    Assay                 Assay                 @relation(fields: [assay_name], references: [assay_name])
+    Assay                 Assay                 @relation(fields: [assay_name], references: [assay_name], onDelete: Restrict)
     AssayPrep             AssayPrep             @relation(fields: [project_id, assay_name], references: [project_id, assay_name], onDelete: Cascade)
+    Analyses              Analysis[]
     Occurrences           Occurrence[]
     AlphaDiversityIndexes AlphaDiversityIndex[]
 

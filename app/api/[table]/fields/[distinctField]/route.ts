@@ -1,7 +1,8 @@
-import { prisma } from "@/app/helpers/prisma";
-import { parseApiQuery } from "@/app/helpers/queries";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { getTableName } from "@/app/helpers/schema";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
+import { AppError, GLOBAL_SERVER_ERROR } from "@/types/objects";
+import TableMetadata from "@/types/tableMetadata";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -13,23 +14,27 @@ export async function GET(
 	try {
 		const model = getTableName(table);
 
-		const { searchParams } = new URL(request.url);
+		const parsedField = TableMetadata[model].enumSchema.safeParse(distinctField);
+		if (!parsedField.success) {
+			return NextResponse.json(
+				{
+					statusMessage: "error",
+					error: `The field named "${distinctField}" does not exist on the table named "${model}".`
+				},
+				{ status: 400 }
+			);
+		}
 
-		const { query } = parseApiQuery(model, searchParams, {
-			features: {
-				relationsLimit: true,
-				filters: true,
-				advanced: true,
-				search: true
-			},
-			defaults: {
-				fields: { [distinctField]: true },
-				distinct: [distinctField]
+		const { searchParams } = new URL(request.url);
+		const client = searchParams.get("trusted")?.toLowerCase() === "true" ? trustedPrisma : prisma;
+
+		//@ts-expect-error dynamically accessing prisma client
+		const result = await client[model].findMany({
+			distinct: [distinctField],
+			select: {
+				[distinctField]: true
 			}
 		});
-
-		//@ts-ignore
-		const result = await prisma[model].findMany(query);
 
 		if (result) {
 			return NextResponse.json({
@@ -37,15 +42,21 @@ export async function GET(
 				result: result.map((e: { [distinctField]: string }) => e[distinctField])
 			});
 		} else {
-			return NextResponse.json({
-				statusMessage: "error",
-				error: `No ${model} matching the search parameters could be found.`
-			});
+			return NextResponse.json(
+				{
+					statusMessage: "error",
+					error: `No ${model} matching the search parameters could be found.`
+				},
+				{ status: 404 }
+			);
 		}
 	} catch (err) {
-		const error = err as Error;
+		console.error(err);
 
-		//TODO: replace database error messages with generic error message
-		return NextResponse.json({ statusMessage: "error", error: error.message });
+		if (err instanceof AppError) {
+			return NextResponse.json({ statusMessage: "error", error: err.message }, { status: err.statusCode });
+		}
+
+		return NextResponse.json({ statusMessage: "error", error: GLOBAL_SERVER_ERROR }, { status: 500 });
 	}
 }

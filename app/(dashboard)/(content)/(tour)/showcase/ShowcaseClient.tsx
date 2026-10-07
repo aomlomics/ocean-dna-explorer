@@ -2,32 +2,44 @@
 
 import Image from "next/image";
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { Taxonomy } from "@/app/generated/prisma/client";
-import { ProjectIcon } from "@/app/components/icons";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
+import { ProjectIcon, TrustedIcon, UntrustedIcon } from "@/app/components/icons";
 import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
 import { matchGbifForPhylopic } from "@/app/components/images/matchGbifForPhylopic";
 import DynamicMap from "@/app/components/map/DynamicMap";
 import { RanksBySpecificity } from "@/types/objects";
 import { AnimatePresence, motion, type Transition } from "framer-motion";
 import type { ProjectBundle } from "./data";
+import { TrustedLabel } from "@/app/components/header/TrustedToggle";
+import { usePrefersReducedMotion } from "@/app/hooks/usePrefersReducedMotion";
 
 const DEFAULT_PROJECT_DURATION_MS = 40_000;
 const GRID_CELL_COUNT = 10;
 const FAST_START_CELL_COUNT = 6;
 const FAST_START_TICK_MS = 55;
 const WARMUP_TICK_MS = 220;
-const STEADY_TICK_MIN_MS = 1800;
-const STEADY_TICK_MAX_MS = 2400;
-const STEADY_CLEAR_CHANCE = 0.12;
+const STEADY_TICK_MS = 3000;
 const INITIAL_TAXONOMY_DELAY_MS = 120;
 const INITIAL_PROJECT_INTRO_DELAY_MS = 950;
 const PROJECT_SWAP_INTRO_DELAY_MS = 420;
-const RECENT_SWAP_MEMORY = 3;
 const MAX_NEW_ENRICHES_PER_PROJECT = 24;
 const PREMIUM_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 const REVEAL_TRANSITION: Transition = { duration: 1.8, ease: PREMIUM_EASE };
 const FIRST_PROJECT_CIRCLE_DURATION_S = 6.2;
 const SWAP_PROJECT_CIRCLE_DURATION_S = 4.8;
+
+// First-fill typewriter is snappy so the grid can populate without lagging the
+// card pop-ins. Steady swaps type slower so each replacement is readable.
+const FAST_TYPE = {
+	scientific: { delay: 0.04, charMs: 14 },
+	common: { delay: 0.18, charMs: 16 },
+	path: { delay: 0.3, charMs: 10 }
+};
+const SLOW_TYPE = {
+	scientific: { delay: 0.35, charMs: 120 },
+	common: { delay: 1.2, charMs: 145 },
+	path: { delay: 1.9, charMs: 130 }
+};
 
 type IucnCategoryId = "NE" | "DD" | "LC" | "NT" | "VU" | "EN" | "CR" | "EW" | "EX";
 
@@ -69,7 +81,7 @@ const IUCN_CLASS: Record<IucnCategoryId, string> = {
 
 type ActiveGridTaxonomy = {
 	id: number;
-	taxonomy: Taxonomy;
+	taxonomy: TaxonomyModel;
 	scientificName: string;
 	taxonomyPath: string;
 	commonName: string | null;
@@ -78,9 +90,10 @@ type ActiveGridTaxonomy = {
 		imageUrl: string;
 		imageDetails: string;
 	} | null;
+	fastType: boolean;
 };
 
-type TaxonomyCardMeta = Omit<ActiveGridTaxonomy, "id">;
+type TaxonomyCardMeta = Omit<ActiveGridTaxonomy, "id" | "fastType">;
 
 type ShowcaseMapLocation = {
 	samp_name: string;
@@ -146,10 +159,6 @@ function scoreEnglishVernacular(row: {
 	return score;
 }
 
-function randomSteadyTickMs() {
-	return STEADY_TICK_MIN_MS + Math.floor(Math.random() * (STEADY_TICK_MAX_MS - STEADY_TICK_MIN_MS + 1));
-}
-
 function getProjectTitleSizeClass(projectName: string): string {
 	const length = projectName.trim().length;
 	if (length >= 120) return "text-3xl sm:text-4xl xl:text-5xl";
@@ -165,7 +174,7 @@ function trimCommonName(commonName: string | null, scientificName: string) {
 }
 
 // Builds a semicolon-free breadcrumb from the individual rank columns.
-function formatTaxonomyPath(t: Taxonomy): string {
+function formatTaxonomyPath(t: TaxonomyModel): string {
 	const ranks = [t.kingdom, t.phylum, t.class, t.order, t.family, t.genus, t.species].filter(
 		(v): v is string => typeof v === "string" && v.trim().length > 0
 	);
@@ -173,7 +182,7 @@ function formatTaxonomyPath(t: Taxonomy): string {
 }
 
 // Picks the most specific known name for display.
-function mostSpecificName(t: Taxonomy): string {
+function mostSpecificName(t: TaxonomyModel): string {
 	for (const rank of RanksBySpecificity) {
 		const value = t[rank]?.toString().trim();
 		if (value) return value.replace(/_/g, " ");
@@ -181,7 +190,7 @@ function mostSpecificName(t: Taxonomy): string {
 	return t.taxonomy.split(";").pop()?.replace(/_/g, " ") ?? t.taxonomy;
 }
 
-async function fetchTaxonomyMeta(taxonomy: Taxonomy): Promise<TaxonomyCardMeta | null> {
+async function fetchTaxonomyMeta(taxonomy: TaxonomyModel): Promise<TaxonomyCardMeta | null> {
 	const cacheKey = taxonomy.taxonomy;
 	if (taxonomyMetaCache.has(cacheKey)) return taxonomyMetaCache.get(cacheKey) ?? null;
 	const inFlight = taxonomyMetaInFlight.get(cacheKey);
@@ -288,7 +297,7 @@ async function fetchTaxonomyMeta(taxonomy: Taxonomy): Promise<TaxonomyCardMeta |
 	return resolved;
 }
 
-function buildFallbackTaxonomyMeta(taxonomy: Taxonomy): TaxonomyCardMeta {
+function buildFallbackTaxonomyMeta(taxonomy: TaxonomyModel): TaxonomyCardMeta {
 	const scientificName = mostSpecificName(taxonomy);
 	return {
 		taxonomy,
@@ -359,41 +368,43 @@ function useFitColumnScale(dependency: string | undefined) {
 
 export default function ShowcaseClient({
 	projects,
-	projectDurationMs = DEFAULT_PROJECT_DURATION_MS
+	projectDurationMs = DEFAULT_PROJECT_DURATION_MS,
+	trusted
 }: {
 	projects: ProjectBundle[];
 	projectDurationMs?: number;
+	trusted: boolean;
 }) {
 	const [projectIdx, setProjectIdx] = useState(0);
-	const [gridTaxa, setGridTaxa] = useState<Array<ActiveGridTaxonomy | null>>(() =>
-		Array.from({ length: GRID_CELL_COUNT }, () => null)
+	const [gridTaxa, setGridTaxa] = useState<Array<ActiveGridTaxonomy | undefined>>(() =>
+		Array.from({ length: GRID_CELL_COUNT })
 	);
-	const gridRef = useRef<Array<ActiveGridTaxonomy | null>>(Array.from({ length: GRID_CELL_COUNT }, () => null));
-	const firstProjectPaint = useRef(true);
+	const gridRef = useRef<Array<ActiveGridTaxonomy | undefined>>(Array.from({ length: GRID_CELL_COUNT }));
+	const [isFirstProjectPaint, setIsFirstProjectPaint] = useState(true);
 	const nextTaxonomyIndex = useRef(0);
 	const gridItemIdCounter = useRef(0);
-	const recentSwapSlotsRef = useRef<number[]>([]);
 	const projectEnrichBudgetUsedRef = useRef(0);
+	const prefersReducedMotion = usePrefersReducedMotion();
 
 	const project = projects[projectIdx];
 	const mapLocations = useMemo(() => (project?.samples ?? []).filter(hasCoordinates), [project?.project_id]);
 
 	useEffect(() => {
-		if (projects.length <= 1) return;
+		// Project swaps are an idle loop (large slides, repeating forever).
+		if (prefersReducedMotion || projects.length <= 1) return;
 		const id = window.setInterval(() => {
-			firstProjectPaint.current = false;
+			setIsFirstProjectPaint(false);
 			setProjectIdx((i) => (i + 1) % projects.length);
 		}, projectDurationMs);
 		return () => window.clearInterval(id);
-	}, [projectDurationMs, projects.length]);
+	}, [prefersReducedMotion, projectDurationMs, projects.length]);
 
 	useEffect(() => {
 		const list = project?.taxonomies ?? [];
-		gridRef.current = Array.from({ length: GRID_CELL_COUNT }, () => null);
+		gridRef.current = Array.from({ length: GRID_CELL_COUNT });
 		setGridTaxa(gridRef.current);
 		nextTaxonomyIndex.current = 0;
 		gridItemIdCounter.current = 0;
-		recentSwapSlotsRef.current = [];
 		projectEnrichBudgetUsedRef.current = 0;
 		if (!list.length) return;
 
@@ -401,58 +412,14 @@ export default function ShowcaseClient({
 		let timeoutId: number | null = null;
 		let startDelayId: number | null = null;
 
-		const applyGrid = (next: Array<ActiveGridTaxonomy | null>) => {
-			gridRef.current = next;
-			setGridTaxa(next);
-		};
-
-		const scheduleNextTick = () => {
-			if (cancelled) return;
-			const hasEmptySlot = gridRef.current.some((cell) => !cell);
-			const filledCount = gridRef.current.reduce((count, cell) => count + (cell ? 1 : 0), 0);
-			timeoutId = window.setTimeout(
-				() => void tick(),
-				hasEmptySlot
-					? filledCount < FAST_START_CELL_COUNT
-						? FAST_START_TICK_MS
-						: WARMUP_TICK_MS
-					: randomSteadyTickMs()
-			);
-		};
-
 		const tick = async () => {
 			if (cancelled) return;
 
-			let current = gridRef.current;
-			const warmup = current.some((cell) => !cell);
-
-			if (!warmup && Math.random() < STEADY_CLEAR_CHANCE) {
-				const clearSlot = Math.floor(Math.random() * GRID_CELL_COUNT);
-				if (current[clearSlot]) {
-					const cleared = [...current];
-					cleared[clearSlot] = null;
-					applyGrid(cleared);
-					current = cleared;
-				}
-			}
-
-			const taxonomy = list[nextTaxonomyIndex.current % list.length];
+			const taxonomyIndex = nextTaxonomyIndex.current;
+			const slot = taxonomyIndex % GRID_CELL_COUNT;
+			const taxonomy = list[taxonomyIndex % list.length]!;
 			nextTaxonomyIndex.current += 1;
 
-			const emptySlot = current.findIndex((cell) => !cell);
-			let slot = emptySlot;
-			if (slot === -1) {
-				const recentSlots = recentSwapSlotsRef.current;
-				const allowedSlots: number[] = [];
-				for (let i = 0; i < GRID_CELL_COUNT; i += 1) {
-					if (!recentSlots.includes(i)) allowedSlots.push(i);
-				}
-				if (allowedSlots.length) {
-					slot = allowedSlots[Math.floor(Math.random() * allowedSlots.length)];
-				} else {
-					slot = Math.floor(Math.random() * GRID_CELL_COUNT);
-				}
-			}
 			gridItemIdCounter.current += 1;
 			const insertedId = gridItemIdCounter.current;
 			const fallbackMeta = buildFallbackTaxonomyMeta(taxonomy);
@@ -478,30 +445,43 @@ export default function ShowcaseClient({
 			const next = [...gridRef.current];
 			next[slot] = {
 				id: insertedId,
-				...insertMeta
+				...insertMeta,
+				fastType: taxonomyIndex < GRID_CELL_COUNT
 			};
-			applyGrid(next);
-			const recentSlots = recentSwapSlotsRef.current;
-			recentSlots.push(slot);
-			if (recentSlots.length > RECENT_SWAP_MEMORY) {
-				recentSlots.splice(0, recentSlots.length - RECENT_SWAP_MEMORY);
-			}
+			gridRef.current = next;
+			setGridTaxa(next);
 
-			scheduleNextTick();
+			if (cancelled) return;
+			const filledCount = nextTaxonomyIndex.current;
+			// After the grid is full, ticks keep replacing cells forever. Stop there
+			// when reduced motion is on so the page settles on one frame.
+			if (prefersReducedMotion && filledCount >= Math.min(GRID_CELL_COUNT, list.length)) return;
+			const delayMs = prefersReducedMotion
+				? 0
+				: filledCount < GRID_CELL_COUNT
+					? filledCount < FAST_START_CELL_COUNT
+						? FAST_START_TICK_MS
+						: WARMUP_TICK_MS
+					: STEADY_TICK_MS;
+			timeoutId = window.setTimeout(() => void tick(), delayMs);
 		};
 
-		const introDelayMs = firstProjectPaint.current ? INITIAL_PROJECT_INTRO_DELAY_MS : PROJECT_SWAP_INTRO_DELAY_MS;
-		const taxonomyStartDelayMs = Math.max(INITIAL_TAXONOMY_DELAY_MS, introDelayMs);
+		const introDelayMs = prefersReducedMotion
+			? 0
+			: isFirstProjectPaint
+				? INITIAL_PROJECT_INTRO_DELAY_MS
+				: PROJECT_SWAP_INTRO_DELAY_MS;
+		const taxonomyStartDelayMs = prefersReducedMotion ? 0 : Math.max(INITIAL_TAXONOMY_DELAY_MS, introDelayMs);
 		startDelayId = window.setTimeout(() => {
 			if (cancelled) return;
-			scheduleNextTick();
+			void tick();
 		}, taxonomyStartDelayMs);
 		return () => {
 			cancelled = true;
 			if (timeoutId != null) window.clearTimeout(timeoutId);
 			if (startDelayId != null) window.clearTimeout(startDelayId);
 		};
-	}, [project?.project_id, project?.taxonomies]);
+	}, [prefersReducedMotion, project?.project_id, project?.taxonomies]);
 
 	// Auto-fit the left info column so the project id / name are never cut off.
 	const { availableRef, contentRef, scale: fitScale } = useFitColumnScale(project?.project_id);
@@ -509,12 +489,12 @@ export default function ShowcaseClient({
 	if (!project) return null;
 
 	const fromLeft = projectIdx % 2 === 0;
-	const swapIn = !firstProjectPaint.current;
+	const swapIn = !isFirstProjectPaint;
 	const circleDuration = swapIn ? SWAP_PROJECT_CIRCLE_DURATION_S : FIRST_PROJECT_CIRCLE_DURATION_S;
 	const projectTitleSizeClass = getProjectTitleSizeClass(project.project_name);
 
 	return (
-		<div className="tour-motion-bg relative isolate min-h-screen w-full overflow-hidden bg-linear-to-b from-base-300 via-base-200 to-base-300 text-base-content [html[data-theme='dark']_&]:from-base-300 [html[data-theme='dark']_&]:via-base-300/90 [html[data-theme='dark']_&]:to-base-300">
+		<div className="tour-motion-bg relative isolate min-h-dvh w-full overflow-hidden bg-linear-to-b from-base-300 via-base-200 to-base-300 text-base-content [html[data-theme='dark']_&]:from-base-300 [html[data-theme='dark']_&]:via-base-300/90 [html[data-theme='dark']_&]:to-base-300">
 			<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_25%_18%,oklch(var(--p)/0.16),transparent_46%),radial-gradient(ellipse_at_82%_48%,oklch(var(--s)/0.13),transparent_48%)]" />
 
 			<AnimatePresence mode="wait">
@@ -522,11 +502,11 @@ export default function ShowcaseClient({
 					key={project.project_id}
 					role="group"
 					aria-label={project.project_name}
-					className="relative z-10 grid h-screen grid-cols-1 gap-6 px-[5vw] py-[5vh] lg:grid-cols-[minmax(0,0.88fr)_minmax(34rem,1.12fr)]"
-					initial={{ opacity: 0 }}
+					className="relative z-10 grid h-dvh w-full min-w-0 grid-cols-1 gap-6 px-[5vw] py-[5vh] lg:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)]"
+					initial={prefersReducedMotion ? false : { opacity: 0 }}
 					animate={{ opacity: 1 }}
 					exit={{ opacity: 0, scale: 0.992, transition: { duration: 0.55, ease: PREMIUM_EASE } }}
-					transition={{ duration: 1.6, ease: PREMIUM_EASE }}
+					transition={prefersReducedMotion ? { duration: 0 } : { duration: 1.6, ease: PREMIUM_EASE }}
 				>
 					<div ref={availableRef} className="flex min-h-0 min-w-0 flex-col justify-start overflow-hidden py-2">
 						<div
@@ -542,26 +522,36 @@ export default function ShowcaseClient({
 									height={96}
 									className="h-22 w-22 shrink-0"
 								/>
-								<p className="text-[1.75rem] font-semibold tracking-tight text-base-content/92 sm:text-[2.2rem]">
-									Ocean DNA Explorer
-								</p>
+								<div className="min-w-0">
+									<p className="text-[1.75rem] font-semibold tracking-tight text-base-content/92 sm:text-[2.2rem]">
+										Ocean DNA Explorer
+									</p>
+									<p className="mt-1 flex items-center gap-2 text-base font-medium tracking-tight text-base-content/80 sm:text-lg">
+										{trusted ? <TrustedIcon className="text-primary" /> : <UntrustedIcon className="text-primary" />}
+										Showing <TrustedLabel />
+									</p>
+								</div>
 							</div>
 
 							<div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start">
 								<motion.div
 									className="relative w-fit"
 									initial={
-										swapIn
-											? {
-													x: fromLeft ? "-50vw" : "50vw",
-													rotate: fromLeft ? -52 : 52,
-													scale: 0.68,
-													opacity: 0
-												}
-											: { x: "-14vw", rotate: -16, scale: 0.9, opacity: 0 }
+										prefersReducedMotion
+											? false
+											: swapIn
+												? {
+														x: fromLeft ? "-50vw" : "50vw",
+														rotate: fromLeft ? -52 : 52,
+														scale: 0.68,
+														opacity: 0
+													}
+												: { x: "-14vw", rotate: -16, scale: 0.9, opacity: 0 }
 									}
 									animate={{ x: 0, rotate: 0, scale: 1, opacity: 1 }}
-									transition={{ duration: circleDuration, ease: PREMIUM_EASE }}
+									transition={
+										prefersReducedMotion ? { duration: 0 } : { duration: circleDuration, ease: PREMIUM_EASE }
+									}
 								>
 									<div className="relative aspect-square h-44 overflow-hidden rounded-full border-[6px] border-primary bg-base-300 sm:h-56 xl:h-64">
 										{project.imageFileUrl_ODE ? (
@@ -577,9 +567,19 @@ export default function ShowcaseClient({
 
 								<motion.div
 									className="h-44 w-full overflow-hidden rounded-3xl border-[6px] border-primary bg-base-300/40 shadow-xl sm:h-56 md:max-w-104 xl:h-64"
-									initial={swapIn ? { x: fromLeft ? "-36vw" : "36vw", opacity: 0 } : { x: "-12vw", opacity: 0 }}
+									initial={
+										prefersReducedMotion
+											? false
+											: swapIn
+												? { x: fromLeft ? "-36vw" : "36vw", opacity: 0 }
+												: { x: "-12vw", opacity: 0 }
+									}
 									animate={{ x: 0, opacity: 1 }}
-									transition={{ duration: circleDuration, ease: PREMIUM_EASE, delay: 0.08 }}
+									transition={
+										prefersReducedMotion
+											? { duration: 0 }
+											: { duration: circleDuration, ease: PREMIUM_EASE, delay: 0.08 }
+									}
 								>
 									<div className="showcase-map-minimal pointer-events-none h-full w-full">
 										<ProjectSamplesMap projectId={project.project_id} locations={mapLocations} />
@@ -587,13 +587,13 @@ export default function ShowcaseClient({
 								</motion.div>
 							</div>
 
-							<MaskedReveal delay={0.06}>
+							<MaskedReveal delay={0.06} reduced={prefersReducedMotion}>
 								<div className="text-2xl font-semibold leading-tight text-primary sm:text-3xl xl:text-4xl">
 									{project.project_id}
 								</div>
 							</MaskedReveal>
 
-							<MaskedReveal delay={0.14}>
+							<MaskedReveal delay={0.14} reduced={prefersReducedMotion}>
 								<h1
 									className={`mt-3 max-w-4xl wrap-break-word pb-[0.08em] font-semibold leading-[1.08] tracking-[-0.03em] text-white drop-shadow-md ${projectTitleSizeClass}`}
 								>
@@ -602,7 +602,7 @@ export default function ShowcaseClient({
 							</MaskedReveal>
 
 							{project.projectDescription ? (
-								<MaskedReveal delay={0.22}>
+								<MaskedReveal delay={0.22} reduced={prefersReducedMotion}>
 									<p className="mt-4 max-w-3xl line-clamp-4 text-base leading-relaxed text-base-content sm:text-lg xl:text-xl">
 										{project.projectDescription}
 									</p>
@@ -611,7 +611,7 @@ export default function ShowcaseClient({
 
 							<motion.dl
 								className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-sm text-base-content/75"
-								initial="hidden"
+								initial={prefersReducedMotion ? "show" : "hidden"}
 								animate="show"
 								variants={{
 									hidden: {},
@@ -624,10 +624,10 @@ export default function ShowcaseClient({
 						</div>
 					</div>
 
-					<div className="relative flex min-h-[56vh] items-center justify-center lg:min-h-0">
-						<div className="grid h-full min-h-[56vh] w-full grid-cols-2 grid-rows-5 place-content-center gap-x-10 gap-y-5 lg:min-h-0">
+					<div className="relative flex min-h-[56vh] min-w-0 items-center justify-center lg:min-h-0">
+						<div className="grid h-full min-h-[56vh] w-full min-w-0 grid-cols-2 grid-rows-5 place-content-center gap-x-10 gap-y-5 lg:min-h-0">
 							{Array.from({ length: GRID_CELL_COUNT }, (_, slot) => (
-								<TaxonomyGridCell key={slot} cell={gridTaxa[slot]} />
+								<TaxonomyGridCell key={slot} cell={gridTaxa[slot]} reduced={prefersReducedMotion} />
 							))}
 						</div>
 					</div>
@@ -661,7 +661,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 	);
 }
 
-function TaxonomyGridCell({ cell }: { cell: ActiveGridTaxonomy | null }) {
+function TaxonomyGridCell({ cell, reduced }: { cell: ActiveGridTaxonomy | undefined; reduced: boolean }) {
 	if (!cell) {
 		return <div className="min-h-28" />;
 	}
@@ -670,21 +670,21 @@ function TaxonomyGridCell({ cell }: { cell: ActiveGridTaxonomy | null }) {
 		<AnimatePresence mode="wait" initial={false}>
 			<motion.div
 				key={cell.id}
-				initial={{ opacity: 0 }}
+				initial={reduced ? false : { opacity: 0 }}
 				animate={{ opacity: 1 }}
 				exit={{ opacity: 0, transition: { duration: 0.24, ease: PREMIUM_EASE } }}
-				transition={{ duration: 0.55, ease: PREMIUM_EASE }}
+				transition={reduced ? { duration: 0 } : { duration: 0.55, ease: PREMIUM_EASE }}
 				className="flex min-h-32 items-center gap-4 px-2 py-1"
 			>
 				<motion.div
 					className="relative h-20 w-20 shrink-0 sm:h-22 sm:w-22"
 					title={cell.phylopic?.imageDetails ? `PhyloPic nodes: ${cell.phylopic.imageDetails}` : undefined}
-					initial={{ opacity: 0, scale: 0.94 }}
+					initial={reduced ? false : { opacity: 0, scale: 0.94 }}
 					animate={{ opacity: 1, scale: 1 }}
-					transition={{ duration: 0.65, ease: PREMIUM_EASE }}
+					transition={reduced ? { duration: 0 } : { duration: 0.65, ease: PREMIUM_EASE }}
 				>
 					{cell.phylopic?.imageUrl ? (
-						<ThemeAwarePhyloPic src={cell.phylopic.imageUrl} alt="Taxonomy image" fill className="object-contain" />
+						<ThemeAwarePhyloPic src={cell.phylopic.imageUrl} alt="Taxonomy image" className="object-contain" />
 					) : (
 						<div className="flex h-full w-full items-center justify-center text-4xl font-semibold leading-none text-primary/95">
 							?
@@ -698,8 +698,9 @@ function TaxonomyGridCell({ cell }: { cell: ActiveGridTaxonomy | null }) {
 							key={`${cell.id}-scientific`}
 							text={cell.scientificName}
 							className="line-clamp-2 text-balance text-[22px] font-semibold leading-tight tracking-tight text-primary drop-shadow-md"
-							delay={0.25}
-							charMs={86}
+							delay={cell.fastType ? FAST_TYPE.scientific.delay : SLOW_TYPE.scientific.delay}
+							charMs={cell.fastType ? FAST_TYPE.scientific.charMs : SLOW_TYPE.scientific.charMs}
+							instant={reduced}
 						/>
 						{cell.iucn ? (
 							<span
@@ -718,15 +719,17 @@ function TaxonomyGridCell({ cell }: { cell: ActiveGridTaxonomy | null }) {
 						key={`${cell.id}-common`}
 						text={cell.commonName ?? "No common name found"}
 						className="mt-0.5 line-clamp-1 text-[16px] font-medium text-base-content/72"
-						delay={0.9}
-						charMs={104}
+						delay={cell.fastType ? FAST_TYPE.common.delay : SLOW_TYPE.common.delay}
+						charMs={cell.fastType ? FAST_TYPE.common.charMs : SLOW_TYPE.common.charMs}
+						instant={reduced}
 					/>
 					<TypewriterText
 						key={`${cell.id}-taxonomy`}
 						text={cell.taxonomyPath}
 						className="mt-1 line-clamp-2 wrap-anywhere text-[12px] leading-snug text-base-content/58"
-						delay={1.45}
-						charMs={92}
+						delay={cell.fastType ? FAST_TYPE.path.delay : SLOW_TYPE.path.delay}
+						charMs={cell.fastType ? FAST_TYPE.path.charMs : SLOW_TYPE.path.charMs}
+						instant={reduced}
 					/>
 				</div>
 			</motion.div>
@@ -738,17 +741,26 @@ function TypewriterText({
 	text,
 	className,
 	delay,
-	charMs
+	charMs,
+	instant = false
 }: {
 	text: string;
 	className?: string;
 	delay?: number;
 	charMs?: number;
+	instant?: boolean;
 }) {
 	const [visibleChars, setVisibleChars] = useState(0);
+	const animationKey = `${text}\0${delay ?? ""}\0${charMs ?? ""}`;
+	const [prevAnimationKey, setPrevAnimationKey] = useState(animationKey);
+
+	if (animationKey !== prevAnimationKey) {
+		setPrevAnimationKey(animationKey);
+		setVisibleChars(0);
+	}
 
 	useEffect(() => {
-		setVisibleChars(0);
+		if (instant) return;
 		const startDelayMs = Math.max(0, Math.round((delay ?? 0) * 1000));
 		const perCharMs = Math.max(8, charMs ?? 14);
 		let timer: number | null = null;
@@ -765,9 +777,9 @@ function TypewriterText({
 		return () => {
 			if (timer != null) window.clearTimeout(timer);
 		};
-	}, [text, delay, charMs]);
+	}, [instant, text, delay, charMs]);
 
-	const typedText = text.slice(0, visibleChars);
+	const typedText = instant ? text : text.slice(0, visibleChars);
 	return (
 		<span className={`relative block ${className ?? ""}`}>
 			{/* Reserve final layout height so the text block does not jump when typing completes. */}
@@ -786,23 +798,33 @@ const ProjectSamplesMap = memo(
 				</div>
 			);
 		}
-		return <DynamicMap locations={locations} cluster clusterRadius={42} />;
+		return <DynamicMap locations={locations} cluster clusterRadius={42} table="sample" id="samp_name" disableSearch />;
 	},
 	(prev, next) => prev.projectId === next.projectId
 );
 
-function MaskedReveal({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
+function MaskedReveal({
+	children,
+	delay = 0,
+	reduced = false
+}: {
+	children: ReactNode;
+	delay?: number;
+	reduced?: boolean;
+}) {
+	if (reduced) {
+		return <div className="overflow-hidden">{children}</div>;
+	}
 	return (
-		<span className="block overflow-hidden">
-			<motion.span
-				className="block"
+		<div className="overflow-hidden">
+			<motion.div
 				initial={{ y: "100%" }}
 				animate={{ y: "0%" }}
 				exit={{ y: "-25%" }}
 				transition={{ ...REVEAL_TRANSITION, delay }}
 			>
 				{children}
-			</motion.span>
-		</span>
+			</motion.div>
+		</div>
 	);
 }

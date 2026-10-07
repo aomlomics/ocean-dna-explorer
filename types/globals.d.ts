@@ -1,8 +1,7 @@
-import { Assay, Feature, BlastQuery, BlastQueryResult } from "@/app/generated/prisma/client";
-import { BlastQueryResultCreateInput } from "@/app/generated/prisma/models";
-import { BlastQueryPartial } from "@/prisma/generated/zod";
-import { ReactNode } from "react";
-import TableMetadata from "@/types/tableMetadata";
+import type { AssayModel } from "@/app/generated/prisma/models/Assay";
+import type { BlastQueryPartial } from "@/prisma/generated/zod";
+import type { User } from "@clerk/nextjs/server";
+import type { TaxonomicRanks } from "./objects";
 
 export type Role = "admin" | "moderator" | "contributor";
 export type Permission = "contribute" | "manageUsers" | "manageDatabase";
@@ -58,15 +57,7 @@ export type ClerkUserObject = {
 type StringQueryMode = "equals" | "contains" | "startsWith" | "endsWith";
 type NumberQueryMode = "equals" | "lt" | "lte" | "gt" | "gte";
 export type QueryMode =
-	| StringQueryMode
-	| NumberQueryMode
-	| "range"
-	| "in"
-	| "notIn"
-	| "null"
-	| "notNull"
-	| "deadValue"
-	| "boolean";
+	StringQueryMode | NumberQueryMode | "range" | "in" | "notIn" | "null" | "notNull" | "deadValue" | "boolean";
 
 type StringParamsArrayField = [string, StringQueryMode, string];
 type NumberParamsArrayField = [string, NumberQueryMode, number];
@@ -100,7 +91,7 @@ export type Polygon = {
 		ne: Point;
 		sw: Point;
 	};
-	points: Point[];
+	points: [Point, Point, Point, ...Point[]];
 };
 export type Circle = {
 	type: "circle";
@@ -116,15 +107,15 @@ export type NullLocation = {
 	decimalLongitude: number | null;
 	[key: string]: any;
 } & { values?: never };
-export type Location = {
+export type MapLocation = {
 	decimalLatitude: number;
 	decimalLongitude: number;
 	[key: string]: any;
 } & { values?: never; polylines?: never };
-export type LocationWithValues = {
+export type MapLocationWithValues = {
 	decimalLatitude: number;
 	decimalLongitude: number;
-	values?: Location[];
+	values?: MapLocation[];
 	polylines?: [number, number][];
 	[key: string]: any;
 };
@@ -135,7 +126,7 @@ export type AsyncReturnType<T extends (...args: any) => Promise<any>> = T extend
 
 export type BlastRequest = {
 	queries: (string | [string, string])[];
-	assay_name?: Assay["assay_name"];
+	assay_name?: AssayModel["assay_name"];
 	save?: boolean;
 	options?: Omit<BlastQueryPartial, "id" | "userId" | "dateCalculated" | "sequences" | "database" | "databaseVersion">;
 };
@@ -149,6 +140,19 @@ export type UserMetadata = {
 		description?: string;
 	};
 };
+
+export type UserObject = {
+	id: User["id"];
+	publicMetadata: UserMetadata;
+	firstName: User["firstName"];
+	lastName: User["lastName"];
+	banned: User["banned"];
+	imageUrl: User["imageUrl"];
+	primaryEmailAddress?: User["emailAddresses"][number]["emailAddress"];
+};
+
+export type TaxonomicRank = (typeof TaxonomicRanks)[number];
+
 declare module "wordcloud";
 
 declare global {

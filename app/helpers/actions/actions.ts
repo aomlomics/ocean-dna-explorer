@@ -1,8 +1,8 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import TableMetadata from "@/types/tableMetadata";
+import { AppError } from "@/types/objects";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 
 export function addToHistory(
-	table: Uncapitalize<Prisma.ModelName>,
+	table: Uncapitalize<ModelName>,
 	editId: string,
 	editHistory: PrismaJson.EditHistoryType | null,
 	changes: PrismaJson.ChangesType
@@ -10,7 +10,7 @@ export function addToHistory(
 	//check if changes are valid
 	for (const cha of changes) {
 		if (!TableMetadata[table].enumSchema.options.includes(cha.field)) {
-			throw new Error(
+			throw new AppError(
 				`Invalid Change for editHistory. Field named "${cha.field}" does not exist on table named "${table}".`
 			);
 		}
@@ -32,7 +32,7 @@ export function addToHistory(
 		} else {
 			//group changes together into previously existing edit
 			const temp = [...editHistory];
-			temp[currEditIndex].changes = [...editHistory[currEditIndex].changes, ...changes];
+			temp[currEditIndex]!.changes = [...editHistory[currEditIndex]!.changes, ...changes];
 			return temp;
 		}
 	} else {

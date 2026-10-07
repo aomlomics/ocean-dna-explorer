@@ -1,31 +1,34 @@
 "use server";
 
-import { AttributionOptionalDefaultsSchema, ImageOptionalDefaultsSchema } from "@/prismaImages/generated/zod";
-import { NetworkPacket } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import {
+	AttributionOptionalDefaultsSchema,
+	type AttributionPartial,
+	ImageOptionalDefaultsSchema,
+	type ImagePartial
+} from "@/prismaImages/generated/zod";
+import type { NetworkPacket } from "@/types/globals";
+import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import { del } from "@vercel/blob";
 import { validateBlobs } from "@/app/helpers/withDb";
-import { Project, Taxonomy } from "@/app/generated/prisma/client";
+import type { ProjectModel, TaxonomyModel } from "@/app/generated/prisma/models";
 import { prisma } from "@/app/helpers/prisma";
-import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 import { handlePrismaError } from "@/app/helpers/queries";
-import { AttributionCreateInput, ImageCreateInput } from "@/app/generated/prismaImages/models";
+import type { AttributionModel, ImageModel } from "@/app/generated/prismaImages/models";
+import type { PrismaPromise } from "@prisma/client/runtime/client";
+import TableMetadata from "@/types/tableMetadata";
 
-export default async function addImageAction(
-	formData: FormData,
-	newAttribution: boolean,
-	target?: { table: "project"; value: Project["project_id"] } | { table: "taxonomy"; value: Taxonomy["taxonomy"] }
-): Promise<NetworkPacket> {
-	const url = formData.get("url");
-	if (url && typeof url === "string") {
-		const validBlob = await validateBlobs([url]);
-		if (!validBlob) {
-			return { statusMessage: "error", error: "File is not valid" };
-		}
-	}
-
+export default async function addImageAction({
+	image,
+	attribution,
+	target
+}: {
+	image: ImagePartial;
+	attribution?: AttributionPartial;
+	target?:
+		{ table: "project"; value: ProjectModel["project_id"] } | { table: "taxonomy"; value: TaxonomyModel["taxonomy"] };
+}): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata?.role;
 
@@ -33,74 +36,84 @@ export default async function addImageAction(
 		return { statusMessage: "error", error: "Must be logged in." };
 	}
 
-	if (!role || !RolePermissions[role].includes("manageDatabase")) {
-		return { statusMessage: "error", error: "Invalid role." };
+	if (
+		!role ||
+		(!target && !RolePermissions[role].includes("manageDatabase")) ||
+		(target && !RolePermissions[role].includes("contribute"))
+	) {
+		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
-	if (target) {
-		if (!DataTableNames.includes(target.table)) {
-			return { statusMessage: "error", error: `Table with name of "${target.table}" does not exist.` };
-		}
+	if (!image || !image.url || typeof image.url !== "string") {
+		return { statusMessage: "error", error: "File URL is missing from image." };
 	}
 
-	let attribution = undefined as undefined | AttributionCreateInput;
-	let image = undefined as undefined | ImageCreateInput;
+	let deleteDbImageOnError = false;
 	try {
-		const formObj = Object.fromEntries(formData) as Record<string, any>;
-		for (const key in formObj) {
-			if (formObj[key] === "") {
-				delete formObj[key];
-			}
+		if (image.url) {
+			await validateBlobs([image.url]);
 		}
-		if (formObj.homePage && formObj.homePage === "true") {
-			formObj.homePage = true;
+
+		const parsedImage = ImageOptionalDefaultsSchema.parse({ ...image, userId });
+		let parsedAttribution;
+		if (attribution) {
+			parsedAttribution = AttributionOptionalDefaultsSchema.parse(attribution);
+		}
+
+		//create image and new attribution (if provided)
+		const queries = [prismaImages.image.create({ data: parsedImage! })] as PrismaPromise<
+			ImageModel | AttributionModel
+		>[];
+		if (parsedAttribution) {
+			queries.unshift(prismaImages.attribution.create({ data: parsedAttribution }));
+			await prismaImages.$transaction(queries);
 		} else {
-			formObj.homePage = false;
+			await queries[0];
 		}
-		formObj.userId = userId;
-
-		image = ImageOptionalDefaultsSchema.parse(formObj);
-		if (newAttribution) {
-			attribution = AttributionOptionalDefaultsSchema.parse(formObj);
-		}
-
-		await prismaImages.$transaction(async (tx) => {
-			if (attribution) {
-				await tx.attribution.create({
-					data: attribution
-				});
-			}
-
-			await tx.image.create({
-				data: image as ImageCreateInput
-			});
-		});
+		deleteDbImageOnError = true;
 	} catch (err: any) {
-		if (url && typeof url === "string") {
-			await del(url);
+		console.error(err);
+
+		await del(image.url);
+
+		if (deleteDbImageOnError) {
+			const queries = [prismaImages.image.delete({ where: { url: image.url } })] as PrismaPromise<
+				ImageModel | AttributionModel
+			>[];
+			if (attribution) {
+				queries.push(prismaImages.attribution.delete({ where: { attributionTitle: attribution.attributionTitle } }));
+				await prismaImages.$transaction(queries);
+			} else {
+				await queries[0];
+			}
 		}
 
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
-			return { statusMessage: "error", error: prismaErr.error };
-		} else {
-			const error = err as Error;
-			return { statusMessage: "error", error: error.message };
+			return prismaErr;
 		}
+
+		if (err instanceof AppError) {
+			return { statusMessage: "error", error: err.message };
+		}
+
+		return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 	}
 
 	if (target) {
 		try {
-			//@ts-ignore
+			//@ts-expect-error dynamically accessing prisma client
 			await prisma[target.table].update({
 				where: {
 					[TableMetadata[target.table].titleField as string]: target.value
 				},
 				data: {
-					imageFileUrl_ODE: url
+					imageFileUrl_ODE: image.url
 				}
 			});
 		} catch (err: any) {
+			console.error(err);
+
 			await prismaImages.$transaction(async (tx) => {
 				if (attribution) {
 					await tx.attribution.delete({
@@ -119,11 +132,10 @@ export default async function addImageAction(
 
 			const prismaErr = handlePrismaError(err);
 			if (prismaErr) {
-				return { statusMessage: "error", error: prismaErr.error };
-			} else {
-				const error = err as Error;
-				return { statusMessage: "error", error: error.message };
+				return prismaErr;
 			}
+
+			return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 		}
 	}
 

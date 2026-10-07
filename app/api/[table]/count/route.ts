@@ -1,12 +1,13 @@
-import { prisma } from "@/app/helpers/prisma";
-import { deepWhere, parseApiQuery } from "@/app/helpers/queries";
+import { deepWhere } from "@/app/helpers/api";
+import { parseApiQuery } from "@/app/helpers/api";
 import { getTableName } from "@/app/helpers/schema";
 import { deepMerge, getLocationsInsideShapes } from "@/app/helpers/utils";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import { auth } from "@clerk/nextjs/server";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { fetchBlast } from "@/app/helpers/blast";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
+import { AppError, GLOBAL_SERVER_ERROR } from "@/types/objects";
 
 export async function GET(
 	request: Request,
@@ -17,26 +18,52 @@ export async function GET(
 	const { sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata?.role;
 
-	const cookieStore = await cookies();
-
 	try {
 		const model = getTableName(table);
 
 		const { searchParams } = new URL(request.url);
 
-		let { query, blast, shapes, sampleWhere } = parseApiQuery(model, searchParams, {
+		const parsedQuery = parseApiQuery(model, searchParams, {
 			features: {
 				filters: true,
 				advanced: true,
-				search: true,
-				shapes: true
+				search: true
 			},
-			sampleWhere: true
+			extras: {
+				blast: true,
+				shapes: true
+			}
 		});
+		const { trusted, query, blast, shapes } = parsedQuery;
+		let { sampleWhere } = parsedQuery;
+		const client = trusted ? trustedPrisma : prisma;
 
-		//replace the where with samp_names that match the query and are inside the shapes
-		if (sampleWhere) {
-			const samples = await prisma.sample.findMany({
+		let featureidWhere;
+		let BlastQueryResults;
+		let existingBlastDate;
+		if (blast) {
+			({ BlastQueryResults, existingBlastDate } = await fetchBlast(blast, {
+				role,
+				token: await getToken({ expiresInSeconds: 60 })
+			}));
+
+			const baseFeatureWhere = {
+				featureid: {
+					in: BlastQueryResults.map((bqr) => bqr.featureid)
+				}
+			};
+			featureidWhere = deepWhere(model, "feature", baseFeatureWhere);
+
+			if (sampleWhere) {
+				sampleWhere = deepMerge(sampleWhere, deepWhere("sample", "feature", baseFeatureWhere));
+			}
+			query.where = query.where ? deepMerge(query.where, featureidWhere) : featureidWhere;
+		}
+
+		if (shapes && sampleWhere) {
+			//TODO: breaks with a sample query in nested group
+			//replace the where with samp_names that match the query and are inside the shapes
+			const samples = await client.sample.findMany({
 				where: sampleWhere,
 				select: {
 					samp_name: true,
@@ -45,33 +72,18 @@ export async function GET(
 				}
 			});
 
-			query.where = deepWhere(model, "sample", {
-				samp_name: { in: getLocationsInsideShapes(samples, shapes!).map((samp) => samp.samp_name) }
-			});
-		}
-
-		//inject blast results into queries
-		let BlastQueryResults;
-		let existingBlastDate;
-		if (blast) {
-			({ BlastQueryResults, existingBlastDate } = await fetchBlast(
-				blast,
-				{ role, token: await getToken({ expiresInSeconds: 60 }) },
-				cookieStore
-			));
-			const featureWhere = deepWhere(model, "feature", {
-				featureid: {
-					in: BlastQueryResults.map((bqr) => bqr.featureid)
-				}
+			const sampNamesWhere = deepWhere(model, "sample", {
+				samp_name: { in: getLocationsInsideShapes(samples, shapes).map((sample) => sample.samp_name) }
 			});
 
-			query.where = query.where ? deepMerge(query.where, featureWhere) : featureWhere;
+			//inject blast results if queried for
+			query.where = featureidWhere ? deepMerge(sampNamesWhere, featureidWhere) : sampNamesWhere;
 		}
 
-		//@ts-ignore
-		let result = await prisma[model].count(query);
+		//@ts-expect-error dynamically accessing prisma client
+		let result = await client[model].count(query);
 
-		if (result) {
+		if (result != null) {
 			//don't do this if already done
 			if (shapes && !sampleWhere) {
 				result = getLocationsInsideShapes(result, shapes);
@@ -79,15 +91,21 @@ export async function GET(
 
 			return NextResponse.json({ statusMessage: "success", result, BlastQueryResults, existingBlastDate });
 		} else {
-			return NextResponse.json({
-				statusMessage: "error",
-				error: `No ${model} matching the search parameters could be found.`
-			});
+			return NextResponse.json(
+				{
+					statusMessage: "error",
+					error: `No ${model} matching the search parameters could be found.`
+				},
+				{ status: 404 }
+			);
 		}
 	} catch (err) {
-		const error = err as Error;
+		console.error(err);
 
-		//TODO: replace database error messages with generic error message
-		return NextResponse.json({ statusMessage: "error", error: error.message });
+		if (err instanceof AppError) {
+			return NextResponse.json({ statusMessage: "error", error: err.message }, { status: err.statusCode });
+		}
+
+		return NextResponse.json({ statusMessage: "error", error: GLOBAL_SERVER_ERROR }, { status: 500 });
 	}
 }

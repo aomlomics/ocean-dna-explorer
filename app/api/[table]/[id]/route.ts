@@ -1,7 +1,8 @@
-import { prisma } from "@/app/helpers/prisma";
-import { parseApiQuery } from "@/app/helpers/queries";
+import { parseApiQuery } from "@/app/helpers/api";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { getTableName } from "@/app/helpers/schema";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
+import { AppError, GLOBAL_SERVER_ERROR } from "@/types/objects";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -13,39 +14,46 @@ export async function GET(
 	try {
 		const model = getTableName(table);
 
-		const parsedId = parseInt(id);
-		if (Number.isNaN(parsedId)) {
-			return NextResponse.json({ statusMessage: "error", error: `Invalid ID: ${parsedId}.` });
+		const parsedId = Number(id);
+		if (!Number.isInteger(parsedId)) {
+			return NextResponse.json({ statusMessage: "error", error: `Invalid ID: ${parsedId}.` }, { status: 400 });
 		}
 
 		const { searchParams } = new URL(request.url);
 
-		const { query } = parseApiQuery(model, searchParams, {
+		const { trusted, query } = parseApiQuery(model, searchParams, {
 			features: {
 				fields: true,
 				relations: true,
-				relationsLimit: true
+				relCounts: true
 			},
 			defaults: {
-				filters: { id: parseInt(id) }
+				filters: { id: Number(id) }
 			}
 		});
+		const client = trusted ? trustedPrisma : prisma;
 
-		//@ts-ignore
-		const result = await prisma[model].findUnique(query);
+		//@ts-expect-error dynamically accessing prisma client
+		const result = await client[model].findUnique(query);
 
 		if (result) {
 			return NextResponse.json({ statusMessage: "success", result });
 		} else {
-			return NextResponse.json({
-				statusMessage: "error",
-				error: `No ${model} matching the search parameters could be found.`
-			});
+			return NextResponse.json(
+				{
+					statusMessage: "error",
+					error: `No ${model} matching the search parameters could be found.`
+				},
+				{ status: 404 }
+			);
 		}
 	} catch (err) {
-		const error = err as Error;
+		console.error(err);
 
-		//TODO: replace database error messages with generic error message
-		return NextResponse.json({ statusMessage: "error", error: error.message });
+		if (err instanceof AppError) {
+			return NextResponse.json({ statusMessage: "error", error: err.message }, { status: err.statusCode });
+		}
+
+		return NextResponse.json({ statusMessage: "error", error: GLOBAL_SERVER_ERROR }, { status: 500 });
 	}
 }

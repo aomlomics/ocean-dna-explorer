@@ -1,11 +1,9 @@
 import { DeadBooleanToEnum, DeadValueEnum } from "@/types/enums";
 import { ZodArray, ZodBoolean, ZodDate, ZodEnum, ZodLazy, ZodNumber, ZodOptional, ZodString } from "zod";
-import { Prisma } from "../generated/prisma/client";
-import TableMetadata, { DataTableNames, RelationMetadata, TableNames } from "@/types/tableMetadata";
-import { TypeSeparators } from "@/types/objects";
-import { capitalizeTable } from "./utils";
-import { DbType } from "@/types/globals";
-import { JsonValue } from "@prisma/client/runtime/client";
+import type { Prisma } from "@/app/generated/prisma/browser";
+import TableMetadata, { DataTableNames, type ModelName, TableNames } from "@/types/tableMetadata";
+import { AppError, TypeSeparators } from "@/types/objects";
+import type { DbType } from "@/types/globals";
 
 //handles converting numbers from 0 to 99
 function stringToNumber(str: string) {
@@ -43,17 +41,18 @@ function stringToNumber(str: string) {
 	const ENDING = "__";
 	const SEP = "_";
 
-	const words = str.toString().split(ENDING);
-	if (words.length === 1) {
+	const [first, ...rest] = str.toString().split(ENDING) as [string, ...string[]];
+	if (!rest) {
 		return str;
 	}
 
 	let num = 0;
 	let replace = "";
 
-	words[0].split(SEP).forEach((word) => {
-		if (word in NUMBERS) {
-			num += NUMBERS[word];
+	first.split(SEP).forEach((word) => {
+		const curr = NUMBERS[word];
+		if (curr != null) {
+			num += curr;
 
 			if (replace === "") {
 				replace += word;
@@ -91,7 +90,7 @@ export function parseDbDeadBoolean(dbEnum: Record<string, string>) {
 }
 
 function getTypeRecursive(field: any): { type: DbType; optional?: boolean; values?: string[] } {
-	let shape = {} as { type: DbType; optional?: boolean; values?: string[] };
+	const shape = {} as { type: DbType; optional?: boolean; values?: string[] };
 
 	if (field instanceof ZodOptional) {
 		shape.optional = true;
@@ -130,24 +129,28 @@ function getTypeRecursive(field: any): { type: DbType; optional?: boolean; value
 }
 
 export function getZodType(
-	table: Prisma.ModelName | Uncapitalize<Prisma.ModelName>,
-	field: string
+	table: ModelName | Uncapitalize<ModelName>,
+	field: string,
+	error?: string
 ): { type: DbType; optional?: boolean; values?: string[] } {
-	const result = getTypeRecursive(TableMetadata[table].schema.shape[field]);
+	const found = TableMetadata[table].enumSchema.options.find((f) => f.toLowerCase() === field.toLowerCase());
 
-	if (!result.type) {
-		throw new Error(`Could not find type of "${field}" on table named ${table}.`);
+	if (found) {
+		const result = getTypeRecursive(TableMetadata[table].schema.shape[found]);
+		if (result.type) {
+			return result;
+		}
 	}
 
-	return result;
+	throw new AppError(error || `Could not find type of "${field}" on table named ${table}.`);
 }
 
 //parse a field value into a given object only if it exists in the schema
 export function parseSchemaToObject(
 	f: string,
 	v: string,
-	obj: Record<string, string | string[] | number | number[] | Date | boolean | JsonValue | null>,
-	table: Uncapitalize<Prisma.ModelName>
+	obj: Record<string, string | string[] | number | number[] | Date | boolean | Prisma.JsonValue | null>,
+	table: Uncapitalize<ModelName>
 ) {
 	const field = f.trim();
 	const value = v.trim();
@@ -167,11 +170,11 @@ export function parseSchemaToObject(
 				obj[field] = new Date(DeadValueEnum[value.toLowerCase() as keyof typeof DeadValueEnum]);
 			} else if (isNaN(dateVal.valueOf())) {
 				//value is not a singular valid date
-				const valArray = value.split(TypeSeparators[type]).map((v) => v.trim());
+				const [start, end, ...rest] = value.split(TypeSeparators[type]).map((v) => v.trim());
 
 				//check if there are exactly 2 dates
-				if (valArray.length !== 2) {
-					throw new Error(
+				if (!start || !end || rest.length) {
+					throw new AppError(
 						`Invalid format for the field "${field}". Field must be either one ISO 8601 date, or two dates separated with a "${TypeSeparators[type]}". The provided value was "${value}".`
 					);
 				}
@@ -181,47 +184,47 @@ export function parseSchemaToObject(
 					!TableMetadata[table].enumSchema.options.includes(field + "_Midpoint_ODE") ||
 					!TableMetadata[table].enumSchema.options.includes(field + "_End_ODE")
 				) {
-					throw new Error(
+					throw new AppError(
 						`Invalid format for the field "${field}". The value can't be a range. The provided value was "${value}".`
 					);
 				}
 
 				//check if either date is dead value
-				if (valArray[0].toLowerCase() in DeadValueEnum || valArray[1].toLowerCase() in DeadValueEnum) {
-					throw new Error(
+				if (start.toLowerCase() in DeadValueEnum || end.toLowerCase() in DeadValueEnum) {
+					throw new AppError(
 						`Invalid format for the field "${field}". If providing two dates, neither can be a dead value. The provided value was "${value}".`
 					);
 				}
 
-				const dateArray = valArray.map((v) => new Date(v));
+				const [startDate, endDate] = [new Date(start), new Date(end)];
 
 				//check if first date is invalid
-				if (isNaN(dateArray[0].valueOf())) {
-					throw new Error(
-						`Invalid format for the field "${field}". The first value must be a valid ISO 8601 date. The provided value for the first date was "${dateArray[0]}". The provided value for the second date was "${dateArray[1]}".`
+				if (isNaN(startDate.valueOf())) {
+					throw new AppError(
+						`Invalid format for the field "${field}". The first value must be a valid ISO 8601 date. The provided value for the first date was "${start}". The provided value for the second date was "${end}".`
 					);
 				}
 
 				//check if second date is invalid
-				if (isNaN(dateArray[1].valueOf())) {
-					throw new Error(
-						`Invalid format for the field "${field}". The second value must be a valid ISO 8601 date. The provided value for the first date was "${dateArray[0]}". The provided value for the second date was "${dateArray[1]}".`
+				if (isNaN(endDate.valueOf())) {
+					throw new AppError(
+						`Invalid format for the field "${field}". The second value must be a valid ISO 8601 date. The provided value for the first date was "${start}". The provided value for the second date was "${end}".`
 					);
 				}
 
 				//check if dates are in correct order
-				if (dateArray[0].getTime() >= dateArray[1].getTime()) {
-					throw new Error(
-						`Invalid format for the field "${field}". The first date must be before second date. The provided value for the first date was "${dateArray[0]}". The provided value for the second date was "${dateArray[1]}".`
+				if (startDate.getTime() >= endDate.getTime()) {
+					throw new AppError(
+						`Invalid format for the field "${field}". The first date must be before second date. The provided value for the first date was "${start}". The provided value for the second date was "${end}".`
 					);
 				}
 
 				//add to normal field
-				obj[field] = dateArray[0];
+				obj[field] = startDate;
 
 				//add to database specific fields
-				obj[field + "_Midpoint_ODE"] = new Date((dateArray[0].getTime() + dateArray[1].getTime()) / 2);
-				obj[field + "_End_ODE"] = dateArray[1];
+				obj[field + "_Midpoint_ODE"] = new Date((startDate.getTime() + endDate.getTime()) / 2);
+				obj[field + "_End_ODE"] = endDate;
 			} else {
 				//value is singular valid date
 				//use date value
@@ -234,73 +237,73 @@ export function parseSchemaToObject(
 			} else {
 				obj[field] = value;
 			}
-		} else if (value in DeadValueEnum) {
+		} else if (value.toLowerCase() in DeadValueEnum) {
 			//replace the value with the DeadValue equivalent
-			obj[field] = DeadValueEnum[value as unknown as DeadValueEnum];
+			obj[field] = DeadValueEnum[value as keyof typeof DeadValueEnum];
 		} else if (type === "float" || type === "integer") {
-			const parser = type === "float" ? parseFloat : parseInt;
-			const valArray = value.split(TypeSeparators[type]).map((v) => v.trim());
+			//TODO: handle dashes (and handle negative numbers)
+			const [start, end, ...rest] = value.split(TypeSeparators[type]).map((v) => v.trim());
 
-			if (valArray.length === 2) {
+			if (start && end && !rest.length) {
 				//value is not a singular valid number
 				//check if field has corresponding range fields in database
 				if (
 					!TableMetadata[table].enumSchema.options.includes(field + "_Midpoint_ODE") ||
 					!TableMetadata[table].enumSchema.options.includes(field + "_End_ODE")
 				) {
-					throw new Error(
+					throw new AppError(
 						`Invalid format for the field "${field}". The value can't be a range. The provided value was "${value}".`
 					);
 				}
 
 				//check if either number is dead value
-				if (valArray[0].toLowerCase() in DeadValueEnum || valArray[1].toLowerCase() in DeadValueEnum) {
-					throw new Error(
-						`Invalid format for the field "${field}". If providing two ${type}s, neither can be a dead value. The first provided value was "${valArray[0]}". The second provided value was "${valArray[1]}".`
+				if (start.toLowerCase() in DeadValueEnum || end.toLowerCase() in DeadValueEnum) {
+					throw new AppError(
+						`Invalid format for the field "${field}". If providing two ${type}s, neither can be a dead value. The first provided value was "${start}". The second provided value was "${end}".`
 					);
 				}
 
-				const parsedArray = valArray.map((v) => parser(v));
+				const [parsedStart, parsedEnd] = [Number(start), Number(end)];
 
 				//check if first number is invalid
-				if (isNaN(parsedArray[0])) {
-					throw new Error(
-						`Invalid format for the field "${field}". First value must be a valid ${type}. The first provided value was "${valArray[0]}". The second provided value was "${valArray[1]}".`
+				if (!Number.isFinite(parsedStart) || (type === "integer" && !Number.isInteger(parsedStart))) {
+					throw new AppError(
+						`Invalid format for the field "${field}". First value must be a valid ${type}. The first provided value was "${start}". The second provided value was "${end}".`
 					);
 				}
 
 				//check if second number is invalid
-				if (isNaN(parsedArray[1])) {
-					throw new Error(
-						`Invalid format for the field "${field}". Second value must be a valid ${type}. The first provided value was "${valArray[0]}". The second provided value was "${valArray[1]}".`
+				if (!Number.isFinite(parsedEnd) || (type === "integer" && !Number.isInteger(parsedEnd))) {
+					throw new AppError(
+						`Invalid format for the field "${field}". Second value must be a valid ${type}. The first provided value was "${start}". The second provided value was "${end}".`
 					);
 				}
 
 				//check if numbers are in correct order
-				if (parsedArray[0] >= parsedArray[1]) {
-					throw new Error(
-						`Invalid format for the field "${field}". First ${type} must be before second ${type}. The first provided value was "${valArray[0]}". The second provided value was "${valArray[1]}".`
+				if (parsedStart >= parsedEnd) {
+					throw new AppError(
+						`Invalid format for the field "${field}". First ${type} must be before second ${type}. The first provided value was "${start}". The second provided value was "${end}".`
 					);
 				}
 
 				//add to normal field
-				obj[field] = parsedArray[0];
+				obj[field] = parsedStart;
 
 				//add to database specific fields
-				const midpoint = (parsedArray[0] + parsedArray[1]) / 2;
+				const midpoint = (parsedStart + parsedEnd) / 2;
 				obj[field + "_Midpoint_ODE"] = type === "float" ? midpoint : Math.round(midpoint);
-				obj[field + "_End_ODE"] = parsedArray[1];
-			} else if (valArray.length === 1) {
-				const parsed = parser(valArray[0]);
-				if (isNaN(parsed)) {
-					throw new Error(
+				obj[field + "_End_ODE"] = parsedEnd;
+			} else if (start && !end && !rest.length) {
+				const parsed = Number(start);
+				if (!Number.isFinite(parsed) || (type === "integer" && !Number.isInteger(parsed))) {
+					throw new AppError(
 						`Invalid format for the field "${field}". Field must be a number. The provided value was "${value}".`
 					);
 				}
 
 				obj[field] = parsed;
 			} else {
-				throw new Error(
+				throw new AppError(
 					`Invalid format for the field "${field}". Field must be either one ${type}, or two ${type}s separated with a "${TypeSeparators[type]}". The provided value was "${value}".`
 				);
 			}
@@ -311,74 +314,21 @@ export function parseSchemaToObject(
 	}
 }
 
-export function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: Uncapitalize<Prisma.ModelName>) {
-	const queue = [[capitalizeTable(start), []]] as [Prisma.ModelName, Prisma.ModelName[]][];
-	const visited = new Set() as Set<Prisma.ModelName>;
-
-	const capsTarget = capitalizeTable(target);
-	while (queue.length) {
-		let [curr, [...path]] = queue.shift()!;
-		path.push(curr);
-
-		if (curr === capsTarget) {
-			if (!path.length) {
-				return;
-			}
-
-			//convert to path of relation metadata
-			const pathRelations = [] as RelationMetadata[];
-			path.reduce((prev, t) => {
-				pathRelations.push(TableMetadata[prev].relations.find((rel) => rel.table === t)!);
-				return t;
-			});
-			return pathRelations as [RelationMetadata, ...RelationMetadata[]];
-		}
-
-		if (
-			!visited.has(curr) && //skip visited tables
-			//Project restrictions
-			(curr !== "Project" || //base case
-				path.length === 1) //starting at Project
-		) {
-			for (const rel of TableMetadata[curr].relations) {
-				if (
-					//Analysis restrictions
-					(curr !== "Analysis" || //base case
-						rel.table === "Project" || //Analysis to Project
-						rel.table === "Assay" || //Analysis to Assay
-						path.includes("Project") || //Project to Analysis
-						path.length === 1) && //starting at Analysis
-					//Assay restrictions
-					(curr !== "Assay" || //base case
-						rel.table === "AssayPrep" || //Assay to AssayPrep
-						(path.includes("AssayPrep") && path.length === 2) || //starting at AssayPrep to Assay
-						path.length === 1) //starting at Assay
-				) {
-					queue.push([rel.table, path]);
-				}
-			}
-		}
-		visited.add(curr);
-	}
-}
-
 export function getTableName(table: string, err?: string) {
-	const found = TableNames.find(
-		(t) => t.toLowerCase() === table.toLowerCase() || TableMetadata[t].plural.toLowerCase() === table.toLowerCase()
-	);
+	const found = getTableNameSafe(table);
 
 	if (!found) {
-		throw new Error(err || `Invalid table name: "${table}".`);
+		throw new AppError(err || `Invalid table name: "${table}".`);
 	}
 
 	return found;
 }
 
 export function getDataTableName(table: string, err?: string) {
-	const found = DataTableNames.find((t) => t.toLowerCase() === table.toLowerCase());
+	const found = getDataTableNameSafe(table);
 
 	if (!found) {
-		throw new Error(err || `Invalid table name: "${table}".`);
+		throw new AppError(err || `Invalid table name: "${table}".`);
 	}
 
 	return found;
@@ -386,12 +336,16 @@ export function getDataTableName(table: string, err?: string) {
 
 export function getTableNameSafe(table?: string | null) {
 	if (table) {
-		return TableNames.find((t) => t.toLowerCase() === table.toLowerCase());
+		return TableNames.find(
+			(t) => t.toLowerCase() === table.toLowerCase() || TableMetadata[t].plural.toLowerCase() === table.toLowerCase()
+		);
 	}
 }
 
 export function getDataTableNameSafe(table?: string | null) {
 	if (table) {
-		return DataTableNames.find((t) => t.toLowerCase() === table.toLowerCase());
+		return DataTableNames.find(
+			(t) => t.toLowerCase() === table.toLowerCase() || TableMetadata[t].plural.toLowerCase() === table.toLowerCase()
+		);
 	}
 }

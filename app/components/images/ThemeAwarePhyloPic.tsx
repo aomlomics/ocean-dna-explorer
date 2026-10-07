@@ -1,15 +1,32 @@
-import Image, { ImageProps } from "next/image";
+import Image from "next/image";
 
-interface ThemeAwarePhyloPicProps extends Omit<ImageProps, "className"> {
+//TODO: make sizes required
+export default function ThemeAwarePhyloPic({
+	src,
+	alt,
+	className,
+	sizes,
+	onLoad,
+	onError,
+	priority
+}: {
+	src: string;
+	alt: string;
 	className?: string;
-}
-
-export default function ThemeAwarePhyloPic(props: ThemeAwarePhyloPicProps) {
-	const { className = "", ...imageProps } = props;
-
+	sizes?: string;
+	onLoad?: () => void;
+	onError?: () => void;
+	priority?: boolean;
+}) {
 	return (
 		<Image
-			{...imageProps}
+			src={src}
+			alt={alt}
+			fill
+			sizes={sizes}
+			onLoad={onLoad}
+			onError={onError}
+			priority={priority}
 			className={`
         transition-all duration-200
         [html[data-theme='light']_&]:filter-[invert(17%)_sepia(31%)_saturate(4408%)_hue-rotate(209deg)_brightness(93%)_contrast(84%)]

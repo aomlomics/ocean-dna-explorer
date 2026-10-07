@@ -1,5 +1,5 @@
 import { prisma } from "@/app/helpers/prisma";
-import type { Taxonomy } from "@/app/generated/prisma/client";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 
 // How many projects to cycle through, and how many taxa to pull per project.
 // Keeping these modest so the query stays cheap and the tour feels varied.
@@ -20,7 +20,7 @@ export type ProjectBundle = {
 	assay_type: string;
 	projectDescription: string | null;
 	imageFileUrl_ODE: string | null;
-	taxonomies: Taxonomy[];
+	taxonomies: TaxonomyModel[];
 	samples: {
 		samp_name: string;
 		decimalLatitude: number | null;
@@ -36,7 +36,7 @@ function sample<T>(arr: T[], count: number): T[] {
 	const copy = arr.slice();
 	for (let i = copy.length - 1; i > 0; i--) {
 		const j = Math.floor(Math.random() * (i + 1));
-		[copy[i], copy[j]] = [copy[j], copy[i]];
+		[copy[i], copy[j]] = [copy[j]!, copy[i]!];
 	}
 	return copy.slice(0, count);
 }
@@ -73,16 +73,14 @@ function buildDiverseMapSamples<T extends { decimalLatitude: number | null; deci
 		}
 	}
 
-	const bucketEntries = sample(Array.from(buckets.entries()), buckets.size).map(([_, rows]) =>
-		sample(rows, rows.length)
-	);
+	const bucketEntries = sample(Array.from(buckets.values()), buckets.size).map((rows) => sample(rows, rows.length));
 	const picked: T[] = [];
 	let cursor = 0;
 	while (picked.length < maxCount) {
 		let addedThisPass = false;
 		for (const rows of bucketEntries) {
 			if (cursor < rows.length) {
-				picked.push(rows[cursor]);
+				picked.push(rows[cursor]!);
 				addedThisPass = true;
 				if (picked.length >= maxCount) break;
 			}
@@ -147,7 +145,7 @@ export async function getTourShowcaseProjects(options?: {
 	});
 
 	const bundles: ProjectBundle[] = projects.map((p) => {
-		const uniqueTaxa = new Map<string, Taxonomy>();
+		const uniqueTaxa = new Map<string, TaxonomyModel>();
 		for (const analysis of p.Analyses) {
 			for (const assignment of analysis.Assignments) {
 				if (!uniqueTaxa.has(assignment.Taxonomy.taxonomy)) {

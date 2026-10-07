@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { animate, motion } from "framer-motion";
+import { usePrefersReducedMotion } from "@/app/hooks/usePrefersReducedMotion";
 
 // [phrase, weight] — larger weight = bigger text in the cloud
 const WORD_LIST: [string, number][] = [
@@ -138,6 +139,7 @@ type WordCloudFn = ((el: HTMLElement, opts: object) => void) & {
 export default function AmbientPage() {
 	const cloudHostRef = useRef<HTMLDivElement | null>(null);
 	const cloudWordsRef = useRef<HTMLDivElement | null>(null);
+	const prefersReducedMotion = usePrefersReducedMotion();
 
 	useEffect(() => {
 		const host = cloudHostRef.current;
@@ -253,6 +255,20 @@ export default function AmbientPage() {
 				}, 4_000);
 			}
 
+			// The retype / fade / breathe cycle is an idle loop. With reduced
+			// motion, show the laid-out cloud once and leave it still.
+			if (prefersReducedMotion) {
+				wordEls.forEach((el) => {
+					const fullText = el.dataset.ambientFullText ?? el.textContent ?? "";
+					el.dataset.ambientFullText = fullText;
+					el.textContent = fullText;
+					el.style.opacity = "1";
+					el.classList.remove("ambient-word-breathe");
+				});
+				wordsEl.style.visibility = "visible";
+				return;
+			}
+
 			// Shuffle so the pop-in order varies each cycle.
 			const shuffled = [...wordEls].sort(() => Math.random() - 0.5);
 			let idx = 0;
@@ -284,7 +300,7 @@ export default function AmbientPage() {
 				revealTimer = window.setInterval(() => {
 					if (cancelled) return;
 					for (let i = 0; i < BATCH_SIZE && idx < shuffled.length; i++, idx++) {
-						typeInWord(shuffled[idx]);
+						typeInWord(shuffled[idx]!);
 					}
 					if (idx >= shuffled.length && revealTimer != null) {
 						// All words are visible — let the cycle timer handle the next reset.
@@ -315,9 +331,9 @@ export default function AmbientPage() {
 			if (cancelled) return;
 
 			// @ts-expect-error wordcloud2 has no bundled TS types.
-			const module = await import("wordcloud");
+			const wordcloudMod = await import("wordcloud");
 			if (cancelled) return;
-			wordCloud = (module.default ?? module) as WordCloudFn;
+			wordCloud = (wordcloudMod.default ?? wordcloudMod) as WordCloudFn;
 
 			clearReveal();
 			wordCloud.stop?.();
@@ -415,7 +431,8 @@ export default function AmbientPage() {
 
 		// Let the foreground intro motion complete before starting the word cloud
 		// typing cycle so the sequence reads as: content slides in, then cloud animates.
-		introTimer = window.setTimeout(() => void renderCloud(), 12_200);
+		// Reduced motion skips that intro, so the cloud can render immediately.
+		introTimer = window.setTimeout(() => void renderCloud(), prefersReducedMotion ? 0 : 12_200);
 
 		return () => {
 			cancelled = true;
@@ -429,7 +446,7 @@ export default function AmbientPage() {
 			wordCloud?.stop?.();
 			window.removeEventListener("resize", scheduleRender);
 		};
-	}, []);
+	}, [prefersReducedMotion]);
 
 	return (
 		<div className="tour-motion-bg relative isolate flex min-h-dvh w-full flex-col overflow-hidden bg-linear-to-br from-base-300 via-base-200 to-base-300 text-base-content [html[data-theme='dark']_&]:from-base-300 [html[data-theme='dark']_&]:via-base-300/90 [html[data-theme='dark']_&]:to-base-300">
@@ -438,21 +455,25 @@ export default function AmbientPage() {
 			<section className="relative z-10 mx-auto flex w-full max-w-[1800px] flex-1 flex-col items-center justify-center gap-12 px-[6vw] py-6 sm:gap-14 sm:py-8 lg:min-h-0 lg:flex-row lg:items-stretch lg:justify-center lg:gap-x-[clamp(2rem,4vw,4rem)]">
 				<motion.div
 					className="ambient-logo flex w-full max-w-xl shrink-0 flex-col justify-center lg:max-w-140 lg:basis-[min(34%,560px)]"
-					initial={{ opacity: 0 }}
+					initial={prefersReducedMotion ? false : { opacity: 0 }}
 					animate={{ opacity: 1 }}
-					transition={{ duration: 1.8, ease: [0.22, 1, 0.36, 1] }}
+					transition={prefersReducedMotion ? { duration: 0 } : { duration: 1.8, ease: [0.22, 1, 0.36, 1] }}
 				>
 					<div className="flex flex-col gap-5 sm:gap-6">
 						<motion.div
 							className="flex flex-wrap items-center gap-x-5 gap-y-4 sm:gap-x-6"
-							initial={{ opacity: 0 }}
+							initial={prefersReducedMotion ? false : { opacity: 0 }}
 							animate={{ opacity: 1 }}
-							transition={{ duration: 0.8, delay: 0.1 }}
+							transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.8, delay: 0.1 }}
 						>
 							<motion.div
-								initial={{ opacity: 0, x: -260, y: 42 }}
+								initial={prefersReducedMotion ? false : { opacity: 0, x: -260, y: 42 }}
 								animate={{ opacity: 1, x: 0, y: 0 }}
-								transition={{ duration: 10.8, ease: [0.22, 1, 0.36, 1], delay: 0.12 }}
+								transition={
+									prefersReducedMotion
+										? { duration: 0 }
+										: { duration: 10.8, ease: [0.22, 1, 0.36, 1], delay: 0.12 }
+								}
 							>
 								<Image
 									src="/images/ode_logo_clean.svg"
@@ -465,32 +486,44 @@ export default function AmbientPage() {
 							</motion.div>
 							<motion.h1
 								className="max-w-[16ch] text-[clamp(2rem,5.2vw,3.85rem)] font-semibold leading-[1.08] tracking-[-0.035em] text-white drop-shadow-[0_2px_24px_oklch(var(--p)/0.25)]"
-								initial={{ opacity: 0, x: 250, y: -26 }}
+								initial={prefersReducedMotion ? false : { opacity: 0, x: 250, y: -26 }}
 								animate={{ opacity: 1, x: 0, y: 0 }}
-								transition={{ duration: 12.2, ease: [0.22, 1, 0.36, 1], delay: 0.35 }}
+								transition={
+									prefersReducedMotion
+										? { duration: 0 }
+										: { duration: 12.2, ease: [0.22, 1, 0.36, 1], delay: 0.35 }
+								}
 							>
 								Ocean DNA Explorer
 							</motion.h1>
 						</motion.div>
 						<motion.div
 							className="flex flex-col gap-5 sm:gap-6"
-							initial={{ opacity: 0 }}
+							initial={prefersReducedMotion ? false : { opacity: 0 }}
 							animate={{ opacity: 1 }}
-							transition={{ duration: 1.2, delay: 0.2 }}
+							transition={prefersReducedMotion ? { duration: 0 } : { duration: 1.2, delay: 0.2 }}
 						>
 							<motion.p
 								className="max-w-xl text-xl font-semibold leading-snug tracking-tight text-base-content/92 sm:text-2xl xl:text-3xl"
-								initial={{ opacity: 0, x: -200, y: 56 }}
+								initial={prefersReducedMotion ? false : { opacity: 0, x: -200, y: 56 }}
 								animate={{ opacity: 1, x: 0, y: 0 }}
-								transition={{ duration: 11.6, ease: [0.22, 1, 0.36, 1], delay: 0.72 }}
+								transition={
+									prefersReducedMotion
+										? { duration: 0 }
+										: { duration: 11.6, ease: [0.22, 1, 0.36, 1], delay: 0.72 }
+								}
 							>
 								Unlock the potential of your eDNA data.
 							</motion.p>
 							<motion.p
 								className="max-w-xl text-base leading-relaxed text-base-content/68 sm:text-lg xl:text-lg"
-								initial={{ opacity: 0, x: 290, y: 38 }}
+								initial={prefersReducedMotion ? false : { opacity: 0, x: 290, y: 38 }}
 								animate={{ opacity: 1, x: 0, y: 0 }}
-								transition={{ duration: 13.0, ease: [0.22, 1, 0.36, 1], delay: 1.05 }}
+								transition={
+									prefersReducedMotion
+										? { duration: 0 }
+										: { duration: 13.0, ease: [0.22, 1, 0.36, 1], delay: 1.05 }
+								}
 							>
 								Explore ocean biodiversity through projects, samples, taxonomies, metadata, and interactive
 								visualizations.

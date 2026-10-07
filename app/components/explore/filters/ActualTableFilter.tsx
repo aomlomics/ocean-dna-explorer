@@ -3,9 +3,9 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import RangeFilter from "./filterTypes/RangeFilter";
-import { FilterConfig, getActiveFilters, buildActiveSummaries } from "./filterHelpers";
+import { type FilterConfig, getActiveFilters, buildActiveSummaries } from "./filterHelpers";
 import SelectFilter from "./filterTypes/SelectFilter";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import SelectGroup from "./filterTypes/SelectGroup";
 import Filter from "./filterTypes/Filter";
 
@@ -94,30 +94,11 @@ export default function ActualTableFilter({
 						config={config}
 						activeFilters={activeFilters}
 						fieldName={typeof config.field === "string" ? config.field : config.field.f}
-						value={
-							typeof config.field === "string" && activeFilters[config.field] !== undefined
-								? activeFilters[config.field]
-								: typeof config.field === "object" &&
-									activeFilters[config.field.rel] !== undefined &&
-									JSON.parse(activeFilters[config.field.rel])[config.field.f]
-						}
 					/>
 				);
 			} else if (config.type === "range") {
 				acc.push(
-					<Filter
-						key={i}
-						fieldName={typeof config.field === "string" ? config.field : config.field.f}
-						value={
-							typeof config.field === "string" && activeFilters[config.field] !== undefined
-								? (JSON.parse(activeFilters[config.field]).gte || config.gte) +
-									" to " +
-									(JSON.parse(activeFilters[config.field]).lte || config.lte)
-								: typeof config.field === "object" &&
-									activeFilters[config.field.rel] !== undefined &&
-									JSON.parse(activeFilters[config.field.rel])[config.field.f]
-						}
-					>
+					<Filter key={i} fieldName={typeof config.field === "string" ? config.field : config.field.f}>
 						<RangeFilter config={config} />
 					</Filter>
 				);

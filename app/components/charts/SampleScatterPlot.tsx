@@ -1,7 +1,7 @@
 "use client";
 
-import { Sample } from "@/app/generated/prisma/client";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import type { SampleModel } from "@/app/generated/prisma/models/Sample";
+import { type ReactNode, useMemo, useRef, useState, useTransition } from "react";
 import distinctColors from "distinct-colors";
 import { Scatter } from "react-chartjs-2";
 import {
@@ -21,14 +21,11 @@ import { DeadValueEnum } from "@/types/enums";
 import { getZodType } from "@/app/helpers/schema";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import chroma from "chroma-js";
+import { DEFAULT_LEGEND_FIELD, DEFAULT_X_FIELD, DEFAULT_Y_FIELD } from "./wrappers/SampleVisualize";
 
 ChartJS.register(TimeScale, LinearScale, PointElement, ScatterController, Title, Tooltip, Legend, zoomPlugin);
 
-type SamplePoint = { x: number | Date; y: number | Date; samp_name: Sample["samp_name"] };
-
-export const DEFAULT_X_FIELD = "eventDate" as keyof Sample;
-export const DEFAULT_Y_FIELD = "minimumDepthInMeters" as keyof Sample;
-export const DEFAULT_LEGEND_FIELD = "project_id" as keyof Sample;
+type SamplePoint = { x: number | Date; y: number | Date; samp_name: SampleModel["samp_name"] };
 
 const POINT_STYLES = {
 	borderWidth: 1,
@@ -46,13 +43,14 @@ type DataPoint = {
 //TODO: style dates in legend properly (options.plugins.legend.labels.generateLabels)
 //TODO: add checklist for legendField
 //TODO: store zoom as state, don't reset zoom when changing legendField
+//TODO: properly label SamplePoints using project_id where necessary
 export default function SampleScatterPlot({
 	samples,
 	fields,
 	xyFields,
 	userDefinedFields
 }: {
-	samples: Sample[];
+	samples: SampleModel[];
 	fields: string[];
 	xyFields: string[];
 	userDefinedFields?: Set<string>;
@@ -62,87 +60,30 @@ export default function SampleScatterPlot({
 	const { textColor } = useDaisyTheme();
 	const gridColor = chroma(textColor).alpha(0.3).hex();
 
-	const [xField, setXField] = useState(DEFAULT_X_FIELD);
-	const [xType, setXType] = useState("date" as "date" | "number");
-	const [xMin, setXMin] = useState(undefined as number | undefined);
-	const [xMax, setXMax] = useState(undefined as number | undefined);
 	const [xReverse, setXReverse] = useState(false);
-
-	const [yField, setYField] = useState(DEFAULT_Y_FIELD);
-	const [yType, setYType] = useState("number" as "date" | "number");
-	const [yMin, setYMin] = useState(undefined as number | undefined);
-	const [yMax, setYMax] = useState(undefined as number | undefined);
 	const [yReverse, setYReverse] = useState(false);
 
+	const [loading, startTransition] = useTransition();
+
 	const [legendField, setLegendField] = useState(DEFAULT_LEGEND_FIELD);
-	const [hoveredLegend, setHoveredLegend] = useState(undefined as string | undefined);
+	const [xField, setXField] = useState(() =>
+		xyFields.includes(DEFAULT_X_FIELD)
+			? DEFAULT_X_FIELD
+			: (xyFields.find((f) => f !== DEFAULT_LEGEND_FIELD) as keyof SampleModel)
+	);
+	const [yField, setYField] = useState(() =>
+		xyFields.includes(DEFAULT_Y_FIELD)
+			? DEFAULT_Y_FIELD
+			: (xyFields.find((f) => f !== DEFAULT_LEGEND_FIELD && f !== xField) as keyof SampleModel)
+	);
 
-	const [loading, setLoading] = useState(true);
-	const [chartData, setChartData] = useState({ labels: [], datasets: [] } as {
-		labels: string[];
-		datasets: DataPoint[];
-	});
-
-	useEffect(() => {
-		if (userDefinedFields?.has(xField)) {
-			let tempType = "date" as typeof xType;
-
-			for (const samp of samples) {
-				if (samp.userDefined && samp.userDefined[xField] != null) {
-					if (!isNaN(parseFloat(samp.userDefined[xField]))) {
-						tempType = "number";
-						break;
-					}
-				}
-			}
-
-			setXType(tempType);
-		} else {
-			const type = getZodType("sample", xField).type;
-
-			if (type === "integer" || type === "float") {
-				setXType("number");
-			} else if (type === "date") {
-				setXType("date");
-			}
-		}
-	}, [xField]);
-
-	useEffect(() => {
-		if (userDefinedFields?.has(yField)) {
-			let tempType = "date" as typeof yType;
-
-			for (const samp of samples) {
-				if (samp.userDefined && samp.userDefined[yField] != null) {
-					if (!isNaN(parseFloat(samp.userDefined[yField]))) {
-						tempType = "number";
-						break;
-					}
-				}
-			}
-
-			setYType(tempType);
-		} else {
-			const type = getZodType("sample", yField).type;
-
-			if (type === "integer" || type === "float") {
-				setYType("number");
-			} else if (type === "date") {
-				setYType("date");
-			}
-		}
-	}, [yField]);
-
-	useEffect(() => {
+	const chartInfo = useMemo(() => {
 		const labels = new Set() as Set<string>;
 
-		let tempXMin = undefined as number | undefined;
-		let tempXMax = undefined as number | undefined;
-		let tempYMin = undefined as number | undefined;
-		let tempYMax = undefined as number | undefined;
+		const xType = getFieldType(xField);
+		const yType = getFieldType(yField);
 
-		//construct datasets using legendField
-		const tempDatasets = samples.reduce(
+		const result = samples.reduce(
 			(acc, p) => {
 				let val = null;
 				if (userDefinedFields?.has(legendField)) {
@@ -155,23 +96,34 @@ export default function SampleScatterPlot({
 
 				if (val != null && !((val as string | number) in DeadValueEnum) && val !== "") {
 					let xVal = null as number | Date | null;
-					if (userDefinedFields?.has(xField) && p.userDefined) {
-						if (xType === "number") {
-							xVal = parseFloat(p.userDefined[xField]);
-						} else {
-							xVal = new Date(p.userDefined[xField]);
+					if (userDefinedFields?.has(xField)) {
+						const val = p.userDefined?.[xField];
+						if (val != null) {
+							if (xType === "number") {
+								xVal = Number(val);
+							} else {
+								xVal = new Date(val);
+							}
 						}
 					} else {
 						xVal = p[xField] as typeof xVal;
 					}
 
-					if (xVal !== null && !(typeof xVal === "number" ? xVal in DeadValueEnum : xVal.getTime() in DeadValueEnum)) {
+					if (
+						xVal !== null &&
+						(typeof xVal === "number"
+							? Number.isFinite(xVal) && !(xVal in DeadValueEnum)
+							: Number.isFinite(xVal.getTime()) && !(xVal.getTime() in DeadValueEnum))
+					) {
 						let yVal = null as number | Date | null;
-						if (userDefinedFields?.has(yField) && p.userDefined) {
-							if (yType === "number") {
-								yVal = parseFloat(p.userDefined[yField]);
-							} else {
-								yVal = new Date(p.userDefined[yField]);
+						if (userDefinedFields?.has(yField)) {
+							const val = p.userDefined?.[yField];
+							if (val) {
+								if (yType === "number") {
+									yVal = parseFloat(val);
+								} else {
+									yVal = new Date(val);
+								}
 							}
 						} else {
 							yVal = p[yField] as typeof yVal;
@@ -179,35 +131,38 @@ export default function SampleScatterPlot({
 
 						if (
 							yVal !== null &&
-							!(typeof yVal === "number" ? yVal in DeadValueEnum : yVal.getTime() in DeadValueEnum)
+							(typeof yVal === "number"
+								? Number.isFinite(yVal) && !(yVal in DeadValueEnum)
+								: Number.isFinite(yVal.getTime()) && !(yVal.getTime() in DeadValueEnum))
 						) {
 							const numXVal = typeof xVal === "number" ? xVal : xVal.getTime();
-							if (!tempXMin || numXVal < tempXMin) {
-								tempXMin = numXVal;
+							if (acc.xMin == null || numXVal < acc.xMin) {
+								acc.xMin = numXVal;
 							}
-							if (!tempXMax || numXVal > tempXMax) {
-								tempXMax = numXVal;
+							if (acc.xMax == null || numXVal > acc.xMax) {
+								acc.xMax = numXVal;
 							}
 
 							const numYVal = typeof yVal === "number" ? yVal : yVal.getTime();
-							if (!tempYMin || numYVal < tempYMin) {
-								tempYMin = numYVal;
+							if (acc.yMin == null || numYVal < acc.yMin) {
+								acc.yMin = numYVal;
 							}
-							if (!tempYMax || numYVal > tempYMax) {
-								tempYMax = numYVal;
+							if (acc.yMax == null || numYVal > acc.yMax) {
+								acc.yMax = numYVal;
 							}
 
 							const label = val.toString();
-							const setIndex = acc.findIndex((s) => s.label === label);
-							if (setIndex !== -1) {
-								acc[setIndex].data.push({ x: xVal, y: yVal, samp_name: p.samp_name });
+							const set = acc.datasetMap.get(label);
+							if (set) {
+								set.data.push({ x: xVal, y: yVal, samp_name: p.samp_name });
 							} else {
 								labels.add(label);
-								acc.push({
+								const dataset = {
 									label,
 									data: [{ x: xVal, y: yVal, samp_name: p.samp_name }],
 									...POINT_STYLES
-								});
+								};
+								acc.datasetMap.set(label, dataset);
 							}
 						}
 					}
@@ -215,59 +170,84 @@ export default function SampleScatterPlot({
 
 				return acc;
 			},
-			[] as (Omit<DataPoint, "borderColor" | "backgroundColor"> & { borderColor?: string; backgroundColor?: string })[]
+			{
+				datasetMap: new Map<
+					string,
+					Omit<DataPoint, "borderColor" | "backgroundColor"> & {
+						borderColor?: string;
+						backgroundColor?: string;
+					}
+				>(),
+				xMin: undefined as number | undefined,
+				xMax: undefined as number | undefined,
+				yMin: undefined as number | undefined,
+				yMax: undefined as number | undefined
+			}
 		);
 
-		if (tempXMin !== undefined && tempXMax !== undefined) {
-			const xBuffer = (tempXMax - tempXMin) / 20;
-			setXMin(tempXMin - xBuffer);
-			setXMax(tempXMax + xBuffer);
-		}
-
-		if (tempYMin !== undefined && tempYMax !== undefined) {
-			const yBuffer = (tempYMax - tempYMin) / 20;
-			setYMin(tempYMin - yBuffer);
-			setYMax(tempYMax + yBuffer);
-		}
+		const tempDatasets = Array.from(result.datasetMap.values());
 
 		//assign colors
-		distinctColors({ count: Object.keys(tempDatasets).length, chromaMin: 35, lightMin: 35 }).forEach((color, i) => {
-			tempDatasets[i].borderColor = color.hex();
-			tempDatasets[i].backgroundColor = color.alpha(0.5).hex();
+		distinctColors({ count: tempDatasets.length, chromaMin: 35, lightMin: 35 }).forEach((color, i) => {
+			tempDatasets[i]!.borderColor = color.hex();
+			tempDatasets[i]!.backgroundColor = color.alpha(0.5).hex();
 		});
 
-		setChartData({ labels: Array.from(labels).sort(), datasets: tempDatasets as DataPoint[] });
-		setLoading(false);
-	}, [xField, yField, legendField]);
+		const xMin =
+			result.xMin !== undefined && result.xMax !== undefined
+				? result.xMin - (result.xMax - result.xMin) / 20
+				: result.xMin;
+		const xMax =
+			result.xMin !== undefined && result.xMax !== undefined
+				? result.xMax + (result.xMax - result.xMin) / 20
+				: result.xMax;
+		const yMin =
+			result.yMin !== undefined && result.yMax !== undefined
+				? result.yMin - (result.yMax - result.yMin) / 20
+				: result.yMin;
+		const yMax =
+			result.yMin !== undefined && result.yMax !== undefined
+				? result.yMax + (result.yMax - result.yMin) / 20
+				: result.yMax;
 
-	useEffect(() => {
-		if (chartData.datasets.length > 1) {
-			if (hoveredLegend) {
-				//dim every color except hovered legend color
-				setChartData({
-					labels: chartData.labels,
-					datasets: chartData.datasets.map((ds) => ({
-						...ds,
-						borderColor:
-							ds.label === hoveredLegend
-								? chroma(ds.borderColor).alpha(1).hex()
-								: chroma(ds.borderColor).alpha(0.1).hex(),
-						backgroundColor: ds.label === hoveredLegend ? chroma(ds.borderColor).alpha(0.5).hex() : "#00000000"
-					}))
-				});
-			} else if (chartData.datasets.some((set) => set.backgroundColor === "#00000000")) {
-				//return all colors to normal
-				setChartData({
-					labels: chartData.labels,
-					datasets: chartData.datasets.map((ds) => ({
-						...ds,
-						borderColor: chroma(ds.borderColor).alpha(1).hex(),
-						backgroundColor: chroma(ds.borderColor).alpha(0.5).hex()
-					}))
-				});
+		return {
+			data: { labels: Array.from(labels).sort(), datasets: tempDatasets as DataPoint[] },
+			xType,
+			xMin,
+			xMax,
+			yType,
+			yMin,
+			yMax
+		};
+	}, [samples, xField, yField, legendField, userDefinedFields]);
+
+	function getFieldType(newField: keyof SampleModel) {
+		if (userDefinedFields?.has(newField)) {
+			let tempType = "date" as "number" | "date";
+
+			for (const samp of samples) {
+				if (
+					samp.userDefined &&
+					samp.userDefined[newField] != null &&
+					samp.userDefined[newField].trim() !== "" &&
+					Number.isFinite(Number(samp.userDefined[newField]))
+				) {
+					tempType = "number";
+					break;
+				}
+			}
+
+			return tempType;
+		} else {
+			const type = getZodType("sample", newField).type;
+
+			if (type === "integer" || type === "float") {
+				return "number";
+			} else {
+				return "date";
 			}
 		}
-	}, [hoveredLegend]);
+	}
 
 	return (
 		<div className="relative p-6">
@@ -289,10 +269,7 @@ export default function SampleScatterPlot({
 						</legend>
 						<select
 							value={xField}
-							onChange={(e) => {
-								setLoading(true);
-								setXField(e.target.value as keyof Sample);
-							}}
+							onChange={(e) => startTransition(() => setXField(e.currentTarget.value as keyof SampleModel))}
 							className="select"
 							disabled={loading}
 						>
@@ -311,23 +288,29 @@ export default function SampleScatterPlot({
 						</select>
 					</fieldset>
 
-					<svg
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						xmlns="http://www.w3.org/2000/svg"
-						className={`w-8 h-8 mt-7 justify-self-center${loading ? " text-primary/40" : " text-primary cursor-pointer"}`}
-						onClick={() => {
-							setLoading(true);
-							setXField(yField);
-							setYField(xField);
-						}}
+					<button
+						disabled={loading}
+						aria-label="Swap X and Y axes"
+						onClick={() =>
+							startTransition(() => {
+								setXField(yField);
+								setYField(xField);
+							})
+						}
 					>
-						<path fill="currentColor" d="M21 7.5L8 7.5M21 7.5L16.6667 3M21 7.5L16.6667 12" />
-						<path fill="currentColor" d="M4 16.5L17 16.5M4 16.5L8.33333 21M4 16.5L8.33333 12" />
-					</svg>
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							xmlns="http://www.w3.org/2000/svg"
+							className={`w-8 h-8 mt-7 justify-self-center${loading ? " text-primary/40" : " text-primary cursor-pointer"}`}
+						>
+							<path fill="currentColor" d="M21 7.5L8 7.5M21 7.5L16.6667 3M21 7.5L16.6667 12" />
+							<path fill="currentColor" d="M4 16.5L17 16.5M4 16.5L8.33333 21M4 16.5L8.33333 12" />
+						</svg>
+					</button>
 
 					<fieldset className="fieldset">
 						<legend className="fieldset-legend w-full flex justify-between gap-2">
@@ -345,10 +328,7 @@ export default function SampleScatterPlot({
 						</legend>
 						<select
 							value={yField}
-							onChange={(e) => {
-								setLoading(true);
-								setYField(e.target.value as keyof Sample);
-							}}
+							onChange={(e) => startTransition(() => setYField(e.currentTarget.value as keyof SampleModel))}
 							className="select"
 							disabled={loading}
 						>
@@ -372,10 +352,7 @@ export default function SampleScatterPlot({
 					<legend className="fieldset-legend">Color points by:</legend>
 					<select
 						value={legendField}
-						onChange={(e) => {
-							setLoading(true);
-							setLegendField(e.target.value as keyof Sample);
-						}}
+						onChange={(e) => startTransition(() => setLegendField(e.currentTarget.value as keyof SampleModel))}
 						className="select"
 						disabled={loading}
 					>
@@ -403,7 +380,7 @@ export default function SampleScatterPlot({
 
 			<Scatter
 				ref={ref}
-				data={chartData}
+				data={chartInfo.data}
 				options={{
 					responsive: true,
 					plugins: {
@@ -412,12 +389,6 @@ export default function SampleScatterPlot({
 							position: "top",
 							labels: {
 								color: textColor
-							},
-							onHover: (event, item) => {
-								setHoveredLegend(item.text);
-							},
-							onLeave: () => {
-								setHoveredLegend(undefined);
 							}
 						},
 						title: {
@@ -453,7 +424,7 @@ export default function SampleScatterPlot({
 					},
 					scales: {
 						x: {
-							...(xType === "date"
+							...(chartInfo.xType === "date"
 								? {
 										type: "time",
 										time: {
@@ -476,12 +447,12 @@ export default function SampleScatterPlot({
 							grid: {
 								color: gridColor
 							},
-							min: xMin,
-							max: xMax,
+							min: chartInfo.xMin,
+							max: chartInfo.xMax,
 							reverse: xReverse
 						},
 						y: {
-							...(yType === "date"
+							...(chartInfo.yType === "date"
 								? {
 										type: "time",
 										time: {
@@ -504,8 +475,8 @@ export default function SampleScatterPlot({
 							grid: {
 								color: gridColor
 							},
-							min: yMin,
-							max: yMax,
+							min: chartInfo.yMin,
+							max: chartInfo.yMax,
 							reverse: yReverse
 						}
 					}

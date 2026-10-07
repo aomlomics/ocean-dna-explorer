@@ -1,22 +1,23 @@
 "use server";
 
-import { Project } from "@/app/generated/prisma/client";
+import type { ProjectModel } from "@/app/generated/prisma/models/Project";
 import { prisma } from "@/app/helpers/prisma";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { ProjectSchema } from "@/prisma/generated/zod";
-import { NetworkPacket, Role } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import type { NetworkPacket, Role } from "@/types/globals";
+import { GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
 export default async function projectUpdateUserIdsAction(
-	target: Project["project_id"],
-	newUserIds: Project["userIds"],
-	deletedUserIds: Project["userIds"]
+	target: ProjectModel["project_id"],
+	newUserIds: ProjectModel["userIds"],
+	deletedUserIds: ProjectModel["userIds"]
 ): Promise<NetworkPacket> {
 	const client = await clerkClient();
-	const { userId } = await auth();
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata?.role;
 
-	if (!userId) {
+	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
@@ -50,11 +51,11 @@ export default async function projectUpdateUserIdsAction(
 			});
 
 			if (!project) {
-				throw new Error(`No Project with project_id of "${project_id}" found.`);
+				return { statusMessage: "error", error: `No Project with project_id of "${project_id}" found.` };
 			} else if (!project.userIds.includes(userId)) {
-				throw new Error("Unauthorized action.");
+				return { statusMessage: "error", error: "Unauthorized action." };
 			} else if (deletedUserIds.includes(userId)) {
-				throw new Error("Can't remove self from userIds");
+				return { statusMessage: "error", error: "Can't remove self from userIds" };
 			}
 
 			const userIds = [...project.userIds.filter((id) => !deletedUserIds.includes(id)), ...newUserIds];
@@ -71,12 +72,13 @@ export default async function projectUpdateUserIdsAction(
 
 		return { statusMessage: "success" };
 	} catch (err: any) {
+		console.error(err);
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			return prismaErr;
 		}
 
-		const error = err as Error;
-		return { statusMessage: "error", error: error.message };
+		return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 	}
 }

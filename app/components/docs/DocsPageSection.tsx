@@ -1,12 +1,12 @@
 import DocsSections, {
-	DocsGenericProps,
-	DocsPage,
+	type DocsGenericProps,
+	type DocsPage,
 	DocsPageTitles,
-	DocsSection,
+	type DocsSection,
 	getNextDocsSection
 } from "@/types/docsSections";
 import Link from "next/link";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import MobileTOC from "./MobileTOC";
 
 const docContentProseClassName =
@@ -16,9 +16,11 @@ const docContentProseClassName =
 	"[&_h4]:text-lg [&_h4]:font-medium [&_h4]:text-base-content [&_h4]:mt-6 [&_h4]:mb-1.5 " +
 	"[&_div>h4:first-child]:!mt-0 " +
 	"[&_h5]:text-lg [&_h5]:font-medium [&_h5]:text-base-content [&_h5]:mt-6 [&_h5]:mb-1.5 " +
-	"[&_table_code]:text-base [&_table_code]:font-mono";
+	"[&_table_code]:text-base [&_table_code]:font-mono " +
+	//words in a sentence stay mono, without the chip background prose and page classes add
+	"[&_:not(pre)>code]:!bg-transparent [&_:not(pre)>code]:!p-0 [&_:not(pre)>code]:!rounded-none " +
+	"[&_:not(pre)>code]:!font-normal [&_:not(pre)>code]:font-mono [&_:not(pre)>code]:!text-inherit";
 
-//TODO: add route breadcrumbs
 export default function DocsPageSection<P extends DocsPage>({
 	page,
 	section,
@@ -26,7 +28,7 @@ export default function DocsPageSection<P extends DocsPage>({
 	subsections
 }: DocsGenericProps<P> & {
 	header: ReactNode;
-	subsections?: { id: string; title: string; content: ReactNode }[];
+	subsections?: { id: string; title: string; content: ReactNode; icon?: ReactNode }[];
 }) {
 	const prev = getNextDocsSection({ page, section, dir: -1 });
 	const next = getNextDocsSection({ page, section });
@@ -46,21 +48,23 @@ export default function DocsPageSection<P extends DocsPage>({
 					</ul>
 				</div>
 
-				<h2 className="text-4xl font-semibold tracking-tight text-primary mb-3 pt-5">
+				<h1 className="text-4xl font-semibold tracking-tight text-primary mb-3 pt-5">
 					{(DocsSections[page][section] as DocsSection).title}
-				</h2>
+				</h1>
 				<div className={docContentProseClassName}>{header}</div>
 			</div>
 
 			{subsections ? (
 				subsections.map((sect) => (
-					<DocsPageSubsection key={sect.id} id={sect.id} title={sect.title} content={sect.content} />
+					<DocsPageSubsection key={sect.id} id={sect.id} title={sect.title} icon={sect.icon}>
+						{sect.content}
+					</DocsPageSubsection>
 				))
 			) : (
 				<></>
 			)}
 
-			<div className="flex justify-center gap-50 w-full mt-10 pt-7 border-t border-base-content/20 text-base-content/50">
+			<div className="flex justify-center gap-50 w-full mt-10 pt-7 text-base-content/50">
 				{prev ? (
 					<Link
 						className="grid grid-cols-[auto_1fr] grid-rows-[1fr_auto] items-center hover:text-base-content transition-colors"
@@ -112,11 +116,24 @@ export default function DocsPageSection<P extends DocsPage>({
 	);
 }
 
-function DocsPageSubsection({ id, title, content }: { id: string; title: string; content: ReactNode }) {
+function DocsPageSubsection({
+	id,
+	title,
+	icon,
+	children
+}: {
+	id: string;
+	title: string;
+	icon?: ReactNode;
+	children: ReactNode;
+}) {
 	return (
-		<div id={id} className="pt-5">
-			<h3 className="text-3xl font-semibold tracking-tight text-base-content mb-2">{title}</h3>
-			<div className={docContentProseClassName}>{content}</div>
+		<div id={id} className="pt-16">
+			<h2 className="mb-2 flex items-center gap-3 text-3xl font-semibold tracking-tight text-base-content">
+				{icon}
+				{title}
+			</h2>
+			<div className={docContentProseClassName}>{children}</div>
 		</div>
 	);
 }

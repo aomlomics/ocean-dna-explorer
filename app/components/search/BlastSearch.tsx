@@ -1,14 +1,13 @@
 "use client";
 
-import { Analysis, Assay } from "@/app/generated/prisma/client";
+import type { AssayModel } from "@/app/generated/prisma/models/Assay";
 import { MAX_UNCOMPRESSED_LENGTH, compressURIComponent } from "@/app/helpers/utils";
-import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { useAuth } from "@clerk/nextjs";
 import { usePathname, useSearchParams } from "next/navigation";
-import { SubmitEvent, useEffect, useState } from "react";
+import { type SubmitEvent, useState } from "react";
 import InfoButton from "../InfoButton";
-import { BlastQueryWithRelations } from "@/prisma/generated/zod";
+import type { BlastQueryWithRelations } from "@/prisma/generated/zod";
 import Link from "next/link";
 import { parseBlastRequest } from "@/app/helpers/blast";
 
@@ -20,7 +19,7 @@ const DEFAULT_QCOV_HSP = 80;
 //TODO: add clear query button
 //TODO: add list of existing queries for current user
 //TODO: use the useRouter hook instead of updating window.location.href directly (previously was unreliably failing to navigate on prod)
-export default function BlastSearch() {
+export default function BlastSearch({ assayNames }: { assayNames: AssayModel["assay_name"][] }) {
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
 
@@ -28,94 +27,22 @@ export default function BlastSearch() {
 	const role = sessionClaims?.metadata?.role;
 
 	const [prevQueries, setPrevQueries] = useState(undefined as BlastQueryWithRelations[] | undefined);
-	const [assayNames, setAssayNames] = useState(undefined as Assay["assay_name"][] | undefined);
 
 	const [error, setError] = useState("");
 
-	const [blastDatabase, setBlastDatabase] = useState("");
-	const [blastQuery, setBlastQuery] = useState("");
-	const [task, setTask] = useState("blastn" as "blastn" | "megablast");
-	const [max_target_seqs, set_max_target_seqs] = useState(NaN);
-	const [evalue, set_evalue] = useState("");
-	const [perc_identity, set_perc_identity] = useState(NaN);
-	const [qcov_hsp_perc, set_qcov_hsp_perc] = useState(NaN);
+	const blast = parseBlastRequest(new URLSearchParams(searchParams), { safe: true });
 
-	useEffect(() => {
-		async function doFetch() {
-			const res = await fetch("/api/assay?fields=assay_name&relations=analysis");
-			if (res.ok) {
-				const response = (await res.json()) as NetworkPacket;
-				if (response.statusMessage === "success") {
-					const names = response.result.reduce(
-						(
-							acc: Assay["assay_name"][],
-							a: { assay_name: Assay["assay_name"]; Analyses: { id: Analysis["id"] }[] }
-						) => {
-							if (a.Analyses.length) {
-								acc.push(a.assay_name);
-							}
-
-							return acc;
-						},
-						[]
-					) as Assay["assay_name"][];
-					setAssayNames(names);
-					const blastDbParam = names?.find((a) => a === searchParams.get("blastDatabase"));
-					if (blastDbParam) {
-						setBlastDatabase(blastDbParam);
-					}
-				} else if (response.statusMessage === "error") {
-					setError(response.error);
-					return;
-				}
-			} else {
-				setError(res.statusText);
-				return;
-			}
-		}
-
-		doFetch();
-	}, []);
-
-	useEffect(() => {
-		if (!blastQuery || parseBlast(blastQuery)) {
-			setError("");
-		}
-	}, [blastQuery]);
-
-	useEffect(() => {
-		const defaults = {
-			database: "" as typeof blastDatabase,
-			query: "" as typeof blastQuery,
-			task: "blastn" as typeof task,
-			max_target_seqs: NaN as typeof max_target_seqs,
-			evalue: "" as typeof evalue,
-			perc_identity: NaN as typeof perc_identity,
-			qcov_hsp_perc: NaN as typeof qcov_hsp_perc
-		};
-
-		const blast = parseBlastRequest(new URLSearchParams(searchParams), { safe: true });
-		if (blast) {
-			defaults.database = assayNames?.find((a) => a === blast.assay_name) || "";
-			defaults.query = blast.queries.map((q) => (typeof q === "string" ? q : `>${q[0]}\n${q[1]}`)).join("\n");
-
-			if (blast.options) {
-				if (blast.options.task === "megablast") defaults.task = "megablast";
-				if (blast.options.max_target_seqs != null) defaults.max_target_seqs = blast.options.max_target_seqs;
-				if (blast.options.evalue != null) defaults.evalue = blast.options.evalue.toString();
-				if (blast.options.perc_identity != null) defaults.perc_identity = blast.options.perc_identity;
-				if (blast.options.qcov_hsp_perc != null) defaults.qcov_hsp_perc = blast.options.qcov_hsp_perc;
-			}
-		}
-
-		setBlastDatabase(defaults.database);
-		setBlastQuery(defaults.query);
-		setTask(defaults.task);
-		set_max_target_seqs(defaults.max_target_seqs);
-		set_evalue(defaults.evalue);
-		set_perc_identity(defaults.perc_identity);
-		set_qcov_hsp_perc(defaults.qcov_hsp_perc);
-	}, [searchParams.toString()]);
+	const [blastDatabase, setBlastDatabase] = useState(
+		blast?.assay_name ?? assayNames.find((a) => a === searchParams.get("blastDatabase")) ?? ""
+	);
+	const [blastQuery, setBlastQuery] = useState(
+		blast ? blast.queries.map((q) => (typeof q === "string" ? q : `>${q[0]}\n${q[1]}`)).join("\n") : ""
+	);
+	const [task, setTask] = useState(blast?.options?.task === "megablast" ? "megablast" : "blastn");
+	const [max_target_seqs, set_max_target_seqs] = useState(blast?.options?.max_target_seqs ?? NaN);
+	const [evalue, set_evalue] = useState(blast?.options?.evalue?.toString() ?? "");
+	const [perc_identity, set_perc_identity] = useState(blast?.options?.perc_identity ?? NaN);
+	const [qcov_hsp_perc, set_qcov_hsp_perc] = useState(blast?.options?.qcov_hsp_perc ?? NaN);
 
 	function parseBlast(text: string) {
 		const names = new Set() as Set<string>;
@@ -178,11 +105,11 @@ export default function BlastSearch() {
 			}
 		} else {
 			//singular sequence, potentially with newlines
-			queries.push([split.map((s) => s.trim()).join("")]);
-
-			if (!queries[0].length) {
+			const seq = split.map((s) => s.trim()).join("");
+			if (!seq.length) {
 				return;
 			}
+			queries.push([seq]);
 		}
 
 		return queries;
@@ -229,10 +156,15 @@ export default function BlastSearch() {
 	}
 
 	return (
-		<form onSubmit={handleSubmit} className="flex flex-col items-start" aria-disabled={!assayNames}>
-			<fieldset className="fieldset w-full" key={assayNames?.toString()}>
+		<form onSubmit={handleSubmit} className="flex flex-col items-start">
+			<fieldset className="fieldset w-full">
 				<legend className="fieldset-legend">Database</legend>
-				<select value={blastDatabase} onChange={(e) => setBlastDatabase(e.currentTarget.value)} className="select">
+				<select
+					value={blastDatabase}
+					onChange={(e) => setBlastDatabase(e.currentTarget.value)}
+					className="select"
+					disabled={!assayNames}
+				>
 					<option value="">All</option>
 					{assayNames?.map((assay_name) => (
 						<option key={assay_name}>{assay_name}</option>
@@ -258,7 +190,13 @@ export default function BlastSearch() {
 				<textarea
 					className="textarea w-full aspect-4/1"
 					value={blastQuery}
-					onChange={(e) => setBlastQuery(e.currentTarget.value)}
+					onChange={(e) => {
+						setBlastQuery(e.currentTarget.value);
+						if (!e.currentTarget.value || parseBlast(e.currentTarget.value)) {
+							setError("");
+						}
+					}}
+					disabled={!assayNames}
 				/>
 			</fieldset>
 
@@ -274,22 +212,25 @@ export default function BlastSearch() {
 					accept=".fasta"
 					onChange={async (e) => {
 						if (e.currentTarget.files) {
-							const file = e.currentTarget.files[0];
+							const file = e.currentTarget.files.item(0);
 							e.currentTarget.value = "";
-							if (file.name.endsWith(".fasta")) {
-								setBlastQuery(await file.text());
-							} else {
-								setError("File must be of type .fasta.");
+							if (file) {
+								if (file.name.endsWith(".fasta")) {
+									setBlastQuery(await file.text());
+								} else {
+									setError("File must be of type .fasta.");
+								}
 							}
 						}
 					}}
+					disabled={!assayNames}
 				/>
 			</fieldset>
 
 			{role && RolePermissions[role].includes("contribute") ? (
 				<fieldset className="fieldset mt-2">
 					<label className="label select-none">
-						<input name="blastSave" type="checkbox" className="checkbox" />
+						<input name="blastSave" type="checkbox" className="checkbox" disabled={!assayNames} />
 						Save BLAST
 					</label>
 				</fieldset>
@@ -308,6 +249,7 @@ export default function BlastSearch() {
 							className="toggle"
 							checked={task === "megablast"}
 							onChange={(e) => (e.target.checked ? setTask("megablast") : setTask("blastn"))}
+							disabled={!assayNames}
 						/>
 						{task}
 					</label>
@@ -330,8 +272,9 @@ export default function BlastSearch() {
 							max="100"
 							className="input"
 							placeholder={`${DEFAULT_NUM_RESULTS}`}
-							value={max_target_seqs.toString()}
-							onChange={(e) => set_max_target_seqs(parseInt(e.currentTarget.value))}
+							value={Number.isFinite(max_target_seqs) ? max_target_seqs : ""}
+							onChange={(e) => set_max_target_seqs(parseInt(e.currentTarget.value, 10))}
+							disabled={!assayNames}
 						/>
 					</fieldset>
 
@@ -350,6 +293,7 @@ export default function BlastSearch() {
 							placeholder={`${DEFAULT_EVALUE}`}
 							value={evalue.toString()}
 							onChange={(e) => set_evalue(e.currentTarget.value)}
+							disabled={!assayNames}
 						/>
 					</fieldset>
 
@@ -369,8 +313,9 @@ export default function BlastSearch() {
 							max="100"
 							className="input"
 							placeholder={`${DEFAULT_PERCENT_IDENTITY}`}
-							value={perc_identity.toString()}
+							value={Number.isFinite(perc_identity) ? perc_identity : ""}
 							onChange={(e) => set_perc_identity(parseFloat(e.currentTarget.value))}
+							disabled={!assayNames}
 						/>
 					</fieldset>
 
@@ -390,14 +335,15 @@ export default function BlastSearch() {
 							max="100"
 							className="input"
 							placeholder={`${DEFAULT_QCOV_HSP}`}
-							value={qcov_hsp_perc.toString()}
+							value={Number.isFinite(qcov_hsp_perc) ? qcov_hsp_perc : ""}
 							onChange={(e) => set_qcov_hsp_perc(parseFloat(e.currentTarget.value))}
+							disabled={!assayNames}
 						/>
 					</fieldset>
 				</div>
 			</div>
 
-			<button className="btn btn-success self-stretch mt-4 mx-30" disabled={!blastQuery}>
+			<button className="btn btn-success self-stretch mt-4 mx-30" disabled={!assayNames || !blastQuery}>
 				BLAST
 			</button>
 		</form>

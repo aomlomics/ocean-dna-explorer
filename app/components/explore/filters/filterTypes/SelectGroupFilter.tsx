@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { ConfigField, handleFilterChange } from "../filterHelpers";
-import { NetworkPacket } from "@/types/globals";
-import { Prisma } from "@/app/generated/prisma/client";
+import { type ConfigField, handleFilterChange } from "../filterHelpers";
+import type { NetworkPacket } from "@/types/globals";
 import { useState } from "react";
+import type { ModelName } from "@/types/tableMetadata";
+import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 export default function SelectGroupFilter({
 	field,
@@ -18,11 +19,12 @@ export default function SelectGroupFilter({
 		[k: string]: string;
 	};
 	value: string;
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	group: ConfigField[];
 }) {
 	const searchParams = useSearchParams();
 	const router = useRouter();
+	const { trusted } = useTrusted();
 	const [options, setOptions] = useState({} as Record<string, string[]>);
 
 	async function getOptions() {
@@ -44,7 +46,7 @@ export default function SelectGroupFilter({
 			.join("&");
 
 		const response = await fetch(
-			`/api/${table}/fields/distinct/?${where.length ? where + "&" : ""}${extraSelf ? `extraFields=${fieldName}` : ""}`,
+			`/api/internal/${table}/fields/distinct?trusted=${trusted}&${where.length ? where + "&" : ""}${extraSelf ? `extraFields=${fieldName}` : ""}`,
 			{ cache: "force-cache" }
 		);
 		const json = (await response.json()) as NetworkPacket;
@@ -79,7 +81,7 @@ export default function SelectGroupFilter({
 					<option value="">Any</option>
 					{!!value && <option value={value}>{value}</option>}
 					{Object.keys(options).length !== 0 &&
-						options[typeof field === "string" ? field : field.f].map((option: string) => (
+						options[typeof field === "string" ? field : field.f]!.map((option: string) => (
 							<option key={option} value={option}>
 								{option}
 							</option>

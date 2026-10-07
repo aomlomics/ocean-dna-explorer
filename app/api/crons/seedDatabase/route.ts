@@ -1,11 +1,11 @@
 import { prisma } from "@/app/helpers/prisma";
 import { handlePrismaError, seedAssays } from "@/app/helpers/queries";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request): Promise<NextResponse<NetworkPacket>> {
 	const authHeader = request.headers.get("authorization");
-	if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+	if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
 		return NextResponse.json({ statusMessage: "error", error: "Unauthorized" });
 	}
 
@@ -14,9 +14,11 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 
 		return NextResponse.json({ statusMessage: "success" });
 	} catch (err: any) {
+		console.error(err);
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
-			return NextResponse.json(prismaErr);
+			return NextResponse.json(prismaErr, { status: 400 });
 		}
 
 		const error = err as Error;

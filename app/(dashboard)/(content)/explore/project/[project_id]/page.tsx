@@ -1,20 +1,51 @@
 import { Suspense, type ReactNode } from "react";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
-import EditHistory from "@/app/components/EditHistory";
+import EditHistory from "@/app/components/explore/EditHistory";
 import AssaysCard from "@/app/components/assay/AssaysCard";
-import DataDisplay from "@/app/components/DataDisplay";
+import DataDisplay from "@/app/components/explore/DataDisplay";
 import TableMetadata from "@/types/tableMetadata";
 import StatCard from "@/app/components/explore/StatCard";
-import { LocationIcon, AnalysisIcon, FishIcon, EyeIcon } from "@/app/components/icons";
+import { ProjectIcon, SampleIcon, AnalysisIcon, TaxonomyIcon, OccurrenceIcon } from "@/app/components/icons";
 import Image from "next/image";
 import { DepthCoverageCard, DepthCoverageCardSkeleton } from "@/app/components/dataSummary/DepthCoverageCard";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import ProjectCoverPhotoPreview from "@/app/components/explore/ProjectCoverPhotoPreview";
+import ProjectFileDownloads, {
+	type AnalysisDownloadBundle,
+	type DownloadFile
+} from "@/app/components/explore/ProjectFileDownloads";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
+import { getBlobSizes } from "@/app/helpers/getBlobSizes";
 import { notFound } from "next/navigation";
+import type { AnalysisModel, AssayModel, TaxonomyModel } from "@/app/generated/prisma/models";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ project_id: string }> }): Promise<Metadata> {
+	const { project_id } = await decodeRouteParams(params);
+
+	const project = await trustedPrisma.project.findUnique({
+		where: {
+			project_id
+		},
+		select: {
+			id: true
+		}
+	});
+
+	if (project) {
+		return {
+			title: `${project_id} | ${TableMetadata.project.plural}`,
+			description: `Explore the ${project_id} project, including its samples, analyses, assays, taxonomic assignments, sampling locations, sequencing depth, and project metadata.`
+		};
+	} else {
+		return {
+			title: "Project not found"
+		};
+	}
+}
 
 /** Char budget per row (incl. ` | ` between segments). */
 const INSTITUTION_MAX_CH = 98;
@@ -112,7 +143,7 @@ function formatInstitutionHeaderBlock(institution: string | null | undefined): R
 			<div className="flex min-w-0 flex-wrap items-start gap-x-1">
 				<span className="font-medium text-base-content/70 shrink-0">Institution:</span>
 				<div className="flex min-w-0 flex-1 basis-0 flex-wrap content-start items-baseline gap-x-0">
-					{renderInstitutionPipeLine(lines[0], "inst-l0")}
+					{renderInstitutionPipeLine(lines[0]!, "inst-l0")}
 				</div>
 			</div>
 			{lines.slice(1).map((line, idx) => (
@@ -127,24 +158,71 @@ function formatInstitutionHeaderBlock(institution: string | null | undefined): R
 	);
 }
 
+function ProjectDownloadsSkeleton({ hasAnalyses }: { hasAnalyses: boolean }) {
+	return (
+		<div className="relative z-raised flex flex-wrap items-center gap-3" aria-hidden>
+			<div className="inline-flex items-center gap-3 rounded-lg bg-base-200 px-4 py-2">
+				<span className="skeleton h-8 w-8 shrink-0 rounded" />
+				<span className="flex flex-col gap-1">
+					<span className="skeleton h-4 w-36" />
+					<span className="skeleton h-3 w-14" />
+				</span>
+			</div>
+			{hasAnalyses ? (
+				<div className="inline-flex items-center gap-3 rounded-lg bg-base-200 px-4 py-2">
+					<span className="skeleton h-8 w-8 shrink-0 rounded" />
+					<span className="flex flex-col gap-1">
+						<span className="skeleton h-4 w-40" />
+						<span className="skeleton h-3 w-14" />
+					</span>
+				</div>
+			) : null}
+		</div>
+	);
+}
+
+async function ProjectDownloadsBlock({
+	project_id,
+	metadataFiles,
+	analyses
+}: {
+	project_id: string;
+	metadataFiles: DownloadFile[];
+	analyses: AnalysisDownloadBundle[];
+}) {
+	const sizeByUrl = await getBlobSizes([
+		...metadataFiles.map((f) => f.href),
+		...analyses.flatMap((a) => a.files.map((f) => f.href))
+	]);
+
+	return (
+		<div className="relative z-raised">
+			<ProjectFileDownloads
+				project_id={project_id}
+				metadataFiles={metadataFiles}
+				analyses={analyses}
+				sizeByUrl={sizeByUrl}
+			/>
+		</div>
+	);
+}
+
 export default async function Project_id({ params }: { params: Promise<{ project_id: string }> }) {
 	const { project_id } = await decodeRouteParams(params);
 
-	const project = await prisma.project.findUnique({
+	const project = await trustedPrisma.project.findUnique({
 		where: {
 			project_id
 		},
 		include: {
-			_count: {
-				select: {
-					Samples: true,
-					Analyses: true
-				}
-			},
+			Samples: true,
 			Analyses: {
 				select: {
 					analysis_run_name: true,
 					assay_name: true,
+					analysisMetadataFileUrl_ODE: true,
+					asvFileUrl_ODE: true,
+					occurrenceFileUrl_ODE: true,
 					Assay: {
 						select: {
 							target_gene: true
@@ -160,9 +238,9 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		}
 	});
 	if (!project) notFound();
-	const { _count: _, Analyses: ___, editHistory: ____, ...justProject } = project;
+	const { Samples, Analyses, editHistory, ...justProject } = project;
 
-	const uniqueAssays = project.Analyses.reduce(
+	const uniqueAssays = Analyses.reduce(
 		(acc: Record<string, Record<string, string>>, a) => ({
 			...acc,
 			[a.assay_name]: { target_gene: a.Assay.target_gene }
@@ -175,38 +253,25 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	}));
 
 	//get a sorted array of taxonomy counts, and a separate object to show which analysis taxonomies came from
-	const taxaCount = {} as Record<string, number>;
-	const taxaCountByAnalysis = {} as Record<string, Record<string, number>>;
-	const taxaCountByAssay = {} as Record<string, Record<string, number>>;
+	const taxaCount = {} as Record<TaxonomyModel["taxonomy"], number>;
+	const taxaCountByAnalysis = {} as Record<
+		AnalysisModel["analysis_run_name"],
+		Record<TaxonomyModel["taxonomy"], number>
+	>;
+	const taxaCountByAssay = {} as Record<AssayModel["assay_name"], Record<TaxonomyModel["taxonomy"], number>>;
 
-	for (const a of project.Analyses) {
-		taxaCountByAnalysis[a.analysis_run_name] = {};
-		if (!taxaCountByAssay[a.assay_name]) {
-			taxaCountByAssay[a.assay_name] = {};
-		}
-
+	for (const a of Analyses) {
 		for (const assign of a.Assignments) {
-			if (assign.taxonomy in taxaCount) {
-				taxaCount[assign.taxonomy] += 1;
-			} else {
-				taxaCount[assign.taxonomy] = 1;
-			}
+			taxaCount[assign.taxonomy] = (taxaCount[assign.taxonomy] ?? 0) + 1;
 
-			if (assign.taxonomy in taxaCountByAnalysis[a.analysis_run_name]) {
-				taxaCountByAnalysis[a.analysis_run_name][assign.taxonomy] += 1;
-			} else {
-				taxaCountByAnalysis[a.analysis_run_name][assign.taxonomy] = 1;
-			}
+			const analysisCounts = (taxaCountByAnalysis[a.analysis_run_name] ??= {});
+			analysisCounts[assign.taxonomy] = (analysisCounts[assign.taxonomy] ?? 0) + 1;
 
-			if (assign.taxonomy in taxaCountByAssay[a.assay_name]) {
-				taxaCountByAssay[a.assay_name][assign.taxonomy] += 1;
-			} else {
-				taxaCountByAssay[a.assay_name][assign.taxonomy] = 1;
-			}
+			const assayCounts = (taxaCountByAssay[a.assay_name] ??= {});
+			assayCounts[assign.taxonomy] = (assayCounts[assign.taxonomy] ?? 0) + 1;
 		}
 	}
 	const sortedTaxa = Object.entries(taxaCount).sort(([, a], [, b]) => b - a);
-	const hasCoverImage = Boolean(project.imageFileUrl_ODE);
 
 	// Get top 2 taxonomies per assay
 	const topTaxaByAssay = Object.entries(taxaCountByAssay).reduce(
@@ -249,15 +314,12 @@ export default async function Project_id({ params }: { params: Promise<{ project
 						<a
 							key={assay}
 							href="#taxonomy-chart"
-							className={[
-								"group block cursor-pointer rounded-xl bg-base-100/20 px-4 py-3 transition-colors duration-150",
-								"hover:bg-base-300/30"
-							].join(" ")}
+							className="group block cursor-pointer rounded-xl bg-base-100/20 px-4 py-3 transition-colors duration-150 hover:bg-base-300/30"
 						>
 							<div className="space-y-2.5">
 								<div className="flex flex-col gap-1">
 									<h3 className="text-base font-medium leading-snug text-base-content">
-										{uniqueAssays[assay].target_gene}
+										{uniqueAssays[assay]!.target_gene}
 									</h3>
 									<p className="truncate text-sm text-base-content/70">{assay}</p>
 								</div>
@@ -289,13 +351,13 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
 			<div className="lg:col-span-2">
 				<Map
-					query={() => prisma.sample.findMany({ where: { project_id } })}
+					locations={Samples}
 					where={{ project_id }}
 					cluster
 					legend
 					draw
 					legendOmit={["project_id"]}
-					className="h-126 w-full min-h-136"
+					className="lg:h-136 w-full"
 					defaultLegendField="expedition_id"
 				/>
 			</div>
@@ -319,7 +381,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	);
 
 	/* Matches ContentLayout widths so full-bleed heroes align foreground with the page column. */
-	const contentColumnClass = "mx-auto w-[85%] max-w-[1536px] sm:w-[80%] md:w-[75%] lg:w-[75%] xl:w-[80%]";
+	const contentColumnClass = "mx-auto w-[85%] sm:w-[80%] md:w-[75%] lg:w-[75%] xl:w-[80%]";
 
 	const breadcrumbsBlock = (
 		<div className="text-base breadcrumbs mb-3">
@@ -335,32 +397,32 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	);
 
 	const headerBlock = (
-		<header className={hasCoverImage ? "relative z-raised w-full min-w-0 max-w-full" : "w-full min-w-0 max-w-full"}>
+		<header className={`w-full min-w-0 max-w-full ${project.imageFileUrl_ODE ? "relative z-raised" : ""}`}>
 			<div className="flex flex-wrap gap-x-3 gap-y-2 items-center justify-between">
 				<div className="flex flex-wrap gap-2 items-center min-w-0">
 					<TitleHoverTooltip tooltip={TableMetadata.project.description}>
 						<h1
-							className={
-								hasCoverImage
-									? "text-4xl font-semibold text-primary mb-0 drop-shadow-sm [html[data-theme='light']_&]:drop-shadow-md"
-									: "text-4xl font-semibold text-primary mb-0"
-							}
+							className={`flex items-center gap-2 text-4xl font-semibold text-primary mb-0 ${
+								project.imageFileUrl_ODE ? "drop-shadow-sm [html[data-theme='light']_&]:drop-shadow-md" : ""
+							}`}
 						>
-							{project.project_id}
+							<ProjectIcon className="size-8! shrink-0" />
+							<span className="min-w-0 wrap-anywhere">{project_id}</span>
 						</h1>
 					</TitleHoverTooltip>
-					<EditHistory editHistory={project.editHistory} />
+					<EditHistory editHistory={editHistory} />
 				</div>
-				{hasCoverImage && project.imageFileUrl_ODE ? (
-					<ProjectCoverPhotoPreview src={project.imageFileUrl_ODE} title={project.project_name || project.project_id} />
-				) : null}
+
+				{project.imageFileUrl_ODE ? (
+					<ProjectCoverPhotoPreview src={project.imageFileUrl_ODE} title={project.project_name || project_id} />
+				) : (
+					<></>
+				)}
 			</div>
 			<p
-				className={
-					hasCoverImage
-						? "text-2xl max-w-4xl mt-2 text-base-content/90 drop-shadow-sm [html[data-theme='dark']_&]:text-white"
-						: "text-2xl max-w-4xl mt-2 text-base-content/90 [html[data-theme='dark']_&]:text-white"
-				}
+				className={`mt-3 w-fit text-left text-4xl sm:text-5xl font-semibold leading-[1.12] text-pretty wrap-break-word text-base-content [html[data-theme='dark']_&]:text-white ${
+					project.imageFileUrl_ODE ? "max-w-[min(100%,46rem)] drop-shadow-sm" : "max-w-[min(100%,54rem)]"
+				}`}
 			>
 				{project.project_name}
 			</p>
@@ -368,11 +430,11 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				<div className="flex flex-wrap gap-x-6 gap-y-1">
 					<div>
 						<span className="font-medium text-base-content/70">Contact: </span>
-						<span>{project.project_contact || "N/A"}</span>
+						<span>{project.project_contact}</span>
 					</div>
 					<div>
 						<span className="font-medium text-base-content/70">Assay Type: </span>
-						<span>{project.assay_type || "N/A"}</span>
+						<span>{project.assay_type}</span>
 					</div>
 				</div>
 				{formatInstitutionHeaderBlock(project.institution)}
@@ -380,15 +442,35 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		</header>
 	);
 
+	const metadataFiles = [
+		{ label: "projectMetadata", href: project.projectMetadataFileUrl_ODE },
+		{ label: "sampleMetadata", href: project.sampleMetadataFileUrl_ODE },
+		{ label: "libraryMetadata", href: project.libraryMetadataFileUrl_ODE }
+	].filter((f) => Boolean(f.href));
+	const analysisDownloads = Analyses.map((a) => ({
+		analysis_run_name: a.analysis_run_name,
+		files: [
+			{ label: "analysisMetadata", href: a.analysisMetadataFileUrl_ODE },
+			{ label: "asv", href: a.asvFileUrl_ODE },
+			{ label: "occurrence", href: a.occurrenceFileUrl_ODE }
+		].filter((f) => Boolean(f.href))
+	}));
+
+	const downloadsBlock = (
+		<Suspense fallback={<ProjectDownloadsSkeleton hasAnalyses={analysisDownloads.length > 0} />}>
+			<ProjectDownloadsBlock project_id={project_id} metadataFiles={metadataFiles} analyses={analysisDownloads} />
+		</Suspense>
+	);
+
 	const advancedProjStr = `"project_id","equals","${project_id}"`;
 	const glanceBlock = (
 		<div className="flex flex-col h-full">
-			<h2 className="text-2xl font-semibold text-base-content/90 pb-2">Project at a Glance</h2>
-			<div className="flex flex-wrap gap-3">
+			{/* z-raised: sit above header so View as Search tooltips aren't covered */}
+			<div className="relative z-raised flex flex-wrap gap-3">
 				<StatCard
 					title="Samples"
-					value={project._count.Samples}
-					icon={<LocationIcon />}
+					value={Samples.length}
+					icon={<SampleIcon />}
 					link={`/search?table=sample&advanced=[[${advancedProjStr}]]`}
 					tooltip="View as Search"
 					layout="horizontal"
@@ -396,7 +478,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				/>
 				<StatCard
 					title="Analyses"
-					value={project._count.Analyses}
+					value={Analyses.length}
 					icon={<AnalysisIcon />}
 					link={`/search?table=analysis&advanced=[[${advancedProjStr}]]`}
 					tooltip="View as Search"
@@ -406,7 +488,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				<StatCard
 					title="Taxonomies"
 					value={sortedTaxa.length}
-					icon={<FishIcon />}
+					icon={<TaxonomyIcon />}
 					link={`/search?table=taxonomy&advanced=[["project",${advancedProjStr}]]`}
 					tooltip="View as Search"
 					layout="horizontal"
@@ -414,8 +496,8 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				/>
 				<StatCard
 					title="Occurrences"
-					value={project.Analyses.reduce((sum, a) => sum + a.Assignments.length, 0)}
-					icon={<EyeIcon />}
+					value={Analyses.reduce((sum, a) => sum + a.Assignments.length, 0)}
+					icon={<OccurrenceIcon />}
 					link={`/search?table=occurrence&advanced=[["project",${advancedProjStr}]]`}
 					tooltip="View as Search"
 					layout="horizontal"
@@ -427,26 +509,15 @@ export default async function Project_id({ params }: { params: Promise<{ project
 
 	return (
 		<div id="project" className="space-y-8">
-			{hasCoverImage && project.imageFileUrl_ODE ? (
-				<div
-					className={[
-						"relative isolate -mt-4 w-screen max-w-[100vw] shrink-0 overflow-x-clip overflow-y-clip pt-4 pb-10",
-						"ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]"
-					].join(" ")}
-				>
+			{project.imageFileUrl_ODE ? (
+				<div className="relative isolate -mt-4 w-screen max-w-[100vw] shrink-0 overflow-x-clip overflow-y-clip pt-4 pb-10 ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]">
 					{/* Full-width page floor — photography only appears in the upper-right treatment */}
 					<div className="pointer-events-none absolute inset-0 z-0 bg-base-100" aria-hidden />
 
 					{/*
 					 * Top-right hero: top-0 + section overflow-y-clip keeps art under the navbar; right offsets + mask/object-position unchanged otherwise.
 					 */}
-					<div
-						className={[
-							"absolute top-0 z-0 rounded-2xl",
-							"-right-2 max-sm:-right-1 sm:-right-5",
-							"h-[min(54vh,600px)] w-[min(96vw,1400px)] max-sm:w-[min(98vw,760px)] max-sm:h-[min(38vh,400px)]"
-						].join(" ")}
-					>
+					<div className="absolute top-0 z-0 rounded-2xl -right-2 max-sm:-right-1 sm:-right-5 h-[min(54vh,600px)] w-[min(96vw,1400px)] max-sm:w-[min(98vw,760px)] max-sm:h-[min(38vh,400px)]">
 						<div
 							className="relative h-full w-full overflow-hidden rounded-2xl"
 							style={{
@@ -492,22 +563,30 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					</div>
 					<div className={`relative z-10 ${contentColumnClass} space-y-8`}>
 						{breadcrumbsBlock}
-						{headerBlock}
-						{glanceBlock}
+						{/* Tighter rhythm: header → downloads → glance read as one intro block */}
+						<div className="space-y-3">
+							{headerBlock}
+							{downloadsBlock}
+							{glanceBlock}
+						</div>
 						{mapDepthGrid}
 					</div>
 				</div>
 			) : (
 				<div className="space-y-8">
 					{breadcrumbsBlock}
-					{headerBlock}
-					{glanceBlock}
+					{/* Tighter rhythm: header → downloads → glance read as one intro block */}
+					<div className="space-y-3">
+						{headerBlock}
+						{downloadsBlock}
+						{glanceBlock}
+					</div>
 				</div>
 			)}
 
 			{/* No cover: map + depth/assays + metadata below. With cover, metadata sits under map inside mapDepthGrid. */}
 			<section className="mt-2 space-y-8">
-				{!hasCoverImage ? (
+				{!project.imageFileUrl_ODE ? (
 					/*
 					 * No cover image: allow the right column to extend below the map
 					 * without forcing the map taller. We do that by making a 2-row
@@ -516,13 +595,13 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
 						<div className="lg:col-span-2">
 							<Map
-								query={() => prisma.sample.findMany({ where: { project_id } })}
+								locations={Samples}
 								where={{ project_id }}
 								cluster
 								legend
 								draw
 								legendOmit={["project_id"]}
-								className="h-126 w-full min-h-136"
+								className="lg:h-136 w-full"
 								defaultLegendField="expedition_id"
 							/>
 						</div>

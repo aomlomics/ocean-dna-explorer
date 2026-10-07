@@ -1,18 +1,44 @@
 import TableMetadata from "@/types/tableMetadata";
-import { Taxonomy } from "@/app/generated/prisma/client";
-import { prisma } from "@/app/helpers/prisma";
+import { exploreUrl } from "@/app/helpers/utils";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import PhyloPic from "@/app/components/images/PhyloPic";
 import GcDonut from "@/app/components/charts/GcDonut";
-import Table from "@/app/components/paginated/Table";
+import Table from "@/app/components/paginated/table/Table";
 import AssaysCard from "@/app/components/assay/AssaysCard";
+import { FeatureIcon } from "@/app/components/icons";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import Map from "@/app/components/map/Map";
 import CopyButton from "@/app/components/CopyButton";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ featureid: string }> }): Promise<Metadata> {
+	const { featureid } = await decodeRouteParams(params);
+
+	const feature = await trustedPrisma.feature.findUnique({
+		where: {
+			featureid
+		},
+		select: {
+			id: true
+		}
+	});
+
+	if (feature) {
+		return {
+			title: `${featureid} | ${TableMetadata.feature.plural}`
+		};
+	} else {
+		return {
+			title: "Feature not found"
+		};
+	}
+}
 
 const dataExplorerTabBase =
 	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
@@ -63,6 +89,8 @@ const calculateGcContent = (seq: string) => {
 	return (gcCount / totalBases) * 100;
 };
 
+const formatPrevalencePercent = (percent: number) => (percent < 0.1 ? "< 0.1%" : `${percent.toFixed(1)}%`);
+
 export default async function Featureid({
 	params,
 	searchParams
@@ -74,10 +102,10 @@ export default async function Featureid({
 
 	const { view } = await searchParams;
 	if (view !== undefined) {
-		redirect(`/explore/feature/${encodeURIComponent(featureid)}`);
+		redirect(exploreUrl({ table: "feature", featureid }));
 	}
 
-	const { feature, taxaCounts, assaySummaries } = await prisma.$transaction(async (tx) => {
+	const { feature, taxaCounts, assaySummaries } = await trustedPrisma.$transaction(async (tx) => {
 		const feature = await tx.feature.findUnique({
 			where: {
 				featureid
@@ -151,7 +179,7 @@ export default async function Featureid({
 
 	taxaCounts.sort((a, b) => b.count - a.count);
 	const taxonomyById = new globalThis.Map(
-		feature.Assignments.map((assignment) => [assignment.taxonomy, assignment.Taxonomy as Taxonomy | null])
+		feature.Assignments.map((assignment) => [assignment.taxonomy, assignment.Taxonomy as TaxonomyModel | null])
 	);
 	const topTaxonomies = taxaCounts.slice(0, 5).map(({ taxonomy, count }) => {
 		const details = taxonomyById.get(taxonomy) ?? null;
@@ -164,9 +192,6 @@ export default async function Featureid({
 		};
 	});
 	const gcPercent = calculateGcContent(feature.dna_sequence);
-	const sequenceMidpoint = Math.ceil(feature.dna_sequence.length / 2);
-	const sequenceLineTop = feature.dna_sequence.slice(0, sequenceMidpoint);
-	const sequenceLineBottom = feature.dna_sequence.slice(sequenceMidpoint);
 	const totalAssignments = feature._count.Assignments || 0;
 	const assignmentLabel = totalAssignments === 1 ? "assignment" : "assignments";
 
@@ -187,7 +212,10 @@ export default async function Featureid({
 			<header>
 				<div className="flex gap-2 items-center">
 					<TitleHoverTooltip tooltip={TableMetadata.feature.description}>
-						<h1 className="text-4xl font-semibold text-primary mb-2">{feature.featureid}</h1>
+						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+							<FeatureIcon className="size-8! shrink-0" />
+							<span className="min-w-0 wrap-anywhere">{feature.featureid}</span>
+						</h1>
 					</TitleHoverTooltip>
 				</div>
 				<p className="text-lg text-base-content/70 max-w-3xl">
@@ -201,7 +229,7 @@ export default async function Featureid({
 					<div className="lg:col-span-5 flex flex-col gap-6">
 						<Map
 							query={() =>
-								prisma.sample.findMany({
+								trustedPrisma.sample.findMany({
 									where: {
 										Libraries: {
 											some: {
@@ -217,7 +245,7 @@ export default async function Featureid({
 							}
 							cluster
 							legend
-							className="w-full min-h-96 flex-1 rounded-xl"
+							className="w-full lg:min-h-96 flex-1 rounded-xl"
 						/>
 
 						{/* DNA sequence card */}
@@ -225,35 +253,23 @@ export default async function Featureid({
 							<div className="mb-4">
 								<h2 className={cardHeading}>DNA Sequence</h2>
 							</div>
-							<div className="flex flex-wrap items-end gap-x-10 gap-y-4 mb-4">
-								<div>
-									<p className="text-xs font-semibold text-base-content/70">Length</p>
-									<p className="text-4xl leading-tight font-semibold text-base-content mt-1">
-										{feature.sequenceLength_ODE}
-										<span className="ml-1 text-base font-normal text-base-content/60">bp</span>
-									</p>
-								</div>
-								<div className="flex items-center gap-3">
-									<div>
-										<p className="text-xs font-semibold text-base-content/70">GC Content</p>
-										<p className="text-3xl leading-tight font-semibold text-base-content mt-1">
-											{gcPercent.toFixed(1)}%
-										</p>
-									</div>
+							<div className="inline-grid grid-cols-[auto_auto_auto] gap-x-6 gap-y-1 mb-4">
+								<p className="text-xs font-semibold text-base-content/70">Length</p>
+								<p className="text-xs font-semibold text-base-content/70">GC Content</p>
+								<div className="row-span-2 self-center">
 									<GcDonut percentage={gcPercent} size={74} strokeWidth={8} />
 								</div>
+								<p className="text-3xl leading-tight font-semibold text-base-content">
+									{feature.sequenceLength_ODE}
+									<span className="ml-1 text-base font-normal text-base-content/60">bp</span>
+								</p>
+								<p className="text-3xl leading-tight font-semibold text-base-content">{gcPercent.toFixed(1)}%</p>
 							</div>
-							{/* Sequence is split at its midpoint so it reads as two balanced rows */}
 							<div className="rounded-lg bg-base-100/40 p-4">
 								<div className="flex items-center justify-between gap-4">
-									<div className="flex-1 min-w-0 space-y-1">
-										<p className="font-mono text-base xl:text-lg leading-relaxed text-primary break-all">
-											{sequenceLineTop}
-										</p>
-										<p className="font-mono text-base xl:text-lg leading-relaxed text-primary break-all">
-											{sequenceLineBottom}
-										</p>
-									</div>
+									<p className="flex-1 min-w-0 font-mono text-base xl:text-lg leading-relaxed text-primary break-all">
+										{feature.dna_sequence}
+									</p>
 									<CopyButton
 										value={feature.dna_sequence}
 										variant="icon"
@@ -275,16 +291,16 @@ export default async function Featureid({
 							</div>
 							{topTaxonomies.length > 0 ? (
 								<div className="divide-y divide-base-content/10">
-									{topTaxonomies.map((taxonomyItem) => (
+									{topTaxonomies.map((taxa) => (
 										<Link
-											key={taxonomyItem.taxonomy}
-											href={`/explore/taxonomy/${encodeURIComponent(taxonomyItem.taxonomy)}`}
+											key={taxa.taxonomy}
+											href={exploreUrl({ table: "taxonomy", taxonomy: taxa.taxonomy })}
 											className="flex items-center gap-4 p-4 hover:bg-base-300/30 cursor-pointer transition-colors duration-150 group"
 										>
 											<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 group-hover:from-base-300 group-hover:to-base-200 flex items-center justify-center shadow-sm overflow-hidden transition-colors duration-150">
 												<div className="relative w-12 h-12 flex items-center justify-center">
-													{taxonomyItem.details ? (
-														<PhyloPic taxonomy={taxonomyItem.details} />
+													{taxa.details ? (
+														<PhyloPic taxonomy={taxa.details} />
 													) : (
 														<span className="text-xs text-base-content/55">No image</span>
 													)}
@@ -292,9 +308,9 @@ export default async function Featureid({
 											</div>
 											<div className="flex-1 min-w-0">
 												<h3 className="font-medium text-lg text-base-content leading-snug break-all">
-													{taxonomyItem.displayName}
+													{taxa.displayName}
 												</h3>
-												<p className="text-xs text-base-content/60 break-all leading-snug">{taxonomyItem.hierarchy}</p>
+												<p className="text-xs text-base-content/60 break-all leading-snug">{taxa.hierarchy}</p>
 											</div>
 											<svg
 												className="w-4 h-4 text-base-content/45 group-hover:text-base-content/75 transition-colors duration-150 shrink-0"
@@ -319,14 +335,14 @@ export default async function Featureid({
 						<AssaysCard title="Assays used by this Feature" assays={assaySummaries} />
 
 						{/* Prevalence graphs */}
-						<div className={`${cardBase} flex flex-1 flex-col`}>
-							<div className="flex items-start justify-between gap-4 mb-4">
+						<div className={cardBase}>
+							<div className="flex items-start justify-between gap-4 mb-6">
 								<h2 className={cardHeading}>Feature Prevalence</h2>
 								<DashCardInfoButton info={prevalenceCardInfo} />
 							</div>
 							<Suspense
 								fallback={
-									<div className="flex flex-1 items-center justify-center gap-3 py-6">
+									<div className="flex items-center justify-center gap-3 py-6">
 										<span className="loading loading-spinner loading-md text-primary" />
 										<span className="text-sm text-base-content/70">Loading prevalence…</span>
 									</div>
@@ -383,7 +399,7 @@ export default async function Featureid({
 }
 
 async function FeaturePrevalenceSection({ featureid }: { featureid: string }) {
-	const prevalenceData = await prisma.$transaction(async (tx) => {
+	const prevalenceData = await trustedPrisma.$transaction(async (tx) => {
 		const totalSamplesCount = await tx.sample.count();
 
 		const samplesWithFeature = await tx.sample.findMany({
@@ -456,9 +472,12 @@ async function FeaturePrevalenceSection({ featureid }: { featureid: string }) {
 		);
 	}
 
+	const projectPercentLabel = formatPrevalencePercent(projectPercent);
+	const globalPercentLabel = formatPrevalencePercent(globalPercent);
+
 	return (
-		<div className="flex flex-1 flex-col justify-center divide-y divide-base-content/10">
-			<div className="flex items-center justify-between gap-4 pb-4">
+		<div className="space-y-8">
+			<div className="flex items-center justify-between gap-4">
 				<div>
 					<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">
 						Within top project
@@ -469,7 +488,7 @@ async function FeaturePrevalenceSection({ featureid }: { featureid: string }) {
 							</>
 						) : null}
 					</p>
-					<p className="text-3xl font-bold text-primary mt-1">{projectPercent.toFixed(1)}%</p>
+					<p className="text-3xl font-bold text-primary mt-1">{projectPercentLabel}</p>
 					{primaryProjectId ? (
 						<p className="text-xs text-base-content/70 mt-1">
 							{primaryProjectFeatureSamples.toLocaleString()} of {primaryProjectTotalSamples.toLocaleString()} samples
@@ -481,18 +500,18 @@ async function FeaturePrevalenceSection({ featureid }: { featureid: string }) {
 						</p>
 					)}
 				</div>
-				<GcDonut percentage={projectPercent} size={64} strokeWidth={8} />
+				<GcDonut percentage={projectPercent} size={64} strokeWidth={8} label={projectPercentLabel} />
 			</div>
 
-			<div className="flex items-center justify-between gap-4 pt-4">
+			<div className="flex items-center justify-between gap-4">
 				<div>
 					<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Across all samples</p>
-					<p className="text-3xl font-bold text-primary mt-1">{globalPercent.toFixed(1)}%</p>
+					<p className="text-3xl font-bold text-primary mt-1">{globalPercentLabel}</p>
 					<p className="text-xs text-base-content/70 mt-1">
 						{globalFeatureSamples.toLocaleString()} of {totalSamplesCount.toLocaleString()} samples
 					</p>
 				</div>
-				<GcDonut percentage={globalPercent} size={64} strokeWidth={8} />
+				<GcDonut percentage={globalPercent} size={64} strokeWidth={8} label={globalPercentLabel} />
 			</div>
 		</div>
 	);

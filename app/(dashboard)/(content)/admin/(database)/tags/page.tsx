@@ -1,7 +1,12 @@
-import AddTagButton from "@/app/components/tags/AddTagButton";
+import AddTagButton from "@/app/components/admin/tags/AddTagButton";
 import AnalysisTag from "@/app/components/tags/AnalysisTag";
-import DeleteTagButton from "@/app/components/tags/DeleteTagButton";
+import DeleteTagButton from "@/app/components/admin/tags/DeleteTagButton";
 import { prisma } from "@/app/helpers/prisma";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Analysis Tags"
+};
 
 export default async function AddTags() {
 	const tags = await prisma.tag.findMany({
@@ -11,11 +16,13 @@ export default async function AddTags() {
 		include: {
 			Analyses: {
 				select: {
+					project_id: true,
 					analysis_run_name: true
 				}
 			}
 		}
 	});
+
 	return (
 		<div className="space-y-6">
 			<AddTagButton />

@@ -1,5 +1,13 @@
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import Link from "next/link";
+import type { Metadata } from "next";
+import { TrustedIcon, UntrustedIcon } from "@/app/components/icons";
+
+export const metadata: Metadata = {
+	title: "Overview | Help",
+	description:
+		"Learn about Ocean DNA Explorer's features, login system, submissions manager, bug reports, and frequently asked questions."
+};
 
 export default function HelpOverviewPage() {
 	return (
@@ -10,7 +18,7 @@ export default function HelpOverviewPage() {
 				<>
 					<p className="mb-4">
 						The Ocean DNA Explorer is a data portal and visualization platform for uploading and exploring marine eDNA
-						data. This help documentation will guide you through the features of the site.
+						data.
 					</p>
 					<p className="mb-4">
 						Our goal is to make marine eDNA data more findable, accessible, interoperable, and reusable for researchers,
@@ -24,7 +32,6 @@ export default function HelpOverviewPage() {
 					title: "Features Overview",
 					content: (
 						<>
-							<p className="mb-4">ODE's custom features are built specifically for eDNA data:</p>
 							<ul className="list-disc ml-6 mb-4">
 								<li>
 									{" "}
@@ -74,6 +81,42 @@ export default function HelpOverviewPage() {
 					)
 				},
 				{
+					id: "trusted-vs-untrusted-data",
+					title: "Trusted vs Untrusted Data",
+					content: (
+						<>
+							<p className="mb-4">
+								ODE can show only reviewed analyses, or every analysis (and their associated Taxonomies, Samples,
+								Occurrences, etc.) in the database. Switch the data presented to you with the shield in the header, or
+								with the persistent menu in the bottom-left corner of every page.
+							</p>
+							<div className="mb-4 flex items-start gap-3">
+								<TrustedIcon className="text-primary" />
+								<p className="mb-0">
+									<strong>Trusted data</strong> (default) includes only analyses that have been reviewed for
+									contamination, noise, and other potential causes of innacurate identifications.
+								</p>
+							</div>
+							<div className="mb-4 flex items-start gap-3">
+								<UntrustedIcon className="text-primary" />
+								<p className="mb-0">
+									<strong>All data</strong> includes everything submitted to the database.
+								</p>
+							</div>
+							<p className="mb-4">
+								The data presented to you will change when you use the Trusted toggle: the points on maps, the numbers
+								in the data cards, the data points on visualizations, the results of your searches, and the rows of data
+								on Explore pages.
+							</p>
+							<p className="mb-4">
+								eDNA often picks up contamination, so unreviewed analyses can include false detections. Trusted mode
+								hides those until they have been checked. A real example: the human and turkey DNA identified in a
+								particular project was likely caused by the scientist having a turkey sandwich for lunch!
+							</p>
+						</>
+					)
+				},
+				{
 					id: "login-and-roles",
 					title: "Login and Roles",
 					content: (
@@ -88,12 +131,11 @@ export default function HelpOverviewPage() {
 								Manage Account ❯ Security ❯ Delete Account.
 							</p>
 							<p className="mb-4">
-								The roles available on ODE are listed below. Please note, Contributor is required to submit data. Other
-								roles are mostly for internal use by the ODE team:
+								Contributor is required to submit data. The other roles are mostly for internal use by the ODE team:
 							</p>
 							<ul className="list-disc ml-6 mb-4">
-								<li>Admin: Full access to the platform, including managing other user's roles</li>
-								<li>Moderator: Similar to admin, except they cannot manage Admin's roles</li>
+								<li>Admin: Full access to the platform, including managing other user&apos;s roles</li>
+								<li>Moderator: Similar to admin, except they cannot manage Admin&apos;s roles</li>
 								<li>
 									Contributor: Allows you to submit data to the platform, and to access the Submissions Manager to view,
 									delete, or edit your own submissions. Click{" "}
@@ -136,10 +178,6 @@ export default function HelpOverviewPage() {
 					title: "Contact Us, Report a Bug, Request a Feature",
 					content: (
 						<>
-							<p className="mb-4">
-								We welcome your feedback to improve the Ocean DNA Explorer. If you encounter any issues or have
-								suggestions for new features, please let us know.
-							</p>
 							<p className="mb-4">
 								You can submit bug reports, feature requests, or general feedback through our GitHub issues page:
 							</p>
@@ -216,8 +254,8 @@ export default function HelpOverviewPage() {
 									<div className="collapse-title font-medium">Can I download the entire database?</div>
 									<div className="collapse-content">
 										<p>
-											While individual datasets can be downloaded, we currently don't provide a bulk download of the
-											entire database. For large-scale data access, please contact us to discuss your needs.
+											While individual datasets can be downloaded, we currently don&apos;t provide a bulk download of
+											the entire database. For large-scale data access, please contact us to discuss your needs.
 										</p>
 									</div>
 								</div>
@@ -239,8 +277,8 @@ export default function HelpOverviewPage() {
 									<div className="collapse-content">
 										<p>
 											There is no personal data stored in the Ocean DNA Explorer database. User authentication is
-											handled by the platform's reputable authentication provider, Clerk, and all data is stored in a
-											secure database.
+											handled by the platform&apos;s reputable authentication provider, Clerk, and all data is stored in
+											a secure database.
 										</p>
 									</div>
 								</div>

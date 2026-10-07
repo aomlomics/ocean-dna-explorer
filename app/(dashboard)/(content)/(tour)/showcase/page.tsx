@@ -1,5 +1,6 @@
 import ShowcaseClient from "./ShowcaseClient";
 import { getTourShowcaseProjects } from "./data";
+import { cookies } from "next/headers";
 
 // Tour pages are meant to display fresh data each load but don't need
 // per-request dynamic rendering. revalidate=0 keeps this fully dynamic,
@@ -52,6 +53,8 @@ export default async function ShowcasePage({
 		taxaPerProject
 	});
 	const projectDurationSeconds = parseProjectDuration(sp?.projectSeconds ?? sp?.projectDurationSeconds);
+	const cookieStore = await cookies();
+	const trusted = cookieStore.get("trusted")?.value !== "false";
 
 	if (!tourable.length) {
 		return (
@@ -61,5 +64,5 @@ export default async function ShowcasePage({
 		);
 	}
 
-	return <ShowcaseClient projects={tourable} projectDurationMs={projectDurationSeconds * 1000} />;
+	return <ShowcaseClient projects={tourable} projectDurationMs={projectDurationSeconds * 1000} trusted={trusted} />;
 }

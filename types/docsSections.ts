@@ -26,6 +26,7 @@ const DocsSections = {
 			title: "Overview",
 			subsections: {
 				"features-overview": { title: "Features Overview" },
+				"trusted-vs-untrusted-data": { title: "Trusted vs Untrusted Data" },
 				"login-and-roles": { title: "Login and Roles" },
 				"submissions-manager": { title: "Submissions Manager" },
 				"contact-us": { title: "Contact Us, Report a Bug, Request a Feature" },
@@ -46,8 +47,13 @@ const DocsSections = {
 				"searching-on-explore": { title: "Searching on Explore Pages" },
 				projects: { title: "Projects" },
 				samples: { title: "Samples" },
+				assays: { title: "Assays" },
+				"assay-preps": { title: "AssayPreps" },
+				libraries: { title: "Libraries" },
 				analyses: { title: "Analyses" },
+				occurrences: { title: "Occurrences" },
 				features: { title: "Features" },
+				assignments: { title: "Assignments" },
 				taxonomies: { title: "Taxonomies" }
 			}
 		},
@@ -72,8 +78,14 @@ const DocsSections = {
 				"how-to-use-api": {
 					title: "Making Your First API Query"
 				},
+				"rate-limits": {
+					title: "Rate Limits"
+				},
 				"quick-start-code": {
 					title: "Quick Start Code Examples"
+				},
+				"api-rules": {
+					title: "Rules to Know"
 				},
 				"essential-information": {
 					title: "Essential API Information"
@@ -97,14 +109,17 @@ const DocsSections = {
 		endpoints: {
 			title: "API Endpoints",
 			subsections: {
+				"table-names": {
+					title: "Table Names in URLs"
+				},
 				"get-all-tables": {
 					title: "Get All Tables"
 				},
-				"get-table-relations": {
-					title: "Get Table Relations"
-				},
 				"get-table-fields": {
 					title: "Get Table Fields"
+				},
+				"get-table-relations": {
+					title: "Get Table Relations"
 				},
 				"get-unique-field-values": {
 					title: "Get Unique Field Values"
@@ -112,51 +127,104 @@ const DocsSections = {
 				"query-table-data": {
 					title: "Query Table Data"
 				},
+				"count-records": {
+					title: "Count Records"
+				},
 				"get-single-record": {
 					title: "Get Single Record"
+				},
+				"get-dead-values": {
+					title: "Get Dead Values"
+				},
+				"get-users": {
+					title: "Get Users"
+				},
+				"options-by-endpoint": {
+					title: "Options by Endpoint"
 				}
 			}
 		},
 		searching: {
-			title: "Searching and Filtering",
+			title: "Filtering and Searching",
 			subsections: {
-				"standard-search": {
-					title: "Standard Search Parameter"
+				"direct-field-filtering": {
+					title: "Direct Field Filtering"
 				},
-				"advanced-search": {
-					title: "Advanced Search Parameter"
+				"standard-search": {
+					title: "Standard Search"
 				},
 				"id-filtering": {
 					title: "ID Filtering"
 				},
-				"direct-field-filtering": {
-					title: "Direct Field Filtering"
+				"advanced-search": {
+					title: "Advanced Search"
+				},
+				"spatial-search": {
+					title: "Spatial Search"
+				},
+				"blast-search": {
+					title: "BLAST Search"
 				}
 			}
 		},
 		queryParameters: {
-			title: "Query Parameters",
+			title: "Query Options",
 			subsections: {
+				"trusted-data": {
+					title: "Trusted Data"
+				},
 				"field-selection": {
 					title: "Field Selection"
-				},
-				"field-filtering": {
-					title: "Field Filtering (Legacy)"
 				},
 				relations: {
 					title: "Relations"
 				},
 				"relation-field-options": {
-					title: "Relation Field Options"
+					title: "Relation Fields"
 				},
-				"id-filtering-parameter": {
-					title: "ID Filtering"
+				"relation-counts": {
+					title: "Relation Counts"
+				},
+				"sorting-results": {
+					title: "Sorting Results"
+				},
+				"distinct-values": {
+					title: "Distinct Values"
 				},
 				"result-limiting": {
-					title: "Result Limiting"
+					title: "Limits and Pagination"
 				},
-				"relations-result-limiting": {
-					title: "Relations Result Limiting"
+				"ignore-extra-options": {
+					title: "Ignoring Extra Options"
+				}
+			}
+		},
+		recipes: {
+			title: "Common Queries",
+			subsections: {
+				"recipe-discover": {
+					title: "Discover a Table"
+				},
+				"recipe-filter": {
+					title: "Filter and Trim a Table"
+				},
+				"recipe-related": {
+					title: "Get Related Records"
+				},
+				"recipe-deep": {
+					title: "Reach Across Tables"
+				},
+				"recipe-counts": {
+					title: "Count Without Downloading"
+				},
+				"recipe-pagination": {
+					title: "Page Through Large Tables"
+				},
+				"recipe-distinct": {
+					title: "Find Unique Combinations"
+				},
+				"recipe-submitters": {
+					title: "Look Up Who Submitted Data"
 				}
 			}
 		},
@@ -166,8 +234,14 @@ const DocsSections = {
 				"success-structure": {
 					title: "Success Structure"
 				},
+				"result-by-endpoint": {
+					title: "Result Shape by Endpoint"
+				},
 				"error-structure": {
 					title: "Error Structure"
+				},
+				"common-errors": {
+					title: "Common Errors"
 				}
 			}
 		},
@@ -190,7 +264,7 @@ const DocsNavigation = Object.entries(DocsSections).flatMap(([page, sections]) =
 		section: id,
 		title: sect.title
 	}))
-) as DocsNavigationElement[];
+) as [DocsNavigationElement, ...DocsNavigationElement[]];
 
 //TODO: if only providing page, give next page with starting section
 export function getNextDocsSection<P extends DocsPage>(

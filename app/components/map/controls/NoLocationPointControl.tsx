@@ -1,13 +1,12 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
-import { Location, NullLocation } from "@/types/globals";
-import { getWhereAdvancedHref, LegendInfo } from "../utils/mapUtils";
-import { RefObject, useState } from "react";
-import { Map } from "leaflet";
+import type { MapLocation, NullLocation } from "@/types/globals";
+import { getWhereAdvancedHref, type LegendInfo } from "../utils/mapUtils";
+import { type RefObject, useState } from "react";
+import type { Map } from "leaflet";
 import LeafletControl from "./LeafletControl";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
-import TableMetadata, { TableMetadataValue } from "@/types/tableMetadata";
+import TableMetadata, { type ModelName, type TableMetadataValue } from "@/types/tableMetadata";
 import ResizableMapContainer from "../containers/ResizableMapContainer";
 import PopupWithSearchBody from "../popups/PopupWithSearchBody";
 
@@ -22,7 +21,7 @@ export default function NoLocationPointsControl({
 	disableSearch
 }: {
 	noLocationPoints: NullLocation[];
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	where?: Record<string, string>;
 	id: TableMetadataValue["titleField"];
 	legendInfo: LegendInfo;
@@ -33,7 +32,7 @@ export default function NoLocationPointsControl({
 	const [shown, setShown] = useState(false);
 
 	return (
-		<LeafletControl click scroll>
+		<LeafletControl click scroll className="hidden lg:block">
 			<CollapsibleMapContainer
 				dir="left"
 				defaultCollapse
@@ -58,7 +57,7 @@ export default function NoLocationPointsControl({
 							loc={{
 								decimalLatitude: NaN,
 								decimalLongitude: NaN,
-								values: noLocationPoints as Location[] //doesn't matter here
+								values: noLocationPoints as MapLocation[] //doesn't matter here
 							}}
 							href={`/search?table=${table}&advanced=[["OR",["decimalLatitude","null"],["decimalLatitude","deadValue","any"],["decimalLongitude","null"],["decimalLongitude","deadValue","any"]]${
 								where ? "," + getWhereAdvancedHref(where, table) : ""

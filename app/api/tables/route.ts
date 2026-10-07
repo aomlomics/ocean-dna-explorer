@@ -1,4 +1,4 @@
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import { TableNames } from "@/types/tableMetadata";
 import { NextResponse } from "next/server";
 

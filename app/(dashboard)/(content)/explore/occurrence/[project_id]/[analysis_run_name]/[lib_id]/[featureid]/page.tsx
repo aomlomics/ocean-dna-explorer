@@ -1,56 +1,60 @@
 import Map from "@/app/components/map/Map";
 import PhyloPic from "@/app/components/images/PhyloPic";
 import TableMetadata from "@/types/tableMetadata";
-import { Taxonomy } from "@/app/generated/prisma/client";
-import { prisma } from "@/app/helpers/prisma";
+import { exploreUrl } from "@/app/helpers/utils";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
-import { AnalysisIcon, LocationIcon, ProjectIcon } from "@/app/components/icons";
+import {
+	AnalysisIcon,
+	FeatureIcon,
+	LibraryIcon,
+	OccurrenceIcon,
+	ProjectIcon,
+	SampleIcon
+} from "@/app/components/icons";
 import { TaxonomicRanks } from "@/types/objects";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 
-function formatTaxonomyDisplay(dbTaxonomy: Taxonomy) {
-	const taxonomicData = Object.entries(dbTaxonomy)
-		.filter(([key, value]) => {
-			return TaxonomicRanks.includes(key as (typeof TaxonomicRanks)[0]) && value;
-		})
-		.map(([key, value]) => ({
-			rank: key.charAt(0).toUpperCase() + key.slice(1),
-			name: String(value).replace("_", " ")
-		}));
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{
+		project_id: string;
+		analysis_run_name: string;
+		lib_id: string;
+		featureid: string;
+	}>;
+}): Promise<Metadata> {
+	const { project_id, analysis_run_name, lib_id, featureid } = await decodeRouteParams(params);
 
-	return (
-		<div className="space-y-2">
-			{taxonomicData.map((item) => (
-				<div key={item.rank}>
-					<span className="text-base-content/70 font-semibold text-sm">{item.rank}: </span>
-					<span className="text-base-content font-medium text-sm">{item.name}</span>
-				</div>
-			))}
-		</div>
-	);
-}
+	const occurrence = await trustedPrisma.occurrence.findUnique({
+		where: {
+			project_id_analysis_run_name_lib_id_featureid: {
+				project_id,
+				analysis_run_name,
+				lib_id,
+				featureid
+			}
+		},
+		select: {
+			id: true
+		}
+	});
 
-function MaskSvgIcon({ src, className }: { src: string; className?: string }) {
-	return (
-		<span
-			aria-hidden="true"
-			className={`inline-block h-10 w-10 bg-current ${className ?? ""}`}
-			style={{
-				WebkitMaskImage: `url('${src}')`,
-				maskImage: `url('${src}')`,
-				WebkitMaskRepeat: "no-repeat",
-				maskRepeat: "no-repeat",
-				WebkitMaskPosition: "center",
-				maskPosition: "center",
-				WebkitMaskSize: "contain",
-				maskSize: "contain"
-			}}
-		/>
-	);
+	if (occurrence) {
+		return {
+			title: `${featureid} in ${lib_id} | ${TableMetadata.occurrence.plural}`
+		};
+	} else {
+		return {
+			title: "Occurrence not found"
+		};
+	}
 }
 
 export default async function OccurrencePage({
@@ -65,7 +69,7 @@ export default async function OccurrencePage({
 }) {
 	const { project_id, analysis_run_name, lib_id, featureid } = await decodeRouteParams(params);
 
-	const occurrence = await prisma.occurrence.findUnique({
+	const occurrence = await trustedPrisma.occurrence.findUnique({
 		where: {
 			project_id_analysis_run_name_lib_id_featureid: {
 				project_id,
@@ -123,10 +127,10 @@ export default async function OccurrencePage({
 
 	const topStatCards = (
 		<div className="flex flex-wrap gap-4">
-			<Link href={`/explore/feature/${encodeURIComponent(featureid)}`} className="block w-max max-w-full">
+			<Link href={exploreUrl({ table: "feature", featureid })} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-primary">
-						<MaskSvgIcon src="/images/icons/feature_icon.svg" />
+						<FeatureIcon className="h-10! w-10!" />
 					</div>
 					<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
 						<div className="font-medium text-primary tabular-nums leading-tight text-sm whitespace-nowrap">
@@ -138,13 +142,13 @@ export default async function OccurrencePage({
 					</div>
 				</div>
 			</Link>
-			<Link href={`/explore/library/${encodeURIComponent(project_id)}/${lib_id}`} className="block w-max max-w-full">
+			<Link href={exploreUrl({ table: "library", project_id, lib_id })} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
-					<div className="text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">
-						<MaskSvgIcon src="/images/icons/library_icon.svg" />
+					<div className="text-primary">
+						<LibraryIcon className="h-10! w-10!" />
 					</div>
 					<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
-						<div className="font-medium text-emerald-300 [html[data-theme='light']_&]:text-emerald-700 tabular-nums leading-tight text-sm whitespace-nowrap">
+						<div className="font-medium text-primary tabular-nums leading-tight text-sm whitespace-nowrap">
 							{lib_id}
 						</div>
 						<div className="text-xs font-sans font-medium text-base-content/70 uppercase tracking-wider whitespace-nowrap">
@@ -153,13 +157,13 @@ export default async function OccurrencePage({
 					</div>
 				</div>
 			</Link>
-			<Link href={`/explore/analysis/${encodeURIComponent(analysis_run_name)}`} className="block w-max max-w-full">
+			<Link href={exploreUrl({ table: "analysis", project_id, analysis_run_name })} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
-					<div className="text-amber-300 [html[data-theme='light']_&]:text-amber-700">
-						<AnalysisIcon className="h-10 w-10" />
+					<div className="text-primary">
+						<AnalysisIcon className="h-10! w-10!" />
 					</div>
 					<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
-						<div className="font-medium text-amber-300 [html[data-theme='light']_&]:text-amber-700 tabular-nums leading-tight text-sm whitespace-nowrap">
+						<div className="font-medium text-primary tabular-nums leading-tight text-sm whitespace-nowrap">
 							{analysis_run_name}
 						</div>
 						<div className="text-xs font-sans font-medium text-base-content/70 uppercase tracking-wider whitespace-nowrap">
@@ -168,13 +172,13 @@ export default async function OccurrencePage({
 					</div>
 				</div>
 			</Link>
-			<Link href={`/explore/project/${encodeURIComponent(project_id)}`} className="block w-max max-w-full">
+			<Link href={exploreUrl({ table: "project", project_id })} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
-					<div className="text-purple-300 [html[data-theme='light']_&]:text-purple-700">
-						<ProjectIcon className="h-10 w-10" />
+					<div className="text-primary">
+						<ProjectIcon className="h-10! w-10!" />
 					</div>
 					<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
-						<div className="font-medium text-purple-300 [html[data-theme='light']_&]:text-purple-700 tabular-nums leading-tight text-sm whitespace-nowrap">
+						<div className="font-medium text-primary tabular-nums leading-tight text-sm whitespace-nowrap">
 							{project_id}
 						</div>
 						<div className="text-xs font-sans font-medium text-base-content/70 uppercase tracking-wider whitespace-nowrap">
@@ -197,10 +201,7 @@ export default async function OccurrencePage({
 						</Link>
 					</li>
 					<li>
-						<Link
-							href={`/explore/project/${encodeURIComponent(project_id)}`}
-							className="text-primary hover:text-primary-focus"
-						>
+						<Link href={exploreUrl({ table: "project", project_id })} className="text-primary hover:text-primary-focus">
 							{project_id}
 						</Link>
 					</li>
@@ -211,7 +212,7 @@ export default async function OccurrencePage({
 					</li>
 					<li>
 						<Link
-							href={`/explore/analysis/${encodeURIComponent(analysis_run_name)}`}
+							href={exploreUrl({ table: "analysis", project_id, analysis_run_name })}
 							className="inline-block max-w-[26ch] truncate align-bottom text-primary hover:text-primary-focus"
 							title={analysis_run_name}
 						>
@@ -237,11 +238,14 @@ export default async function OccurrencePage({
 			<header>
 				<div className="flex gap-2 items-center">
 					<TitleHoverTooltip tooltip={TableMetadata.occurrence.description}>
-						<h1 className="mb-2 text-2xl sm:text-3xl font-semibold text-base-content/55 wrap-anywhere">
-							<span className="text-primary">{featureid}</span> in{" "}
-							<span className="text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">{lib_id}</span> (
-							<span className="text-amber-300 [html[data-theme='light']_&]:text-amber-700">{analysis_run_name}</span> in{" "}
-							<span className="text-purple-300 [html[data-theme='light']_&]:text-purple-700">{project_id}</span>)
+						<h1 className="mb-2 flex items-center gap-2 text-2xl sm:text-3xl font-semibold text-base-content/55 wrap-anywhere">
+							<OccurrenceIcon className="size-8! shrink-0 text-primary" />
+							<span className="min-w-0">
+								<span className="text-primary">{featureid}</span> in{" "}
+								<span className="text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">{lib_id}</span> (
+								<span className="text-amber-300 [html[data-theme='light']_&]:text-amber-700">{analysis_run_name}</span>{" "}
+								in <span className="text-purple-300 [html[data-theme='light']_&]:text-purple-700">{project_id}</span>)
+							</span>
 						</h1>
 					</TitleHoverTooltip>
 				</div>
@@ -263,7 +267,7 @@ export default async function OccurrencePage({
 				<div className="grid grid-cols-1 lg:grid-cols-8 gap-6 items-start">
 					{/* Left: single-sample map and assay */}
 					<div className="lg:col-span-3 flex flex-col gap-6">
-						<Map locations={[occurrence.Library.Sample]} className="w-full min-h-80 rounded-xl" />
+						<Map locations={[occurrence.Library.Sample]} className="w-full lg:min-h-80 rounded-xl" />
 						<AssaysCard
 							title={assayCardTitle}
 							assays={[
@@ -299,7 +303,7 @@ export default async function OccurrencePage({
 									<div className="space-y-2">
 										{occurrence.Assignment.Taxonomy ? (
 											<Link
-												href={`/explore/taxonomy/${encodeURIComponent(occurrence.Assignment.Taxonomy.taxonomy)}`}
+												href={exploreUrl({ table: "taxonomy", taxonomy: occurrence.Assignment.Taxonomy.taxonomy })}
 												className="text-base md:text-lg font-semibold text-base-content hover:text-primary wrap-break-word"
 											>
 												{taxonomyName}
@@ -324,7 +328,18 @@ export default async function OccurrencePage({
 										<p className="text-xs font-semibold text-base-content/65 uppercase tracking-wide">Full taxonomy</p>
 										<div className="max-h-40 overflow-y-auto pr-1">
 											{occurrence.Assignment.Taxonomy ? (
-												formatTaxonomyDisplay(occurrence.Assignment.Taxonomy)
+												<div className="space-y-2">
+													{TaxonomicRanks.filter((rank) => occurrence.Assignment.Taxonomy[rank]).map((rank) => (
+														<div key={rank}>
+															<span className="text-base-content/70 font-semibold text-sm">
+																{rank.charAt(0).toUpperCase() + rank.slice(1)}:{" "}
+															</span>
+															<span className="text-base-content font-medium text-sm">
+																{occurrence.Assignment.Taxonomy[rank]?.replace("_", " ")}
+															</span>
+														</div>
+													))}
+												</div>
 											) : (
 												<p className="text-sm text-base-content/70">No taxonomy assignment available.</p>
 											)}
@@ -341,11 +356,11 @@ export default async function OccurrencePage({
 						</div>
 						<div className="w-full lg:max-w-sm">
 							<Link
-								href={`/explore/sample/${encodeURIComponent(project_id)}/${encodeURIComponent(occurrence.Library.Sample.samp_name)}`}
+								href={exploreUrl({ table: "sample", project_id, samp_name: occurrence.Library.Sample.samp_name })}
 								className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105"
 							>
 								<div className="text-primary">
-									<LocationIcon className="h-10 w-10" />
+									<SampleIcon className="h-10! w-10!" />
 								</div>
 								<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
 									<div className="truncate font-medium text-base-content tabular-nums leading-tight text-sm">

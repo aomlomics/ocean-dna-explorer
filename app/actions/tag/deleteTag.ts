@@ -1,22 +1,23 @@
 "use server";
 
-import { Tag } from "@/app/generated/prisma/client";
+import type { TagModel } from "@/app/generated/prisma/models/Tag";
 import { prisma } from "@/app/helpers/prisma";
-import { NetworkPacket } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import { handlePrismaError } from "@/app/helpers/queries";
+import type { NetworkPacket } from "@/types/globals";
+import { GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 
-export default async function deleteTagAction(id: Tag["id"]): Promise<NetworkPacket> {
+export default async function deleteTagAction(id: TagModel["id"]): Promise<NetworkPacket> {
 	try {
 		const { userId, sessionClaims } = await auth();
 		const role = sessionClaims?.metadata?.role;
 
 		if (!userId) {
-			throw new Error("Must be logged in.");
+			return { statusMessage: "error", error: "Must be logged in." };
 		}
 
 		if (!role || !RolePermissions[role].includes("manageDatabase")) {
-			throw new Error("Invalid role.");
+			return { statusMessage: "error", error: "Invalid role." };
 		}
 
 		await prisma.tag.delete({
@@ -26,8 +27,14 @@ export default async function deleteTagAction(id: Tag["id"]): Promise<NetworkPac
 		});
 
 		return { statusMessage: "success" };
-	} catch (err) {
-		const error = err as Error;
-		return { statusMessage: "error", error: error.message };
+	} catch (err: any) {
+		console.error(err);
+
+		const prismaErr = handlePrismaError(err);
+		if (prismaErr) {
+			return prismaErr;
+		}
+
+		return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 	}
 }

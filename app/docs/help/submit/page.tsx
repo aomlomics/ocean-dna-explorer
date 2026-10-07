@@ -2,6 +2,13 @@ import { AnalysisAsvTablePreview, AnalysisOccurrenceTablePreview } from "@/app/c
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import WorkshopVideoCallout from "@/app/components/WorkshopVideoCallout";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Submit | Help",
+	description:
+		"Learn how to submit projects and analyses using FAIRe metadata templates, example datasets, and supported data formats, including Tourmaline processing and OBIS/GBIF submission."
+};
 
 /** File icon for example TSV filenames. Pass className for size (e.g. size-14) and text-primary. */
 function ExampleFileGlyph({ className }: { className?: string }) {
@@ -482,7 +489,7 @@ abc12d6cd12a574f2183f003593d3940  -`}
 					content: (
 						<>
 							<p className="mb-0">
-								<Link className="link link-primary" href="https://github.com/baydenwillms/edna2obis-3.0/tree/main">
+								<Link className="link link-primary" href="https://github.com/aomlomics/edna2obis">
 									edna2obis
 								</Link>{" "}
 								reads the same file layout you use for Ocean DNA Explorer and converts it to Darwin Core for submission

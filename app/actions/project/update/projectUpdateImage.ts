@@ -1,37 +1,41 @@
 "use server";
 
-import { Project } from "@/app/generated/prisma/client";
-import { Attribution } from "@/app/generated/prismaImages/client";
+import type { ProjectModel } from "@/app/generated/prisma/models/Project";
+import type { AttributionModel } from "@/app/generated/prismaImages/models/Attribution";
 import { prisma } from "@/app/helpers/prisma";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
 import { ProjectSchema } from "@/prisma/generated/zod";
 import {
-	AttributionOptionalDefaults,
+	type AttributionOptionalDefaults,
 	AttributionOptionalDefaultsSchema,
-	Image,
-	ImageOptionalDefaults,
+	type Image,
+	type ImageOptionalDefaults,
 	ImageOptionalDefaultsSchema
 } from "@/prismaImages/generated/zod";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
+import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";
 
 export default async function projectUpdateImageAction(
-	target: Project["project_id"],
+	target: ProjectModel["project_id"],
 	imageInfo: { image: ImageOptionalDefaults; attribution?: AttributionOptionalDefaults } | null
 ): Promise<NetworkPacket> {
 	if (imageInfo) {
-		const validBlob = await validateBlobs([imageInfo.image.url]);
-		if (!validBlob) {
-			return { statusMessage: "error", error: "File is invalid" };
+		try {
+			await validateBlobs([imageInfo.image.url]);
+		} catch (err) {
+			console.error(err);
+			return { statusMessage: "error", error: err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR };
 		}
 	}
 
-	const { userId } = await auth();
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata?.role;
 
-	if (!userId) {
+	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
 		if (imageInfo?.image.url) {
 			await del(imageInfo.image.url);
 		}
@@ -69,7 +73,7 @@ export default async function projectUpdateImageAction(
 
 	let deletedImage = undefined as Image | undefined;
 	let parsedImage = undefined as Image | undefined;
-	let parsedAttribution = undefined as Attribution | undefined;
+	let parsedAttribution = undefined as AttributionModel | undefined;
 	try {
 		if (imageInfo) {
 			if (imageInfo.image.homePage) {
@@ -81,7 +85,7 @@ export default async function projectUpdateImageAction(
 			parsedImage = ImageOptionalDefaultsSchema.parse(imageInfo.image) as Image;
 
 			parsedAttribution =
-				imageInfo.attribution && (AttributionOptionalDefaultsSchema.parse(imageInfo.attribution) as Attribution);
+				imageInfo.attribution && (AttributionOptionalDefaultsSchema.parse(imageInfo.attribution) as AttributionModel);
 
 			await prismaImages.$transaction(async (tx) => {
 				if (dbProject.imageFileUrl_ODE) {
@@ -126,8 +130,14 @@ export default async function projectUpdateImageAction(
 			});
 		}
 	} catch (err: any) {
-		const error = err as Error;
-		return { statusMessage: "error", error: error.message };
+		console.error(err);
+
+		const prismaErr = handlePrismaError(err);
+		if (prismaErr) {
+			return prismaErr;
+		}
+
+		return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 	}
 
 	try {
@@ -148,6 +158,8 @@ export default async function projectUpdateImageAction(
 
 		return { statusMessage: "success" };
 	} catch (err: any) {
+		console.error(err);
+
 		if (imageInfo?.image.url) {
 			await del(imageInfo.image.url);
 		}
@@ -185,7 +197,6 @@ export default async function projectUpdateImageAction(
 			return prismaErr;
 		}
 
-		const error = err as Error;
-		return { statusMessage: "error", error: error.message };
+		return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 	}
 }

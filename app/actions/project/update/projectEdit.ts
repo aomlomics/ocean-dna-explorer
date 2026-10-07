@@ -1,10 +1,10 @@
 "use server";
 
-import { Project } from "@/app/generated/prisma/client";
+import type { ProjectModel } from "@/app/generated/prisma/models/Project";
 import { prisma } from "@/app/helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { RolePermissions } from "@/types/objects";
-import { Channel, createProgressStream } from "@/app/helpers/progress";
+import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
+import { type Channel, createProgressStream } from "@/app/helpers/progress";
 import { parseProjectFiles } from "@/app/helpers/actions/project";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { v4 as uuidv4 } from "uuid";
@@ -17,7 +17,7 @@ async function doEdit(
 	projectChannel: Channel,
 	sampleChannel: Channel,
 	libraryChannel: Channel,
-	project_id: Project["project_id"]
+	project_id: ProjectModel["project_id"]
 ) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -85,16 +85,24 @@ async function doEdit(
 			delete oldChecksums.libraryMd5;
 		}
 
-		const parseResult = await parseProjectFiles({
-			projectChannel,
-			sampleChannel,
-			libraryChannel,
-			userIds: dbProject.userIds,
-			oldChecksums
-		});
-		if (!parseResult) {
+		let parseResult;
+		try {
+			parseResult = await parseProjectFiles({
+				projectChannel,
+				sampleChannel,
+				libraryChannel,
+				userIds: dbProject.userIds,
+				oldChecksums
+			});
+			if (!parseResult) {
+				throw new Error("An error occurred parsing one of the Project files.");
+			}
+		} catch (err) {
+			const error = err as Error;
+			await globalStream.error(error.message);
 			return;
 		}
+
 		const { project, assays, assayPreps, samples, libraries, checksums } = parseResult;
 
 		await projectChannel.stream.message(
@@ -131,32 +139,25 @@ async function doEdit(
 			if (!dbA) {
 				//assay does not exist
 				await projectChannel.stream.error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
-				throw new Error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
+				return;
 			} else if (dbA.pcr_primer_forward !== a.pcr_primer_forward) {
 				//assay has incorrect pcr_primer_forward
 				await projectChannel.stream.error(
 					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_forward. It should be "${a.pcr_primer_forward}", but it has "${dbA.pcr_primer_forward}".`
 				);
-				throw new Error(
-					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_forward. It should be "${a.pcr_primer_forward}", but it has "${dbA.pcr_primer_forward}".`
-				);
+				return;
 			} else if (dbA.pcr_primer_reverse !== a.pcr_primer_reverse) {
 				//assay has incorrect pcr_primer_reverse
 				await projectChannel.stream.error(
 					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_reverse. It should be "${a.pcr_primer_reverse}", but it has "${dbA.pcr_primer_reverse}".`
 				);
-				throw new Error(
-					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_reverse. It should be "${a.pcr_primer_reverse}", but it has "${dbA.pcr_primer_reverse}".`
-				);
+				return;
 			} else {
 				//get all non-essential fields that do not match
 				for (const [f, value] of Object.entries(a)) {
 					const field = f as keyof (typeof dbAssays)[0];
 					if (value !== dbA[field]) {
-						if (!(a.assay_name in badAssayFields)) {
-							badAssayFields[a.assay_name] = [];
-						}
-						badAssayFields[a.assay_name].push({ field, provided: value, actual: dbA[field] });
+						(badAssayFields[a.assay_name] ??= []).push({ field, provided: value, actual: dbA[field] });
 					}
 				}
 			}
@@ -230,7 +231,7 @@ async function doEdit(
 
 				//assayPreps
 				let i = 0;
-				for (let prep of assayPreps) {
+				for (const prep of assayPreps) {
 					await tx.assayPrep.upsert({
 						where: {
 							project_id_assay_name: {
@@ -276,18 +277,16 @@ async function doEdit(
 				//samples
 				await updateManyRaw(
 					tx,
-					"Sample",
-					samples.filter((samp) => !newSamples.some((dbSamp) => dbSamp.samp_name === samp.samp_name)),
-					"samp_name"
+					"sample",
+					samples.filter((samp) => !newSamples.some((dbSamp) => dbSamp.samp_name === samp.samp_name))
 				);
 				await sampleChannel.stream.message("Existing Samples successfully updated in database.", 93);
 
 				//libraries
 				await updateManyRaw(
 					tx,
-					"Library",
-					libraries.filter((lib) => !newLibraries.some((dbLib) => dbLib.lib_id === lib.lib_id)),
-					"lib_id"
+					"library",
+					libraries.filter((lib) => !newLibraries.some((dbLib) => dbLib.lib_id === lib.lib_id))
 				);
 				await libraryChannel.stream.message("Existing Libraries successfully updated in database.", 93);
 
@@ -411,12 +410,15 @@ async function doEdit(
 
 		return true;
 	} catch (err: any) {
+		console.error(err);
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			await globalStream.error(prismaErr.error);
+		} else if (err instanceof AppError) {
+			await globalStream.error(err.message);
 		} else {
-			const error = err as Error;
-			await globalStream.error(error.message);
+			await globalStream.error(GLOBAL_SERVER_ERROR);
 		}
 	}
 }
@@ -427,26 +429,22 @@ export default async function projectEditAction({
 	sampleFileUrl,
 	libraryFileUrl
 }: {
-	project_id: Project["project_id"];
-	projectFileUrl?: Project["projectMetadataFileUrl_ODE"];
-	sampleFileUrl?: Project["sampleMetadataFileUrl_ODE"];
-	libraryFileUrl?: Project["libraryMetadataFileUrl_ODE"];
+	project_id: ProjectModel["project_id"];
+	projectFileUrl?: ProjectModel["projectMetadataFileUrl_ODE"];
+	sampleFileUrl?: ProjectModel["sampleMetadataFileUrl_ODE"];
+	libraryFileUrl?: ProjectModel["libraryMetadataFileUrl_ODE"];
 }) {
 	const globalStream = createProgressStream();
 	const projectStream = createProgressStream();
 	const sampleStream = createProgressStream();
 	const libraryStream = createProgressStream();
 
-	let errorMsg;
-	const urls = [projectFileUrl, sampleFileUrl, libraryFileUrl].filter(Boolean) as string[];
-	const validBlobs = await validateBlobs(urls);
-	if (!urls.length) {
-		errorMsg = "Must provide at least one new file.";
-	} else if (!validBlobs) {
-		errorMsg = "Files are not valid";
-	}
-	if (errorMsg) {
-		globalStream.error(errorMsg);
+	try {
+		await validateBlobs([projectFileUrl, sampleFileUrl, libraryFileUrl].filter(Boolean) as string[]);
+	} catch (err) {
+		console.error(err);
+
+		globalStream.error(err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR);
 
 		globalStream.close();
 		projectStream.close();

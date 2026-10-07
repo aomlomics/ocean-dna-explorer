@@ -14,12 +14,7 @@ export default function TabButton({ tabName, route }: { tabName: string; route: 
 			href={route}
 			className={[
 				"relative z-20 flex items-center px-2.5 min-[1400px]:px-4 py-2 transition-colors text-sm min-[1400px]:text-lg select-none rounded-t-xl",
-				isActive
-					? "bg-primary text-primary-content"
-					: [
-							"hover:bg-base-300",
-							"hover:text-base-content"
-						].join(" ")
+				isActive ? "bg-primary text-primary-content" : "hover:bg-base-300 hover:text-base-content"
 			].join(" ")}
 		>
 			{tabName}

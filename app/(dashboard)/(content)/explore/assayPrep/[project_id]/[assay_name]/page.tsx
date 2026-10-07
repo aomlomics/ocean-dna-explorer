@@ -1,12 +1,44 @@
 import Link from "next/link";
 import TableMetadata from "@/types/tableMetadata";
-import DataDisplay from "@/app/components/DataDisplay";
-import { prisma } from "@/app/helpers/prisma";
-import { ProjectIcon } from "@/app/components/icons";
+import { exploreUrl } from "@/app/helpers/utils";
+import DataDisplay from "@/app/components/explore/DataDisplay";
+import { trustedPrisma } from "@/app/helpers/prisma";
+import { AssayPrepIcon, ProjectIcon } from "@/app/components/icons";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{ project_id: string; assay_name: string }>;
+}): Promise<Metadata> {
+	const { project_id, assay_name } = await decodeRouteParams(params);
+
+	const assayPrep = await trustedPrisma.assayPrep.findUnique({
+		where: {
+			project_id_assay_name: {
+				project_id,
+				assay_name
+			}
+		},
+		select: {
+			id: true
+		}
+	});
+
+	if (assayPrep) {
+		return {
+			title: `${assay_name} | ${TableMetadata.assayPrep.plural}`
+		};
+	} else {
+		return {
+			title: "AssayPrep not found"
+		};
+	}
+}
 
 export default async function Project_id_Assay_name({
 	params
@@ -15,7 +47,7 @@ export default async function Project_id_Assay_name({
 }) {
 	const { project_id, assay_name } = await decodeRouteParams(params);
 
-	const assayPrep = await prisma.assayPrep.findUnique({
+	const assayPrep = await trustedPrisma.assayPrep.findUnique({
 		where: {
 			project_id_assay_name: {
 				project_id,
@@ -34,18 +66,13 @@ export default async function Project_id_Assay_name({
 					assay_name: true,
 					target_gene: true
 				}
-			},
-			Libraries: {
-				select: {
-					lib_id: true
-				}
 			}
 		}
 	});
 
 	if (!assayPrep) notFound();
 
-	const { Project: project, Assay: assay, Libraries: libraries, ...justAssayPrep } = assayPrep;
+	const { Project: project, Assay: assay, ...justAssayPrep } = assayPrep;
 
 	return (
 		<div className="space-y-6 pb-8">
@@ -64,17 +91,20 @@ export default async function Project_id_Assay_name({
 			<header>
 				<div className="flex gap-2 items-center">
 					<TitleHoverTooltip tooltip={TableMetadata.assayPrep.description}>
-						<h1 className="text-4xl font-semibold text-primary mb-2">{assayPrep.assay_name}</h1>
+						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+							<AssayPrepIcon className="size-8! shrink-0" />
+							<span className="min-w-0 wrap-anywhere">{assayPrep.assay_name}</span>
+						</h1>
 					</TitleHoverTooltip>
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					Assay preparation for{" "}
 					{assay ? (
 						<Link
-							href={`/explore/assay/${encodeURIComponent(assay.assay_name)}`}
+							href={exploreUrl({ table: "assay", assay_name })}
 							className="text-primary hover:text-primary-focus break-all"
 						>
-							assay {assay.assay_name}
+							assay {assay_name}
 						</Link>
 					) : (
 						<span className="italic">an unspecified assay</span>
@@ -82,10 +112,10 @@ export default async function Project_id_Assay_name({
 					in project{" "}
 					{project ? (
 						<Link
-							href={`/explore/project/${encodeURIComponent(project.project_id)}`}
+							href={exploreUrl({ table: "project", project_id })}
 							className="text-primary hover:text-primary-focus break-all"
 						>
-							{project.project_id}
+							{project_id}
 						</Link>
 					) : (
 						<span className="italic">not specified</span>
@@ -109,14 +139,11 @@ export default async function Project_id_Assay_name({
 					{/* Context cards */}
 					<div className="space-y-4">
 						{assay && (
-							<AssaysCard
-								title="Assay used:"
-								assays={[{ assay_name: assay.assay_name, target_gene: assay.target_gene ?? assay.assay_name }]}
-							/>
+							<AssaysCard title="Assay used:" assays={[{ assay_name, target_gene: assay.target_gene ?? assay_name }]} />
 						)}
 
 						{project && (
-							<Link href={`/explore/project/${encodeURIComponent(project.project_id)}`} className="group block w-2/3">
+							<Link href={exploreUrl({ table: "project", project_id })} className="group block w-2/3">
 								<div className="bg-base-200 p-4 rounded-lg hover:bg-base-300 transition-colors flex flex-col items-center text-center max-w-xs mx-auto">
 									<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
 										<ProjectIcon />
@@ -125,7 +152,7 @@ export default async function Project_id_Assay_name({
 										View project
 									</div>
 									<div className="text-base font-semibold text-base-content group-hover:text-primary mt-1 break-all">
-										{project.project_id}
+										{project_id}
 									</div>
 								</div>
 							</Link>

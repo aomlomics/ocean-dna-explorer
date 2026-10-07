@@ -1,6 +1,7 @@
 "use client";
 
-import type { Taxonomy } from "@/app/generated/prisma/client";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { GbifImagePayload } from "./GbifClient";
 import { formatGbifAttributionDisplay, getGbifStillImagePayload } from "./GbifClient";
@@ -9,7 +10,7 @@ import ImagePreviewModal from "../ImagePreviewModal";
 
 type GbifImageProps = {
 	taxonKey: number | string;
-	taxonomy: Taxonomy;
+	taxonomy: TaxonomyModel;
 	altText: string;
 	className?: string;
 	/** When false, no PhyloPic duplicate if GBIF has no photo (parent already shows PhyloPic). Default true (e.g. explore grid). */
@@ -48,6 +49,7 @@ export default function GbifImage({
 			setActiveSrc(null);
 			setLoadFailed(false);
 			setImageLoaded(false);
+			setPreviewOpen(false);
 			try {
 				const p = await getGbifStillImagePayload(taxonKey);
 				if (!cancelled) {
@@ -75,16 +77,10 @@ export default function GbifImage({
 		onPayloadChange?.(payload);
 	}, [payload, onPayloadChange]);
 
-	useEffect(() => {
-		setImageLoaded(false);
-	}, [activeSrc]);
-
-	useEffect(() => {
-		setPreviewOpen(false);
-	}, [activeSrc]);
-
 	function handleImgError() {
 		if (payload && activeSrc === payload.proxyUrl && payload.directUrl !== payload.proxyUrl) {
+			setImageLoaded(false);
+			setPreviewOpen(false);
 			setActiveSrc(payload.directUrl);
 			return;
 		}
@@ -137,15 +133,15 @@ export default function GbifImage({
 							<span className="loading loading-spinner loading-lg text-primary" />
 						</div>
 					) : null}
-					<img
+					<Image
 						src={activeSrc}
 						alt={altText}
-						width={480}
-						height={480}
+						fill
+						sizes="(max-width: 768px) 100vw, 320px"
+						unoptimized
 						onLoad={handleImgLoad}
 						onError={handleImgError}
-						className={`absolute inset-0 box-border h-full w-full max-h-full max-w-full ${fitClass}`}
-						decoding="async"
+						className={fitClass}
 					/>
 				</div>
 			</div>
@@ -168,17 +164,12 @@ export default function GbifImage({
 			<>
 				<div className={`flex h-full w-full flex-col overflow-hidden ${className}`}>
 					<div className="min-h-0 flex-1 overflow-hidden">{clickToPreviewImage}</div>
-					<p className="mt-1 line-clamp-2 text-center text-[10px] leading-snug text-base-content/50">
+					<p className="mt-1 line-clamp-2 text-center text-[10px] leading-snug text-base-content/70">
 						{attributionLine}
 					</p>
 				</div>
 				{activeSrc ? (
-					<ImagePreviewModal
-						isOpen={previewOpen}
-						onClose={() => setPreviewOpen(false)}
-						src={activeSrc}
-						alt={altText}
-					/>
+					<ImagePreviewModal isOpen={previewOpen} onClose={() => setPreviewOpen(false)} src={activeSrc} alt={altText} />
 				) : null}
 			</>
 		);

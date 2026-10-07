@@ -1,15 +1,42 @@
-import DataDisplay from "@/app/components/DataDisplay";
-import { prisma } from "@/app/helpers/prisma";
+import DataDisplay from "@/app/components/explore/DataDisplay";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
-import Table from "@/app/components/paginated/Table";
+import Table from "@/app/components/paginated/table/Table";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import PrimerDiagram from "@/app/components/PrimerDiagram";
+import PrimerDiagram from "@/app/components/explore/PrimerDiagram";
 import GcDonut from "@/app/components/charts/GcDonut";
 import StatCard from "@/app/components/explore/StatCard";
-import { AnalysisIcon, DnaIcon, FishIcon, LocationIcon } from "@/app/components/icons";
+import { AssayIcon, AnalysisIcon, DnaIcon, TaxonomyIcon, SampleIcon, LibraryIcon } from "@/app/components/icons";
 import DropdownCard from "@/app/components/explore/DropdownCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
+import TableMetadata from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ assay_name: string }> }): Promise<Metadata> {
+	const { assay_name } = await decodeRouteParams(params);
+
+	const assay = await trustedPrisma.assay.findUnique({
+		where: {
+			assay_name
+		},
+		select: {
+			target_gene: true
+		}
+	});
+
+	if (assay) {
+		return {
+			title: `${assay_name} | ${TableMetadata.assay.plural}`,
+			description: `Explore the ${assay_name} assay, including its ${assay.target_gene}, PCR primer sequences and characteristics, associated samples/libraries, and analyses.`
+		};
+	} else {
+		return {
+			title: "Assay not found"
+		};
+	}
+}
 
 const ASSAY_MASTER_TSV_URL =
 	"https://raw.githubusercontent.com/NOAA-Omics/noaa-omics-metabarcoding-assays/refs/heads/main/assays.tsv";
@@ -62,10 +89,10 @@ export default async function Assay_name({
 
 	const { view } = await searchParams;
 	if (view !== undefined) {
-		redirect(`/explore/assay/${encodeURIComponent(assay_name)}`);
+		redirect(exploreUrl({ table: "assay", assay_name }));
 	}
 
-	const assay = await prisma.assay.findUnique({
+	const assay = await trustedPrisma.assay.findUnique({
 		where: {
 			assay_name
 		},
@@ -73,14 +100,19 @@ export default async function Assay_name({
 			Libraries: true,
 			Analyses: {
 				select: {
-					analysis_run_name: true
+					analysis_run_name: true,
+					_count: {
+						select: {
+							Taxonomies: true
+						}
+					}
 				}
 			}
 		}
 	});
 
 	if (!assay) return <>Assay not found</>;
-	const { Libraries: _, Analyses: __, ...justAssay } = assay;
+	const { Libraries, Analyses, ...justAssay } = assay;
 
 	const forwardGc = calculateGcContent(assay.pcr_primer_forward);
 	const reverseGc = calculateGcContent(assay.pcr_primer_reverse);
@@ -101,7 +133,10 @@ export default async function Assay_name({
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1 className="text-4xl font-semibold text-primary mb-2">{assay_name}</h1>
+					<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+						<AssayIcon className="size-8! shrink-0" />
+						<span className="min-w-0 wrap-anywhere">{assay_name}</span>
+					</h1>
 				</div>
 				<div className="mt-1 w-full min-w-0 max-w-full text-sm text-base-content/80 space-y-1">
 					<div className="flex flex-wrap gap-x-6 gap-y-1">
@@ -130,7 +165,7 @@ export default async function Assay_name({
 					<div className="lg:col-span-2">
 						<Map
 							query={() =>
-								prisma.sample.findMany({
+								trustedPrisma.sample.findMany({
 									where: {
 										Libraries: {
 											some: {
@@ -312,41 +347,22 @@ export default async function Assay_name({
 							<div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
 								<StatCard
 									title="Samples"
-									icon={<LocationIcon />}
-									value={new Set(assay.Libraries.map((lib) => lib.samp_name)).size}
+									icon={<SampleIcon />}
+									value={new Set(Libraries.map((lib) => lib.samp_name)).size}
 									link={`/search?table=sample&advanced=[["assay","assay_name","equals","${assay_name}"]]`}
 									tooltip="View as Search"
 								/>
 								<StatCard
 									title="Libraries"
-									icon={<LocationIcon />}
-									value={assay.Libraries.length}
+									icon={<LibraryIcon />}
+									value={Libraries.length}
 									link={`/search?table=library&advanced=[["assay_name","equals","${assay_name}"]]`}
 									tooltip="View as Search"
 								/>
 								<StatCard
 									title="Taxonomies"
-									query={async () =>
-										await prisma.taxonomy.count({
-											where: {
-												Assignments: {
-													some: {
-														Analysis: {
-															assay_name
-														},
-														Occurrences: {
-															some: {
-																Library: {
-																	assay_name
-																}
-															}
-														}
-													}
-												}
-											}
-										})
-									}
-									icon={<FishIcon />}
+									value={assay.Analyses.reduce((count, a) => count + a._count.Taxonomies, 0)}
+									icon={<TaxonomyIcon />}
 									link={`/search?table=taxonomy&advanced=[["analysis","assay_name","equals","${assay_name}"]]`}
 									tooltip="View as Search"
 								/>
@@ -357,7 +373,7 @@ export default async function Assay_name({
 								/>
 								<DropdownCard
 									table="analysis"
-									items={assay.Analyses}
+									items={Analyses}
 									icon={<AnalysisIcon />}
 									className="sm:col-span-2 w-full"
 								/>

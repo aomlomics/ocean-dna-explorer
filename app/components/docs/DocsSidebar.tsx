@@ -1,7 +1,12 @@
 "use client";
 
 import useHash from "@/app/hooks/useHash";
-import DocsSections, { DocsGenericSection, DocsPage, DocsSection, DocsPageTitles } from "@/types/docsSections";
+import DocsSections, {
+	type DocsGenericSection,
+	type DocsPage,
+	type DocsSection,
+	DocsPageTitles
+} from "@/types/docsSections";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -33,35 +38,58 @@ export default function DocsSidebar() {
 
 	//detect current section in docs body
 	useEffect(() => {
+		let animationFrame: number | undefined;
+
 		if (!page) {
-			setCurrSection("");
-		} else if (section) {
-			function handleScroll() {
-				const ids = getAllSubsections(section, DocsSections[page][section]);
+			animationFrame = requestAnimationFrame(() => {
+				setCurrSection("");
+			});
 
-				const elements = ids.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
-
-				//if at the bottom, highlight the last section (10 pixel tolerance)
-				const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10;
-
-				if (atBottom && elements.length) {
-					setCurrSection(elements[elements.length - 1].id);
-					return;
+			return () => {
+				if (animationFrame !== undefined) {
+					cancelAnimationFrame(animationFrame);
 				}
+			};
+		}
 
-				const current = [...elements].reverse().find((el) => el.getBoundingClientRect().top <= 50);
+		if (!section) {
+			return;
+		}
 
-				if (current) {
-					setCurrSection(current.id);
+		function handleScroll() {
+			const ids = getAllSubsections(section, DocsSections[page][section]);
+			const elements = ids.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+
+			//if at the bottom, highlight the last section (10 pixel tolerance)
+			const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10;
+
+			if (atBottom) {
+				const last = elements[elements.length - 1];
+				if (last) {
+					setCurrSection(last.id);
+					return;
 				}
 			}
 
-			window.addEventListener("scroll", handleScroll);
-			setCurrSection(section);
-			handleScroll();
+			const current = [...elements].reverse().find((el) => el.getBoundingClientRect().top <= 50);
 
-			return () => window.removeEventListener("scroll", handleScroll);
+			if (current) {
+				setCurrSection(current.id);
+			}
 		}
+
+		window.addEventListener("scroll", handleScroll, { passive: true });
+		animationFrame = requestAnimationFrame(() => {
+			handleScroll();
+		});
+
+		return () => {
+			window.removeEventListener("scroll", handleScroll);
+
+			if (animationFrame !== undefined) {
+				cancelAnimationFrame(animationFrame);
+			}
+		};
 	}, [page, section]);
 
 	//auto scroll sidebar to keep current section in view
@@ -70,7 +98,9 @@ export default function DocsSidebar() {
 			const activeLink = document.getElementById(`sidebar-${currSection}`);
 			const sidebar = ref.current;
 
-			if (!activeLink || !sidebar) return;
+			if (!activeLink || !sidebar) {
+				return;
+			}
 
 			const linkRect = activeLink.getBoundingClientRect();
 			const sidebarRect = sidebar.getBoundingClientRect();
@@ -102,7 +132,7 @@ export default function DocsSidebar() {
 		>
 			{Object.entries(DocsSections).map(([page, sections]) => (
 				<div key={page} className="flex flex-col gap-2.5">
-					<div className="font-bold border-b border-primary pb-1">{DocsPageTitles[page]}</div>
+					<div className="text-lg font-normal">{DocsPageTitles[page]}</div>
 
 					<div className="pl-3 flex flex-col gap-4">
 						{Object.entries(sections).map(([id, sect]: [string, DocsSection]) => (
@@ -114,7 +144,10 @@ export default function DocsSidebar() {
 									onClick={() => {
 										setDisableAutoScroll(false);
 										if (!hash && section === id) {
-											document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+											document.getElementById(id)?.scrollIntoView({
+												behavior: "smooth",
+												block: "start"
+											});
 										}
 									}}
 								>

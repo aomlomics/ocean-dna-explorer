@@ -1,7 +1,6 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import Link from "next/link";
-import { ReactNode, Suspense } from "react";
+import { type ReactNode, Suspense } from "react";
 
 export default function DropdownCard({
 	items,
@@ -10,7 +9,7 @@ export default function DropdownCard({
 	icon,
 	className
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	icon: ReactNode;
 	className?: string;
 } & (
@@ -33,7 +32,7 @@ async function SuspenseDropdownCard({
 }: {
 	items?: (Record<string, any> | string)[];
 	query?: () => Promise<Record<string, any>[]>;
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	icon: ReactNode;
 	className?: string;
 }) {
@@ -97,7 +96,7 @@ async function SuspenseDropdownCard({
 							);
 						} else {
 							const typed = i as Record<string, string>;
-							const joined = TableMetadata[table].titleField.map((f) => encodeURIComponent(typed[f])).join("/");
+							const joined = TableMetadata[table].titleField.map((f) => encodeURIComponent(typed[f]!)).join("/");
 							return (
 								<li key={joined}>
 									<Link href={`/explore/${table}/${joined}`} className="text-base-content hover:text-primary break-all">

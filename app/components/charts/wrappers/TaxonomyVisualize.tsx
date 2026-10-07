@@ -1,117 +1,505 @@
+"use client";
+
 import { DeadValueEnum } from "@/types/enums";
-import { Assignment, Library, Occurrence, Sample, Taxonomy } from "../../../generated/prisma/client";
-import { getZodType } from "../../../helpers/schema";
-import TaxaBarChart from "../TaxaBarChart";
+import type {
+	AssignmentModel,
+	LibraryModel,
+	OccurrenceModel,
+	SampleModel,
+	TaxonomyModel
+} from "@/app/generated/prisma/models";
+import { getZodType } from "@/app/helpers/schema";
 import { GlobalOmit, TaxonomicRanks } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
+import type { TaxonomicRank } from "@/types/globals";
+import { useMemo, useState, type ReactNode } from "react";
+import Link from "next/link";
+import { TAXONOMY_VISUALIZE_TABS } from "../taxonomy/tabs";
+import { useSearchParams } from "next/navigation";
+import LoadingTaxaBarChart from "../loading/taxonomy/LoadingTaxaBarChart";
+import LoadingSampleTaxaAbundance from "../loading/taxonomy/LoadingSampleTaxaAbundance";
+import LoadingTaxonomyTreemap from "../loading/taxonomy/LoadingTaxonomyTreemap";
+import LoadingTaxaPrevalenceHistogram from "../loading/taxonomy/LoadingTaxaPrevalenceHistogram";
+import LoadingTaxaSampleHeatmap from "../loading/taxonomy/LoadingTaxaSampleHeatmap";
+import LoadingCompositionBarChart from "../loading/taxonomy/composition/LoadingCompositionBarChart";
+import LoadingTaxonomyLollipopChart from "../loading/taxonomy/composition/LoadingTaxonomyLollipopChart";
+import LoadingCompositionSunburst from "../loading/taxonomy/composition/LoadingCompositionSunburst";
+import LoadingDarkTaxaPlot from "../loading/taxonomy/LoadingDarkTaxaPlot";
 
-export default function TaxonomyVisualize({
-	occurrences,
-	assignments,
-	taxonomies,
-	samples
-}: {
-	occurrences: {
-		lib_id: Occurrence["lib_id"];
-		featureid: Occurrence["featureid"];
-		organismQuantity: Occurrence["organismQuantity"];
-	}[];
-	assignments: {
-		featureid: Assignment["featureid"];
-		Taxonomy: {
-			id: Taxonomy["id"];
+import dynamic from "next/dynamic";
+const TaxaBarChart = dynamic(() => import("../taxonomy/TaxaBarChart"), {
+	ssr: false
+});
+const SampleTaxaAbundance = dynamic(() => import("../taxonomy/SampleTaxaAbundance"), {
+	ssr: false
+});
+const TaxonomyTreemap = dynamic(() => import("../taxonomy/TaxonomyTreemap"), {
+	ssr: false
+});
+const TaxaPrevalenceHistogram = dynamic(() => import("../taxonomy/TaxaPrevalenceHistogram"), {
+	ssr: false
+});
+const TaxaSampleHeatmap = dynamic(() => import("../taxonomy/TaxaSampleHeatmap"), {
+	ssr: false
+});
+const CompositionBarChart = dynamic(() => import("../taxonomy/composition/CompositionBarChart"), {
+	ssr: false
+});
+const TaxonomyLollipopChart = dynamic(() => import("../taxonomy/composition/TaxonomyLollipopChart"), {
+	ssr: false
+});
+const CompositionSunburst = dynamic(() => import("../taxonomy/composition/CompositionSunburst"), {
+	ssr: false
+});
+const DarkTaxaPlot = dynamic(() => import("../taxonomy/DarkTaxaPlot"), {
+	ssr: false
+});
+
+export type AssignsWithOccs = {
+	featureid: AssignmentModel["featureid"];
+	taxonomy: AssignmentModel["taxonomy"];
+	percent_id: AssignmentModel["percent_id"];
+	Occurrences: {
+		organismQuantity: OccurrenceModel["organismQuantity"];
+		Library: {
+			id: LibraryModel["id"];
 		};
 	}[];
-	taxonomies: (Record<(typeof TaxonomicRanks)[number], string | null> & { id: Taxonomy["id"] })[];
-	samples: (Sample & {
-		Libraries: {
-			lib_id: Library["lib_id"];
-		}[];
-	})[];
+}[];
+
+export type TaxonomiesByName = Record<
+	TaxonomyModel["taxonomy"],
+	Record<TaxonomicRank, string | null> & {
+		taxonomy: TaxonomyModel["taxonomy"];
+	}
+>;
+
+//using a map to maintain the number type on the key
+export type LibsWithSampleById = Map<
+	LibraryModel["id"],
+	{
+		id: LibraryModel["id"];
+		lib_id: LibraryModel["lib_id"];
+		Sample: SampleModel;
+	}
+>;
+
+export const ABUNDANCE_DEFAULT_RANK = "kingdom" as TaxonomicRank;
+export const SAMPLE_ABUNDANCE_DEFAULT_FIELD = "temp";
+export const SAMPLE_ABUNDANCE_DEFAULT_LEGEND_FIELD = "project_id";
+export const TREEMAP_DEFAULT_PARENT_RANK = "phylum" as TaxonomicRank;
+export const TREEMAP_DEFAULT_CHILD_RANK = "family" as TaxonomicRank;
+export const PREVALENCE_DEFAULT_RANK = "species" as TaxonomicRank;
+export const HEATMAP_DEFAULT_RANK = "family" as TaxonomicRank;
+export const COMPOSITION_BAR_DEFAULT_RANK = "family" as TaxonomicRank;
+export const COMPOSITION_LOLLIPOP_DEFAULT_RANK = "species" as TaxonomicRank;
+export const COMPOSITION_SUNBURST_DEFAULT_INNER_RANK = "phylum" as TaxonomicRank;
+export const COMPOSITION_SUNBURST_DEFAULT_OUTER_RANK = "family" as TaxonomicRank;
+export const DARK_TAXA_DEFAULT_THRESHOLD = 90;
+export const DARK_TAXA_DEFAULT_INNER_RANK = "kingdom" as TaxonomicRank;
+export const DARK_TAXA_DEFAULT_OUTER_RANK = "phylum" as TaxonomicRank;
+
+export default function TaxonomyVisualize({
+	assignsWithOccs,
+	taxonomiesByName,
+	libsWithSampleById,
+	pathnamePrefix,
+	loading
+}: {
+	assignsWithOccs: AssignsWithOccs;
+	taxonomiesByName: TaxonomiesByName;
+	libsWithSampleById: LibsWithSampleById;
+	pathnamePrefix?: string;
+	loading?: boolean;
 }) {
-	//sort occurrences by featureid
-	const occsByFeatureid = {} as Record<Occurrence["featureid"], typeof occurrences>;
-	for (const occ of occurrences) {
-		if (occsByFeatureid[occ.featureid]) {
-			occsByFeatureid[occ.featureid].push(occ);
-		} else {
-			occsByFeatureid[occ.featureid] = [occ];
+	const searchParams = useSearchParams();
+	const [tab, setTab] = useState(["abundance"]);
+
+	const {
+		sampFields,
+		sampNumericFields,
+		userDefinedFields,
+		sampleLabels,
+		libraryLabels,
+		sortedLibraries,
+		totalOrganismQuantity,
+		taxaRanksWithData
+	} = useMemo(() => {
+		const sampFields = new Set(["project_id"]) as Set<string>;
+		//build fields in fieldOrder
+		for (const f of TableMetadata.sample.fieldOrder!) {
+			sampFields.add(f);
 		}
-	}
-
-	const taxonomiesById = {} as Record<Taxonomy["id"], (typeof taxonomies)[number]>;
-	for (const taxa of taxonomies) {
-		taxonomiesById[taxa.id] = taxa;
-	}
-
-	const sampFields = new Set(["project_id"]) as Set<string>;
-	//build fields in fieldOrder
-	for (const f of TableMetadata.sample.fieldOrder!) {
-		sampFields.add(f);
-	}
-	for (const f of SampleScalarFieldEnumSchema.options.sort()) {
-		sampFields.add(f);
-	}
-
-	//remove bad fields
-	for (const omit of GlobalOmit) {
-		sampFields.delete(omit);
-	}
-	sampFields.delete("id");
-	sampFields.delete("userDefined");
-	sampFields.delete("samp_name");
-
-	const fieldsWithValues = new Set() as Set<string>;
-	const userDefinedFields = new Set() as Set<string>;
-
-	const samplesById = {} as Record<Sample["id"], Sample & { Libraries: { lib_id: Library["lib_id"] }[] }>;
-	const sampleIdsByLibId = {} as Record<Library["lib_id"], Sample["id"]>;
-	for (const samp of samples) {
-		samplesById[samp.id] = samp;
-
-		for (const lib of samp.Libraries) {
-			sampleIdsByLibId[lib.lib_id] = samp.id;
+		for (const f of SampleScalarFieldEnumSchema.options.sort()) {
+			sampFields.add(f);
 		}
 
-		//check if fields have values
-		for (const f of sampFields) {
-			const key = f as keyof Sample;
+		//remove bad fields
+		for (const omit of GlobalOmit) {
+			sampFields.delete(omit);
+		}
+		sampFields.delete("id");
+		sampFields.delete("userDefined");
+		sampFields.delete("samp_name");
 
-			if (!fieldsWithValues.has(f) && samp[key] != null) {
-				const type = getZodType("sample", key).type;
+		//add to xy field options
+		const sampNumericFields = new Set(["temp"]) as Set<string>;
+		for (const f of Array.from(sampFields)) {
+			const key = f as keyof SampleModel;
+			const type = getZodType("sample", key).type;
 
-				if (type !== "boolean") {
-					if (type === "date" && !((samp[key] as Date).getTime() in DeadValueEnum)) {
-						fieldsWithValues.add(f);
-					} else if (!((samp[key] as string | number) in DeadValueEnum)) {
-						fieldsWithValues.add(f);
+			if (type === "integer" || type === "float" || type === "date") {
+				sampNumericFields.add(key);
+			}
+		}
+
+		const fieldsWithValues = new Set<string>();
+		const userDefinedFields = new Set<string>();
+		const badUdNumericFields = new Set<string>();
+
+		//deduplicate samples
+		const samples = Array.from(
+			new Map(Array.from(libsWithSampleById.values()).map(({ Sample }) => [Sample.id, Sample])).values()
+		);
+
+		for (const samp of samples) {
+			//check if fields have values
+			for (const f of sampFields) {
+				if (!fieldsWithValues.has(f)) {
+					const key = f as keyof SampleModel;
+
+					if (samp[key] != null) {
+						const type = getZodType("sample", key).type;
+
+						if (
+							type !== "boolean" &&
+							!(type === "date"
+								? (samp[key] as Date).getTime() in DeadValueEnum
+								: (samp[key] as string | number) in DeadValueEnum)
+						) {
+							fieldsWithValues.add(f);
+						}
+					}
+				}
+			}
+
+			//add userDefined fields
+			if (samp.userDefined) {
+				for (const ud in samp.userDefined) {
+					if (samp.userDefined[ud] != null && !(samp.userDefined[ud] in DeadValueEnum) && samp.userDefined[ud] !== "") {
+						sampFields.add(ud);
+						fieldsWithValues.add(ud);
+						userDefinedFields.add(ud);
+
+						if (Number.isFinite(Number(samp.userDefined[ud])) || !isNaN(new Date(samp.userDefined[ud]).getTime())) {
+							if (!badUdNumericFields.has(ud)) {
+								sampNumericFields.add(ud);
+							}
+						} else {
+							badUdNumericFields.add(ud);
+							sampNumericFields.delete(ud);
+						}
 					}
 				}
 			}
 		}
 
-		//add userDefined fields
-		if (samp.userDefined) {
-			for (const ud in samp.userDefined) {
-				if (samp.userDefined[ud] != null && !(samp.userDefined[ud] in DeadValueEnum) && samp.userDefined[ud] !== "") {
-					sampFields.add(ud);
-					fieldsWithValues.add(ud);
-					userDefinedFields.add(ud);
+		//build sample id to label mapping
+		const sortedSamples = [...samples].sort((a, b) => a.samp_name.localeCompare(b.samp_name));
+		const sampNamesWithProjectId = {} as Record<
+			SampleModel["samp_name"],
+			{ id: SampleModel["id"]; project_id: SampleModel["project_id"] }[]
+		>;
+
+		for (const samp of sortedSamples) {
+			(sampNamesWithProjectId[samp.samp_name] ??= []).push({ id: samp.id, project_id: samp.project_id });
+		}
+
+		const sampleLabels = new Map() as Map<SampleModel["id"], string>;
+		for (const [samp_name, projectIds] of Object.entries(sampNamesWithProjectId)) {
+			if (projectIds.length > 1) {
+				for (const proj of projectIds) {
+					sampleLabels.set(proj.id, proj.project_id + " / " + samp_name);
+				}
+			} else {
+				sampleLabels.set(projectIds[0]!.id, samp_name);
+			}
+		}
+
+		//build library id to label mapping
+		const sortedLibraries = Array.from(libsWithSampleById.entries()).sort((a, b) =>
+			a[1].lib_id.localeCompare(b[1].lib_id)
+		);
+		const libIdsWithProjectId = {} as Record<
+			LibraryModel["lib_id"],
+			{ id: LibraryModel["id"]; project_id: SampleModel["project_id"] }[]
+		>;
+
+		for (const libArr of sortedLibraries) {
+			(libIdsWithProjectId[libArr[1].lib_id] ??= []).push({
+				id: libArr[1].id,
+				project_id: libArr[1].Sample.project_id
+			});
+		}
+
+		const libraryLabels = new Map() as Map<LibraryModel["id"], string>;
+		for (const [lib_id, projectIds] of Object.entries(libIdsWithProjectId)) {
+			if (projectIds.length > 1) {
+				for (const proj of projectIds) {
+					libraryLabels.set(proj.id, proj.project_id + " / " + lib_id);
+				}
+			} else {
+				libraryLabels.set(projectIds[0]!.id, lib_id);
+			}
+		}
+
+		//total count of all organisms
+		let totalOrganismQuantity = 0;
+		for (const assign of assignsWithOccs) {
+			for (const occ of assign.Occurrences) {
+				totalOrganismQuantity += occ.organismQuantity;
+			}
+		}
+
+		//taxonomic ranks with values
+		const taxaRanksWithData = new Set() as Set<TaxonomicRank>;
+		for (const rank of TaxonomicRanks) {
+			if (!taxaRanksWithData.has(rank)) {
+				for (const taxonomy of Object.values(taxonomiesByName)) {
+					if (taxonomy[rank]) {
+						taxaRanksWithData.add(rank);
+					}
 				}
 			}
 		}
+
+		return {
+			sampFields: Array.from(sampFields),
+			sampNumericFields,
+			userDefinedFields,
+			sampleLabels,
+			libraryLabels,
+			sortedLibraries: new Map(sortedLibraries),
+			totalOrganismQuantity,
+			taxaRanksWithData: [...taxaRanksWithData]
+		};
+	}, [assignsWithOccs, taxonomiesByName, libsWithSampleById]);
+
+	//build tabs
+	const newParams = new URLSearchParams(searchParams);
+	const page = pathnamePrefix ? newParams.get("chart")?.split(",") : undefined;
+	newParams.delete("chart");
+
+	function getTab(
+		route: keyof typeof TAXONOMY_VISUALIZE_TABS,
+		t: (typeof TAXONOMY_VISUALIZE_TABS)[keyof typeof TAXONOMY_VISUALIZE_TABS],
+		i: number,
+		parentPath: string[] = []
+	) {
+		const clickPath = [...parentPath, route];
+		let curr = t;
+		while (curr.tabs) {
+			const [r, first] = Object.entries(curr.tabs)[0]!;
+			clickPath.push(r);
+			curr = first;
+		}
+
+		if (page) {
+			return (
+				<Link
+					key={route}
+					className={`btn ${page[i] === route ? "btn-primary text-primary-content" : "text-base-content"}`}
+					href={`${pathnamePrefix}?chart=${clickPath.join(",")}${newParams.size ? "&" + newParams.toString() : ""}`}
+				>
+					{t.title}
+				</Link>
+			);
+		}
+
+		return (
+			<button
+				key={route}
+				className={`btn ${tab[i] === route ? "btn-primary text-primary-content" : "text-base-content"}`}
+				onClick={() => {
+					setTab(clickPath);
+				}}
+			>
+				{t.title}
+			</button>
+		);
+	}
+
+	//base tabs
+	const tabRows: ReactNode[][] = [Object.entries(TAXONOMY_VISUALIZE_TABS).map(([route, t]) => getTab(route, t, 0))];
+
+	const currentTab = page ?? tab;
+
+	//show nested tabs if they exist for currently selected tab
+	let curr = TAXONOMY_VISUALIZE_TABS[currentTab[0]!]!;
+	let parentPath = [currentTab[0]!];
+	let i = 1;
+	while (curr.tabs) {
+		tabRows.push(Object.entries(curr.tabs).map(([route, t]) => getTab(route, t, i, parentPath)));
+
+		const selectedRoute = currentTab[i]!;
+		curr = curr.tabs[selectedRoute]!;
+		parentPath = [...parentPath, selectedRoute];
+		i++;
 	}
 
 	return (
-		<TaxaBarChart
-			occsByFeatureid={occsByFeatureid}
-			assignments={assignments}
-			taxonomiesById={taxonomiesById}
-			samplesById={samplesById}
-			sampleIdsByLibId={sampleIdsByLibId}
-			sampFields={Array.from(sampFields)}
-			userDefinedFields={userDefinedFields}
-		/>
+		<>
+			<div className="flex flex-col items-center gap-2">
+				{tabRows.map((row, i) => (
+					<div key={i} className="flex justify-center gap-2">
+						{row}
+					</div>
+				))}
+			</div>
+
+			{currentTab[0] === "abundance" ? (
+				loading ? (
+					<LoadingTaxaBarChart />
+				) : (
+					<TaxaBarChart
+						assignsWithOccs={assignsWithOccs}
+						taxonomiesByName={taxonomiesByName}
+						libsWithSampleById={sortedLibraries}
+						sampFields={sampFields}
+						userDefinedFields={userDefinedFields}
+						libraryLabels={libraryLabels}
+						taxaRanksWithData={taxaRanksWithData}
+					/>
+				)
+			) : (
+				<></>
+			)}
+
+			{currentTab[0] === "sampleTaxa" ? (
+				loading ? (
+					<LoadingSampleTaxaAbundance />
+				) : (
+					<SampleTaxaAbundance
+						assignsWithOccs={assignsWithOccs}
+						taxonomiesByName={taxonomiesByName}
+						libsWithSampleById={libsWithSampleById}
+						sampFields={sampFields}
+						sampNumericFields={Array.from(sampNumericFields)}
+						userDefinedFields={userDefinedFields}
+						taxaRanksWithData={taxaRanksWithData}
+					/>
+				)
+			) : (
+				<></>
+			)}
+
+			{currentTab[0] === "treemap" ? (
+				loading ? (
+					<LoadingTaxonomyTreemap />
+				) : (
+					<TaxonomyTreemap
+						assignsWithOccs={assignsWithOccs}
+						taxonomiesByName={taxonomiesByName}
+						taxaRanksWithData={taxaRanksWithData}
+					/>
+				)
+			) : (
+				<></>
+			)}
+
+			{currentTab[0] === "prevalence" ? (
+				loading ? (
+					<LoadingTaxaPrevalenceHistogram />
+				) : (
+					<TaxaPrevalenceHistogram
+						assignsWithOccs={assignsWithOccs}
+						taxonomiesByName={taxonomiesByName}
+						libsWithSampleById={libsWithSampleById}
+						taxaRanksWithData={taxaRanksWithData}
+					/>
+				)
+			) : (
+				<></>
+			)}
+
+			{currentTab[0] === "heatmap" ? (
+				loading ? (
+					<LoadingTaxaSampleHeatmap />
+				) : (
+					<TaxaSampleHeatmap
+						assignsWithOccs={assignsWithOccs}
+						taxonomiesByName={taxonomiesByName}
+						libsWithSampleById={libsWithSampleById}
+						sampleLabels={sampleLabels}
+						taxaRanksWithData={taxaRanksWithData}
+					/>
+				)
+			) : (
+				<></>
+			)}
+
+			{currentTab[0] === "composition" ? (
+				<>
+					{currentTab[1] === "bar" ? (
+						loading ? (
+							<LoadingCompositionBarChart />
+						) : (
+							<CompositionBarChart
+								assignsWithOccs={assignsWithOccs}
+								taxonomiesByName={taxonomiesByName}
+								taxaRanksWithData={taxaRanksWithData}
+							/>
+						)
+					) : (
+						<></>
+					)}
+					{currentTab[1] === "lollipop" ? (
+						loading ? (
+							<LoadingTaxonomyLollipopChart />
+						) : (
+							<TaxonomyLollipopChart
+								assignsWithOccs={assignsWithOccs}
+								taxonomiesByName={taxonomiesByName}
+								taxaRanksWithData={taxaRanksWithData}
+							/>
+						)
+					) : (
+						<></>
+					)}
+					{currentTab[1] === "sunburst" ? (
+						loading ? (
+							<LoadingCompositionSunburst />
+						) : (
+							<CompositionSunburst
+								assignsWithOccs={assignsWithOccs}
+								taxonomiesByName={taxonomiesByName}
+								taxaRanksWithData={taxaRanksWithData}
+							/>
+						)
+					) : (
+						<></>
+					)}
+				</>
+			) : (
+				<></>
+			)}
+
+			{currentTab[0] === "darkTaxa" ? (
+				loading ? (
+					<LoadingDarkTaxaPlot />
+				) : (
+					<DarkTaxaPlot
+						assignsWithOccs={assignsWithOccs}
+						taxonomiesByName={taxonomiesByName}
+						libsWithSampleById={libsWithSampleById}
+						totalOrganismQuantity={totalOrganismQuantity}
+						taxaRanksWithData={taxaRanksWithData}
+					/>
+				)
+			) : (
+				<></>
+			)}
+		</>
 	);
 }

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
 import { getTableName, getZodType } from "@/app/helpers/schema";
-import { stripSecureFields } from "@/app/helpers/queries";
+import { AppError, GLOBAL_SERVER_ERROR } from "@/types/objects";
 
 export async function GET(
 	request: Request,
@@ -10,17 +10,25 @@ export async function GET(
 ): Promise<NextResponse<NetworkPacket>> {
 	const { table } = await params;
 
-	const model = getTableName(table);
+	try {
+		const model = getTableName(table);
 
-	const result = {} as Record<string, ReturnType<typeof getZodType>>;
-	for (const f of TableMetadata[model].enumSchema.options) {
-		if (f !== "userDefined") {
-			const type = getZodType(model, f);
-			result[f] = type;
+		const result = {} as Record<string, ReturnType<typeof getZodType>>;
+		for (const f of TableMetadata[model].enumSchema.options) {
+			if (f !== "userDefined") {
+				const type = getZodType(model, f);
+				result[f] = type;
+			}
 		}
+
+		return NextResponse.json({ statusMessage: "success", result });
+	} catch (err) {
+		console.error(err);
+
+		if (err instanceof AppError) {
+			return NextResponse.json({ statusMessage: "error", error: err.message }, { status: err.statusCode });
+		}
+
+		return NextResponse.json({ statusMessage: "error", error: GLOBAL_SERVER_ERROR }, { status: 500 });
 	}
-
-	stripSecureFields(result);
-
-	return NextResponse.json({ statusMessage: "success", result });
 }

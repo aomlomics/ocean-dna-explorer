@@ -2,18 +2,18 @@
 
 import { prisma } from "@/app/helpers/prisma";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { RolePermissions } from "@/types/objects";
+import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { parseProjectFiles } from "@/app/helpers/actions/project";
-import { Channel, createProgressStream } from "@/app/helpers/progress";
-import { UserMetadata } from "@/types/globals";
+import { type Channel, createProgressStream } from "@/app/helpers/progress";
+import type { UserMetadata } from "@/types/globals";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { del } from "@vercel/blob";
-import { Project } from "@/app/generated/prisma/client";
+import type { ProjectModel } from "@/app/generated/prisma/models/Project";
 import { validateBlobs } from "@/app/helpers/withDb";
 import {
-	AttributionOptionalDefaults,
+	type AttributionOptionalDefaults,
 	AttributionOptionalDefaultsSchema,
-	ImageOptionalDefaults,
+	type ImageOptionalDefaults,
 	ImageOptionalDefaultsSchema
 } from "@/prismaImages/generated/zod";
 import { prismaImages } from "@/app/helpers/prismaImages";
@@ -23,7 +23,7 @@ async function doSubmit(
 	projectChannel: Channel,
 	sampleChannel: Channel,
 	libraryChannel: Channel,
-	userIds: Project["userIds"],
+	userIds: ProjectModel["userIds"],
 	imageInfo?: { image: ImageOptionalDefaults; attribution?: AttributionOptionalDefaults }
 ) {
 	const client = await clerkClient();
@@ -48,6 +48,83 @@ async function doSubmit(
 			return;
 		}
 	}
+
+	let parseResult;
+	try {
+		parseResult = await parseProjectFiles({
+			projectChannel,
+			sampleChannel,
+			libraryChannel,
+			userIds,
+			imageFileUrl: imageInfo?.image.url
+		});
+		if (!parseResult) {
+			throw new Error("An error occurred parsing one of the Project files.");
+		}
+	} catch (err) {
+		const error = err as Error;
+		await globalStream.error(error.message);
+		return;
+	}
+
+	const { project, samples, assays, assayPreps, libraries } = parseResult;
+
+	await projectChannel.stream.message(
+		"All files successfully parsed into database format. Parsing data into database.",
+		75
+	);
+	await sampleChannel.stream.message(
+		"All files successfully parsed into database format. Parsing data into database.",
+		75
+	);
+	await libraryChannel.stream.message(
+		"All files successfully parsed into database format. Parsing data into database.",
+		75
+	);
+
+	const badAssayFields = {} as Record<string, { field: string; provided: any; actual: any }[]>;
+
+	//error checks
+	const dbAssays = await prisma.assay.findMany({
+		where: {
+			assay_name: {
+				in: assays.map((a) => a.assay_name)
+			}
+		}
+	});
+
+	//check if assay data is correct
+	for (const a of assays) {
+		const dbA = dbAssays.find((db) => a.assay_name === db.assay_name);
+
+		if (!dbA) {
+			//assay does not exist
+			await projectChannel.stream.error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
+			return;
+		} else if (dbA.pcr_primer_forward !== a.pcr_primer_forward) {
+			//assay has incorrect pcr_primer_forward
+			await projectChannel.stream.error(
+				`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_forward. It should be "${a.pcr_primer_forward}", but it has "${dbA.pcr_primer_forward}".`
+			);
+			return;
+		} else if (dbA.pcr_primer_reverse !== a.pcr_primer_reverse) {
+			//assay has incorrect pcr_primer_reverse
+			await projectChannel.stream.error(
+				`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_reverse. It should be "${a.pcr_primer_reverse}", but it has "${dbA.pcr_primer_reverse}".`
+			);
+			return;
+		} else {
+			//get all non-essential fields that do not match
+			for (const [f, value] of Object.entries(a)) {
+				const field = f as keyof (typeof dbAssays)[0];
+				if (value !== dbA[field]) {
+					(badAssayFields[a.assay_name] ??= []).push({ field, provided: value, actual: dbA[field] });
+				}
+			}
+		}
+	}
+
+	await projectChannel.stream.message("All checks successful.", 85);
 
 	if (imageInfo) {
 		try {
@@ -81,101 +158,20 @@ async function doSubmit(
 				})
 			]);
 		} catch (err: any) {
+			console.error(err);
+
 			const prismaErr = handlePrismaError(err);
 			if (prismaErr) {
 				await globalStream.error(prismaErr.error);
-			} else {
-				const error = err as Error;
-				await globalStream.error(error.message);
 			}
+
+			await globalStream.error(GLOBAL_SERVER_ERROR);
 
 			return;
 		}
 	}
 
-	let project;
-	let samples;
-	let libraries;
 	try {
-		let assays;
-		let assayPreps;
-
-		const parseResult = await parseProjectFiles({
-			projectChannel,
-			sampleChannel,
-			libraryChannel,
-			userIds,
-			imageFileUrl: imageInfo?.image.url
-		});
-		if (!parseResult) {
-			return;
-		}
-		({ project, samples, assays, assayPreps, libraries } = parseResult);
-
-		await projectChannel.stream.message(
-			"All files successfully parsed into database format. Parsing data into database.",
-			75
-		);
-		await sampleChannel.stream.message(
-			"All files successfully parsed into database format. Parsing data into database.",
-			75
-		);
-		await libraryChannel.stream.message(
-			"All files successfully parsed into database format. Parsing data into database.",
-			75
-		);
-
-		const badAssayFields = {} as Record<string, { field: string; provided: any; actual: any }[]>;
-
-		//error checks
-		const dbAssays = await prisma.assay.findMany({
-			where: {
-				assay_name: {
-					in: assays.map((a) => a.assay_name)
-				}
-			}
-		});
-
-		//check if assay data is correct
-		for (const a of assays) {
-			const dbA = dbAssays.find((db) => a.assay_name === db.assay_name);
-
-			if (!dbA) {
-				//assay does not exist
-				await projectChannel.stream.error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
-				throw new Error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
-			} else if (dbA.pcr_primer_forward !== a.pcr_primer_forward) {
-				//assay has incorrect pcr_primer_forward
-				await projectChannel.stream.error(
-					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_forward. It should be "${a.pcr_primer_forward}", but it has "${dbA.pcr_primer_forward}".`
-				);
-				throw new Error(
-					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_forward. It should be "${a.pcr_primer_forward}", but it has "${dbA.pcr_primer_forward}".`
-				);
-			} else if (dbA.pcr_primer_reverse !== a.pcr_primer_reverse) {
-				//assay has incorrect pcr_primer_reverse
-				await projectChannel.stream.error(
-					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_reverse. It should be "${a.pcr_primer_reverse}", but it has "${dbA.pcr_primer_reverse}".`
-				);
-				throw new Error(
-					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_reverse. It should be "${a.pcr_primer_reverse}", but it has "${dbA.pcr_primer_reverse}".`
-				);
-			} else {
-				//get all non-essential fields that do not match
-				for (const [f, value] of Object.entries(a)) {
-					const field = f as keyof (typeof dbAssays)[0];
-					if (value !== dbA[field]) {
-						if (!(a.assay_name in badAssayFields)) {
-							badAssayFields[a.assay_name] = [];
-						}
-						badAssayFields[a.assay_name].push({ field, provided: value, actual: dbA[field] });
-					}
-				}
-			}
-		}
-
-		await projectChannel.stream.message("All checks successful.", 85);
-
 		//submission
 		await prisma.$transaction([
 			prisma.project.create({
@@ -215,12 +211,13 @@ async function doSubmit(
 
 		return true;
 	} catch (err: any) {
+		console.error(err);
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			await globalStream.error(prismaErr.error);
 		} else {
-			const error = err as Error;
-			await globalStream.error(error.message);
+			await globalStream.error(GLOBAL_SERVER_ERROR);
 		}
 
 		if (imageInfo) {
@@ -244,10 +241,10 @@ async function doSubmit(
 }
 
 export default async function projectSubmitAction(
-	projectFileUrl: Project["projectMetadataFileUrl_ODE"],
-	sampleFileUrl: Project["sampleMetadataFileUrl_ODE"],
-	libraryFileUrl: Project["libraryMetadataFileUrl_ODE"],
-	userIds: Project["userIds"],
+	projectFileUrl: ProjectModel["projectMetadataFileUrl_ODE"],
+	sampleFileUrl: ProjectModel["sampleMetadataFileUrl_ODE"],
+	libraryFileUrl: ProjectModel["libraryMetadataFileUrl_ODE"],
+	userIds: ProjectModel["userIds"],
 	imageInfo?: { image: ImageOptionalDefaults; attribution?: AttributionOptionalDefaults }
 ) {
 	const globalStream = createProgressStream();
@@ -255,11 +252,14 @@ export default async function projectSubmitAction(
 	const sampleStream = createProgressStream();
 	const libraryStream = createProgressStream();
 
-	const validBlobs = await validateBlobs(
-		[projectFileUrl, sampleFileUrl, libraryFileUrl, imageInfo?.image.url].filter(Boolean) as string[]
-	);
-	if (!validBlobs) {
-		globalStream.error("Files are not valid");
+	try {
+		await validateBlobs(
+			[projectFileUrl, sampleFileUrl, libraryFileUrl, imageInfo?.image.url].filter(Boolean) as string[]
+		);
+	} catch (err) {
+		console.error(err);
+
+		globalStream.error(err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR);
 
 		globalStream.close();
 		projectStream.close();

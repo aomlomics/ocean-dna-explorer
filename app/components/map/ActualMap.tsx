@@ -1,78 +1,31 @@
 "use client";
 
 import { MapContainer, TileLayer, Marker, FeatureGroup } from "react-leaflet";
-import MarkerClusterGroup from "react-leaflet-markercluster";
-import {
-	divIcon,
-	LatLng,
-	FeatureGroup as LFeatureGroup,
-	Map,
-	Polygon as LPolygon,
-	Circle as LCircle,
-	LatLngBoundsExpression
-} from "leaflet";
+import { type FeatureGroup as LFeatureGroup, type Map, Polygon as LPolygon, Circle as LCircle } from "leaflet";
 import { FullscreenControl } from "react-leaflet-fullscreen";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-draw/dist/leaflet.draw.css";
 import "react-leaflet-fullscreen/styles.css";
-import { ReactNode, useEffect, useRef, useState } from "react";
-import { Prisma } from "@/app/generated/prisma/client";
-import TableMetadata, { TableMetadataValue } from "@/types/tableMetadata";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import TableMetadata, { type ModelName, type TableMetadataValue } from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
 import { circleToString, getLocationsInsideShapes, getShapesFromUrl, polygonToString } from "@/app/helpers/utils";
-import { LocationWithValues, Location, NullLocation, MapShape } from "@/types/globals";
-import chroma, { Color } from "chroma-js";
-import distinctColors from "distinct-colors";
-import { DeadValueEnum, DeadValueNumbers } from "@/types/enums";
+import type { NullLocation, MapShape } from "@/types/globals";
 import { GlobalOmit } from "@/types/objects";
-import { getZodType } from "@/app/helpers/schema";
 import { usePathname, useSearchParams } from "next/navigation";
 import LegendControl from "./controls/LegendControl";
 import PointSizeControl from "./controls/PointSizeControl";
 import ClusterControl from "./controls/ClusterControl";
 import DrawSelectedControl from "./controls/DrawSelectControl";
 import PopupWithSearch from "./popups/PopupWithSearch";
-import {
-	DEFAULT_CLUSTER_RADIUS,
-	DEFAULT_COLOR,
-	DEFAULT_OUTSIDE_COLOR,
-	DEFAULT_PALETTE,
-	DEFAULT_POINT_SIZE,
-	DEFAULT_POINT_SIZE_STEP,
-	getLegendColor,
-	getLegendValue,
-	LEGEND_VALUES_LIMIT,
-	LegendInfo,
-	legendValueSort
-} from "./utils/mapUtils";
+import { DEFAULT_CLUSTER_RADIUS, DEFAULT_POINT_SIZE, DEFAULT_POINT_SIZE_STEP } from "./utils/mapUtils";
 import LoadingControl from "./controls/LoadingControl";
 import RecenterControl from "./controls/RecenterControl";
 import NoLocationPointsControl from "./controls/NoLocationPointControl";
-
-type MapProps =
-	| {
-			center: LatLng;
-			zoom: number;
-			bounds?: undefined;
-	  }
-	| {
-			center?: undefined;
-			zoom?: undefined;
-			bounds: LatLngBoundsExpression;
-	  };
-
-type Bounds = [[number, number], [number, number]];
-
-const lightMin = 35;
-const chromaMin = 35;
-
-function getConicGradient(colors: chroma.Color[]) {
-	return `conic-gradient(from ${360 / colors.length}deg,${colors
-		.map((c, i) => `${c.hex()} 0% ${(100 / colors.length) * (i + 1)}%`)
-		.join(",")});`;
-}
+import ClusterGroup from "./utils/ClusterGroup";
+import useMapLocations from "./utils/useMapLocations";
 
 function getShape(shape: any) {
 	if (shape.layerType === "polygon") {
@@ -91,87 +44,6 @@ function getShape(shape: any) {
 			radius: shape.layer.getRadius()
 		};
 	}
-}
-
-function getMarkerHtml(count: number, valuesCount: number, combined: number, style: string, borderStyle?: string) {
-	const sharedClassName = "h-full w-full rounded-full";
-	const borderClassName = "border border-black";
-	const tooltipClassName = "tooltip tooltip-secondary before:text-primary-content";
-
-	if (count === 1 && !valuesCount) {
-		return `<div class='${sharedClassName} ${borderClassName}' style='${style}'></div>`;
-	} else {
-		if (count === 1) {
-			return `<div class='${sharedClassName} ${borderClassName} ${tooltipClassName}' data-tip='${valuesCount}' style='${style}'></div>`;
-		} else {
-			if (borderStyle) {
-				return (
-					`<div class='p-1 ${sharedClassName} ${tooltipClassName}' data-tip='${combined}' style='${borderStyle}'>` +
-					`<div class='${sharedClassName}' style='${style}'></div>` +
-					`</div>`
-				);
-			}
-
-			return `<div class='border-4 border-white/40 ${sharedClassName} ${tooltipClassName}' data-tip='${combined}' style='${style}'></div>`;
-		}
-	}
-}
-
-function ddmToDec(deg: string) {
-	const trimmed = deg.trim();
-	const dir = trimmed.slice(-1).toUpperCase();
-	let dirFactor;
-	if (dir === "N" || dir === "E") {
-		dirFactor = 1;
-	} else if (dir === "S" || dir === "W") {
-		dirFactor = -1;
-	} else {
-		return;
-	}
-
-	const degArray = trimmed.slice(0, -1).trim().split(" ");
-	if (degArray.length !== 2) {
-		return;
-	}
-
-	const secondNum = parseFloat(degArray[1]);
-	if (secondNum >= 60) {
-		return;
-	}
-
-	return (parseInt(degArray[0]) + secondNum / 60) * dirFactor;
-}
-
-function verbatimToArray(verbatim: string | undefined | null) {
-	if (!verbatim) {
-		return;
-	}
-
-	const split = verbatim.split("|");
-	if (split.length < 2) {
-		return;
-	}
-
-	const first = ddmToDec(split.shift()!);
-	if (first == null || isNaN(first)) {
-		return;
-	}
-
-	const last = ddmToDec(split.pop()!);
-	if (last == null || isNaN(last)) {
-		return;
-	}
-
-	const arr = [first];
-	for (const s of split) {
-		const dec = ddmToDec(s);
-		if (dec != null && !isNaN(dec)) {
-			arr.push(dec);
-		}
-	}
-	arr.push(last);
-
-	return arr;
 }
 
 //TODO: taxonomy heatmap toggle
@@ -193,8 +65,8 @@ export default function ActualMap({
 	locations: NullLocation[];
 	where?: Record<string, string>;
 	id?: TableMetadataValue["titleField"];
-	table?: Uncapitalize<Prisma.ModelName>;
-	titleTable?: Uncapitalize<Prisma.ModelName>;
+	table?: Uncapitalize<ModelName>;
+	titleTable?: Uncapitalize<ModelName>;
 	defaultLegendField?: string;
 	cluster?: boolean;
 	clusterRadius?: number;
@@ -213,416 +85,26 @@ export default function ActualMap({
 	const mapRef = useRef<Map>(null);
 	const featureGroupRef = useRef<LFeatureGroup>(null);
 
-	//clump locations if they have identical latlng
-	let filteredLocations = [] as Array<Location | LocationWithValues>;
-	//track points with invalid location data
-	let noLocationPoints = [] as NullLocation[];
-	//calculate starting map view
-	let mapProps = {} as MapProps;
-	//legend options
-	const defaultOptions = new Set() as Set<string>;
-	const userDefinedOptions = new Set() as Set<string>;
-
-	const DEFAULT_BOUNDS = [
-		[-90, -180],
-		[90, 180]
-	] as Bounds;
-
-	if (locations.length === 1) {
-		if (
-			locations[0].decimalLatitude !== null &&
-			locations[0].decimalLongitude !== null &&
-			!(locations[0].decimalLatitude! in DeadValueEnum) &&
-			!(locations[0].decimalLongitude! in DeadValueEnum)
-		) {
-			const verbatimLatitudeArray = verbatimToArray(locations[0].verbatimLatitude);
-			const verbatimLongitudeArray = verbatimToArray(locations[0].verbatimLongitude);
-			if (
-				verbatimLatitudeArray &&
-				verbatimLongitudeArray &&
-				verbatimLatitudeArray.length === verbatimLongitudeArray.length &&
-				//make sure the array goes somewhere
-				(verbatimLatitudeArray.length !== 2 ||
-					verbatimLatitudeArray[0] !== verbatimLatitudeArray[verbatimLatitudeArray.length - 1] ||
-					verbatimLongitudeArray[0] !== verbatimLongitudeArray[verbatimLongitudeArray.length - 1])
-			) {
-				let bounds = DEFAULT_BOUNDS;
-				const polylines = [] as [number, number][];
-				for (let i = 0; i < verbatimLatitudeArray.length; i++) {
-					bounds[0][0] = Math.max(verbatimLatitudeArray[i], bounds[0][0]);
-					bounds[0][1] = Math.max(verbatimLongitudeArray[i], bounds[0][1]);
-					bounds[1][0] = Math.min(verbatimLatitudeArray[i], bounds[1][0]);
-					bounds[1][1] = Math.min(verbatimLongitudeArray[i], bounds[1][1]);
-
-					polylines.push([verbatimLatitudeArray[i], verbatimLongitudeArray[i]]);
-				}
-				mapProps = { bounds };
-
-				filteredLocations.push({
-					...(locations[0] as Location),
-					polylines
-				});
-			} else {
-				mapProps = {
-					center: [locations[0].decimalLatitude, locations[0].decimalLongitude] as unknown as LatLng,
-					zoom: 5
-				};
-
-				filteredLocations.push(locations[0] as Location);
-			}
-		} else {
-			noLocationPoints.push(locations[0]);
-			mapProps = { bounds: DEFAULT_BOUNDS };
-		}
-
-		if (locations[0].userDefined) {
-			for (const opt in locations[0].userDefined) {
-				userDefinedOptions.add(opt);
-			}
-		}
-	} else {
-		let bounds = DEFAULT_BOUNDS;
-
-		for (const nullLoc of locations) {
-			if (
-				nullLoc.decimalLatitude !== null &&
-				nullLoc.decimalLongitude !== null &&
-				!(nullLoc.decimalLatitude! in DeadValueEnum) &&
-				!(nullLoc.decimalLongitude! in DeadValueEnum)
-			) {
-				const loc = { ...nullLoc } as Location;
-
-				//check if point already exists
-				//don't combine points if they belong to different groups
-				const titleFields = titleTable
-					? typeof TableMetadata[titleTable].titleField === "string"
-						? [TableMetadata[titleTable].titleField]
-						: TableMetadata[titleTable].titleField
-					: [];
-				const foundIndex = filteredLocations.findIndex(
-					(l) =>
-						l.decimalLatitude === loc.decimalLatitude &&
-						l.decimalLongitude === loc.decimalLongitude &&
-						titleFields.every((f) => l[f] === loc[f])
-				);
-
-				if (foundIndex !== -1) {
-					if (filteredLocations[foundIndex].values) {
-						filteredLocations[foundIndex].values.push(loc);
-					} else {
-						filteredLocations[foundIndex].values = [{ ...filteredLocations[foundIndex] } as Location, loc];
-					}
-				} else {
-					bounds[0][0] = Math.max(loc.decimalLatitude, bounds[0][0]);
-					bounds[0][1] = Math.max(loc.decimalLongitude, bounds[0][1]);
-					bounds[1][0] = Math.min(loc.decimalLatitude, bounds[1][0]);
-					bounds[1][1] = Math.min(loc.decimalLongitude, bounds[1][1]);
-
-					if (titleTable) {
-						defaultOptions.add(getLegendValue(TableMetadata[titleTable].titleField, loc, userDefinedOptions));
-					}
-
-					const verbatimLatitudeArray = verbatimToArray(loc.verbatimLatitude);
-					const verbatimLongitudeArray = verbatimToArray(loc.verbatimLongitude);
-					let polylines = undefined as undefined | [number, number][];
-					if (
-						verbatimLatitudeArray &&
-						verbatimLongitudeArray &&
-						verbatimLatitudeArray.length === verbatimLongitudeArray.length &&
-						//make sure the array goes somewhere
-						(verbatimLatitudeArray.length !== 2 ||
-							verbatimLatitudeArray[0] !== verbatimLatitudeArray[verbatimLatitudeArray.length - 1] ||
-							verbatimLongitudeArray[0] !== verbatimLongitudeArray[verbatimLongitudeArray.length - 1])
-					) {
-						polylines = [];
-						for (let i = 0; i < verbatimLatitudeArray.length; i++) {
-							bounds[0][0] = Math.max(verbatimLatitudeArray[i], bounds[0][0]);
-							bounds[0][1] = Math.max(verbatimLongitudeArray[i], bounds[0][1]);
-							bounds[1][0] = Math.min(verbatimLatitudeArray[i], bounds[1][0]);
-							bounds[1][1] = Math.min(verbatimLongitudeArray[i], bounds[1][1]);
-
-							polylines.push([verbatimLatitudeArray[i], verbatimLongitudeArray[i]]);
-						}
-					}
-
-					filteredLocations.push({ ...loc, polylines });
-				}
-			} else {
-				noLocationPoints.push(nullLoc);
-			}
-
-			if (nullLoc.userDefined) {
-				for (const opt in nullLoc.userDefined) {
-					userDefinedOptions.add(opt);
-				}
-			}
-		}
-
-		//check if all points are in the same spot
-		if (bounds[0][0] === bounds[1][0] && bounds[0][1] === bounds[1][1]) {
-			mapProps = {
-				center: [bounds[0][0], bounds[0][1]] as unknown as LatLng,
-				zoom: 5
-			};
-		} else {
-			mapProps = { bounds };
-		}
-	}
-	const defaultMapProps = { ...mapProps };
-
-	let defaultLegend = undefined as LegendInfo;
-	let pointsOrGroups;
-	if (titleTable) {
-		const titleId = TableMetadata[titleTable].titleField;
-
-		//assign color to each option
-		const optionsArray = Array.from(defaultOptions).sort(legendValueSort);
-		const colors = distinctColors({ count: optionsArray.length, chromaMin, lightMin });
-		const colorMap = {} as Record<string, Color>;
-		for (let i = 0; i < optionsArray.length; i++) {
-			colorMap[optionsArray[i]] = colors[i];
-		}
-		defaultLegend = { field: titleId, mode: "discreet", colorMap };
-
-		//assemble locations object with assigned color and list of locations
-		pointsOrGroups = {} as Record<string, LocationWithValues[]>;
-		for (const loc of filteredLocations) {
-			const opt = getLegendValue(titleId, loc, userDefinedOptions);
-			if (pointsOrGroups[opt]) {
-				pointsOrGroups[opt].push(loc);
-			} else {
-				pointsOrGroups[opt] = [loc];
-			}
-		}
-	} else {
-		pointsOrGroups = filteredLocations;
-	}
-	const reducedPoints = titleTable
-		? Object.values(pointsOrGroups).reduce((acc, arr) => [...acc, ...arr], [])
-		: pointsOrGroups;
-
-	function getMapLegendField(field: string): LegendInfo {
-		if (userDefinedOptions.has(field)) {
-			//get unique options
-			const options = new Set() as Set<any>;
-			let someNoData = false;
-
-			for (const loc of reducedPoints) {
-				if (loc.values) {
-					for (const val of loc.values) {
-						if (val.userDefined[field] != null && val.userDefined[field] !== "") {
-							options.add(val.userDefined[field]);
-						} else {
-							someNoData = true;
-						}
-					}
-				} else if (loc.userDefined[field] != null && loc.userDefined[field] !== "") {
-					options.add(loc.userDefined[field]);
-				} else {
-					someNoData = true;
-				}
-			}
-
-			const optionsArray = Array.from(options).sort(legendValueSort);
-
-			//check if invalid number of options
-			if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
-				return { field, mode: "discreet", colorMap: {} };
-			} else if (optionsArray.length === 1) {
-				return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
-			} else if (optionsArray.length > LEGEND_VALUES_LIMIT) {
-				return { field, mode: "discreet", colorMap: {}, tooManyOptions: true };
-			} else {
-				//valid
-				const colors = distinctColors({ count: optionsArray.length, chromaMin, lightMin });
-				const colorMap = {} as Record<string, Color>;
-				for (let i = 0; i < optionsArray.length; i++) {
-					colorMap[optionsArray[i]] = colors[i];
-				}
-
-				//add default color if there is some point with no data
-				if (someNoData) {
-					colorMap["No value"] = DEFAULT_COLOR;
-				}
-
-				return { field, mode: "discreet", colorMap };
-			}
-		} else {
-			const type = getZodType(table, field).type;
-
-			if (type === "string" || type === "DeadBoolean") {
-				//get unique options
-				const options = new Set() as Set<any>;
-				let someNoData = false;
-
-				for (const loc of reducedPoints) {
-					if (loc.values) {
-						for (const val of loc.values) {
-							if (val[field]) {
-								options.add(val[field]);
-							} else {
-								someNoData = true;
-							}
-						}
-					} else if (loc[field]) {
-						options.add(loc[field]);
-					} else {
-						someNoData = true;
-					}
-				}
-				const optionsArray = Array.from(options).sort(legendValueSort);
-
-				//check if invalid number of options
-				if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
-					return { field, mode: "discreet", colorMap: {} };
-				} else if (optionsArray.length === 1) {
-					return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
-				} else if (optionsArray.length > LEGEND_VALUES_LIMIT) {
-					return { field, mode: "discreet", colorMap: {}, tooManyOptions: true };
-				} else {
-					//valid
-					const colors = distinctColors({ count: optionsArray.length, chromaMin, lightMin });
-					const colorMap = {} as Record<string, Color>;
-					for (let i = 0; i < optionsArray.length; i++) {
-						colorMap[optionsArray[i]] = colors[i];
-					}
-
-					//add default color if there is some point with no data
-					if (someNoData) {
-						colorMap["No value"] = DEFAULT_COLOR;
-					}
-
-					return { field, mode: "discreet", colorMap };
-				}
-			} else if (type === "integer" || type === "float") {
-				//get unique options
-				const options = new Set() as Set<any>;
-				let someNoValue = false;
-
-				for (const loc of reducedPoints) {
-					if (loc.values) {
-						for (const val of loc.values) {
-							if (val[field] != null && !DeadValueNumbers.includes(val[field])) {
-								options.add(val[field]);
-							} else {
-								someNoValue = true;
-							}
-						}
-					} else {
-						if (loc[field] != null && !DeadValueNumbers.includes(loc[field])) {
-							options.add(loc[field]);
-						} else {
-							someNoValue = true;
-						}
-					}
-				}
-				const optionsArray = Array.from(options).sort((a, b) => a - b);
-
-				//check if invalid number of options
-				if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
-					return { field, mode: "discreet", colorMap: {} };
-				} else if (optionsArray.length === 1) {
-					return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
-				} else {
-					//valid
-					return {
-						field,
-						mode: "gradient",
-						range: [optionsArray[0], optionsArray[optionsArray.length - 1]],
-						palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
-						someNoValue
-					};
-				}
-			} else if (type === "date") {
-				//get unique options and cast to epoch timestamp
-				const options = new Set() as Set<any>;
-				let someNoValue = false;
-
-				for (const loc of reducedPoints) {
-					if (loc.values) {
-						for (const val of loc.values) {
-							if (val[field]) {
-								const time = typeof val[field] === "string" ? new Date(val[field]).getTime() : val[field].getTime();
-								if (!DeadValueNumbers.includes(time)) {
-									options.add(time);
-								} else {
-									someNoValue = true;
-								}
-							} else {
-								someNoValue = true;
-							}
-						}
-					} else {
-						if (loc[field]) {
-							const time = typeof loc[field] === "string" ? new Date(loc[field]).getTime() : loc[field].getTime();
-							if (!DeadValueNumbers.includes(time)) {
-								options.add(time);
-							} else {
-								someNoValue = true;
-							}
-						} else {
-							someNoValue = true;
-						}
-					}
-				}
-				const optionsArray = Array.from(options).sort((a, b) => a - b);
-
-				//check if invalid number of options
-				if (
-					optionsArray.length === 0 ||
-					(optionsArray.length === 1 && (optionsArray[0] == null || isNaN(optionsArray[0])))
-				) {
-					return { field, mode: "discreet", colorMap: {} };
-				} else if (optionsArray.length === 1) {
-					return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
-				} else {
-					//valid
-					return {
-						field,
-						mode: "gradient",
-						range: [new Date(optionsArray[0]), new Date(optionsArray[optionsArray.length - 1])],
-						palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
-						someNoValue
-					};
-				}
-			} else {
-				return {
-					field,
-					mode: "discreet",
-					colorMap: { "Unsupported field": DEFAULT_COLOR }
-				};
-			}
-		}
-	}
-
-	//make legend options follow fieldOrder
-	const legendOptions = [];
-	const omit = [...legendOmit, ...GlobalOmit, "id", "userDefined"];
-	if (TableMetadata[table].fieldOrder) {
-		legendOptions.push(...TableMetadata[table].fieldOrder);
-		for (const opt of TableMetadata[table].enumSchema.options) {
-			if (!TableMetadata[table].fieldOrder.includes(opt) && !omit.includes(opt)) {
-				legendOptions.push(opt);
-			}
-		}
-	} else {
-		for (const opt of TableMetadata[table].enumSchema.options) {
-			if (!omit.includes(opt)) {
-				legendOptions.push(opt);
-			}
-		}
-	}
-	if (userDefinedOptions.size) {
-		legendOptions.push(...userDefinedOptions);
-	}
-
-	if (defaultLegendField && legendOptions.includes(defaultLegendField)) {
-		defaultLegend = getMapLegendField(defaultLegendField);
-	}
+	const {
+		userDefinedOptions,
+		defaultLegend,
+		filteredLocations,
+		mapProps,
+		defaultMapProps,
+		pointsOrGroups,
+		noLocationPoints,
+		legendOptions,
+		reducedPoints
+	} = useMapLocations({
+		locations,
+		omit: [...legendOmit, ...GlobalOmit, "id", "userDefined"],
+		table,
+		titleTable,
+		defaultLegendField
+	});
 
 	const [legendInfo, setLegendInfo] = useState(defaultLegend);
 	const [loading, setLoading] = useState(false);
-	const [pointsInside, setPointsInside] = useState([] as Location[]);
 
 	const [pointSize, setPointSize] = useState(DEFAULT_POINT_SIZE as number | undefined);
 	const [pointSizeStep, setPointSizeStep] = useState(DEFAULT_POINT_SIZE_STEP as number | undefined);
@@ -631,33 +113,28 @@ export default function ActualMap({
 	);
 
 	const [shapes, setShapes] = useState({} as Record<string, MapShape>);
-
-	function checkShapes() {
+	const pointsInside = useMemo(() => {
 		if (Object.keys(shapes).length) {
-			setPointsInside(
-				getLocationsInsideShapes(
-					//exclude locations hidden by legend
-					filteredLocations.filter(
-						(l) =>
-							!(
-								legendInfo &&
-								legendInfo.mode === "discreet" &&
-								legendInfo.hidden?.includes(l[legendInfo.field as string])
-							)
-					),
-					Object.values(shapes)
-				)
+			return getLocationsInsideShapes(
+				//exclude locations hidden by legend
+				filteredLocations.filter(
+					(l) =>
+						!(
+							legendInfo &&
+							legendInfo.mode === "discreet" &&
+							legendInfo.hidden?.includes(l[legendInfo.field as string])
+						)
+				),
+				Object.values(shapes)
 			);
 		} else {
-			setPointsInside([]);
+			return [];
 		}
-	}
+	}, [shapes, legendInfo, filteredLocations]);
 
 	//shapes
 	useEffect(() => {
 		if (drawReady) {
-			checkShapes();
-
 			if (shapesToUrl) {
 				const newParams = new URLSearchParams(searchParams);
 				newParams.delete("polygon");
@@ -679,6 +156,7 @@ export default function ActualMap({
 	//waiting until the ref is set, for some reason the ref won't work as a dependency, so wait 2 cycles of rendering to render the draw feature group
 	useEffect(() => {
 		if (!drawAlmostReady) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setDrawAlmostReady(true);
 		} else if (!drawReady) {
 			if (shapesToUrl) {
@@ -704,156 +182,23 @@ export default function ActualMap({
 				}
 			}
 
+			if (mapRef.current) {
+				mapRef.current
+					.getContainer()
+					.style.setProperty("--map-popup-min-width", `${Math.min(300, mapRef.current.getSize().x / 1.5)}px`);
+				mapRef.current
+					.getContainer()
+					.style.setProperty("--map-popup-max-width", `${mapRef.current.getSize().x / 1.5}px`);
+			}
+
 			setDrawReady(true);
 		}
 	}, [drawAlmostReady]);
 
 	useEffect(() => {
-		checkShapes();
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setLoading(false);
 	}, [legendInfo]);
-
-	function ClusterGroup({ radius, children }: { radius: number | undefined; children: ReactNode }) {
-		return (
-			<MarkerClusterGroup
-				maxClusterRadius={radius || 0}
-				singleMarkerMode={true}
-				chunkedLoading={true}
-				iconCreateFunction={(cluster: any) => {
-					let count = 0;
-					let childrenWithValues = 0;
-					let valuesCount = 0;
-					let outsideShapesCount = 0;
-					const uniqueColors = {} as Record<string, { color: chroma.Color; percent?: number }>; //key is hex
-					const colorsArray = [] as chroma.Color[];
-					for (const marker of cluster.getAllChildMarkers()) {
-						count++;
-
-						//TODO: make colors have less alpha when outside shapes instead of turning them black
-						const loc = marker.options.children.props.loc;
-						if (loc.values) {
-							childrenWithValues++;
-							valuesCount += loc.values.length;
-
-							//check if location is outside any drawn shapes
-							if (
-								Object.keys(shapes).length &&
-								pointsInside &&
-								pointsInside.find((p) =>
-									typeof id === "string" ? p[id] === loc[id] : id.every((f) => p[f] === loc[f])
-								) === undefined
-							) {
-								outsideShapesCount += loc.values.length;
-							} else {
-								for (const val of loc.values) {
-									const { color, percent } = getLegendColor(legendInfo, val, userDefinedOptions);
-									uniqueColors[color.hex()] = { color, percent };
-									colorsArray.push(color);
-								}
-							}
-						} else {
-							//check if location is outside any drawn shapes
-							if (
-								Object.keys(shapes).length &&
-								pointsInside &&
-								pointsInside.find((p) =>
-									typeof id === "string" ? p[id] === loc[id] : id.every((f) => p[f] === loc[f])
-								) === undefined
-							) {
-								outsideShapesCount++;
-							} else {
-								const { color, percent } = getLegendColor(legendInfo, loc, userDefinedOptions);
-								uniqueColors[color.hex()] = { color, percent };
-								colorsArray.push(color);
-							}
-						}
-					}
-
-					const combined = childrenWithValues ? count - childrenWithValues + valuesCount : count;
-
-					let size =
-						(pointSize || DEFAULT_POINT_SIZE) +
-						(pointSizeStep || DEFAULT_POINT_SIZE_STEP) * (Math.floor(combined).toString().length - 1);
-					if (count > 1) {
-						//TODO: make border size a percentage of current size
-						size += 5;
-					}
-
-					let html;
-					const uniqueHex = Object.keys(uniqueColors);
-					if ((uniqueHex.length === 1 && !outsideShapesCount) || (!uniqueHex.length && outsideShapesCount)) {
-						//only one color, no gradient
-						let color;
-						if (outsideShapesCount) {
-							color = DEFAULT_OUTSIDE_COLOR;
-						} else {
-							color = Object.values(uniqueColors)[0].color;
-						}
-
-						html = getMarkerHtml(
-							count,
-							valuesCount,
-							combined,
-							`background-color:${color.hex()};`,
-							`background-color:${color.alpha(0.5).hex()};`
-						);
-					} else {
-						//more than one color, display as gradient
-						let orderedColors;
-
-						if (legendInfo?.mode === "discreet") {
-							orderedColors = Object.values(legendInfo.colorMap).filter((color) => uniqueHex.includes(color.hex()));
-						} else {
-							//gradient
-							orderedColors = Object.values(uniqueColors)
-								.sort((c1, c2) => {
-									if (c1.percent && c2.percent) {
-										return c1.percent - c2.percent;
-									} else {
-										let val = 0;
-
-										if (!c1.percent) {
-											val++;
-										}
-										if (!c2.percent) {
-											val--;
-										}
-
-										return val;
-									}
-								})
-								.map((obj) => obj.color);
-						}
-
-						//move first color to end because conic gradient doesn't start at 12 o'clock
-						orderedColors.push(orderedColors.shift() as chroma.Color);
-
-						//account for points outside of drawn shapes
-						if (outsideShapesCount) {
-							orderedColors.push(DEFAULT_OUTSIDE_COLOR);
-						}
-
-						html = getMarkerHtml(
-							count,
-							valuesCount,
-							combined,
-							`background:${getConicGradient(orderedColors)};`,
-							`background:${getConicGradient(orderedColors.map((color) => color.alpha(0.5)))};`
-							// `background:${getConicGradient(orderedColors.map((color) => color.mix("white", 0.4, "oklab")))};`
-						);
-					}
-
-					return divIcon({
-						className: "bg-none",
-						html,
-						iconSize: [size, size]
-					});
-				}}
-			>
-				{children}
-			</MarkerClusterGroup>
-		);
-	}
 
 	return (
 		<div className="flex flex-col items-start h-full w-full z-100 relative">
@@ -924,13 +269,14 @@ export default function ActualMap({
 						legend={legend}
 						legendInfo={legendInfo}
 						setLegendInfo={setLegendInfo}
-						getMapLegendField={getMapLegendField}
 						setLoading={setLoading}
 						legendOptions={legendOptions}
 						userDefinedOptions={userDefinedOptions}
 						mapRef={mapRef}
 						defaultLegend={defaultLegend}
+						table={table}
 						titleTable={titleTable}
+						reducedPoints={reducedPoints}
 					/>
 				</div>
 
@@ -938,11 +284,11 @@ export default function ActualMap({
 
 				<TileLayer
 					attribution='Powered by <a href="https://www.esri.com/en-us/home" target="_blank">Esri</a>'
-					url={`https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?token=${process.env.ARCGIS_KEY}`}
+					url="https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}"
 				/>
 
 				<FeatureGroup ref={featureGroupRef}>
-					{draw && drawReady && featureGroupRef.current && (
+					{draw && drawReady && (
 						<EditControl
 							position="topright"
 							onEdited={(e) => {
@@ -980,22 +326,30 @@ export default function ActualMap({
 								marker: false,
 								circlemarker: false
 							}}
-							featureGroup={featureGroupRef.current}
+							// eslint-disable-next-line react-hooks/refs
+							featureGroup={featureGroupRef.current!}
 						/>
 					)}
 				</FeatureGroup>
 
 				{Array.isArray(pointsOrGroups) ? (
 					//points
-					<ClusterGroup radius={cluster ? clusterRadiusValue : 0}>
+					<ClusterGroup
+						shapes={shapes}
+						pointsInside={pointsInside}
+						id={id}
+						legendInfo={legendInfo}
+						userDefinedOptions={userDefinedOptions}
+						pointSize={pointSize}
+						pointSizeStep={pointSizeStep}
+						radius={clusterRadiusValue ?? 0}
+					>
 						{pointsOrGroups.reduce((acc, loc, i) => {
-							if (
-								!(
-									legendInfo &&
-									legendInfo.mode === "discreet" &&
-									legendInfo.hidden?.includes(loc[legendInfo.field as string])
-								)
-							) {
+							if (!(
+								legendInfo &&
+								legendInfo.mode === "discreet" &&
+								legendInfo.hidden?.includes(loc[legendInfo.field as string])
+							)) {
 								acc.push(
 									<Marker key={i} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
 										<PopupWithSearch
@@ -1040,15 +394,23 @@ export default function ActualMap({
 					//groups
 					<>
 						{Object.values(pointsOrGroups).map((locArray, i) => (
-							<ClusterGroup key={i} radius={cluster ? clusterRadiusValue : 0}>
+							<ClusterGroup
+								key={i}
+								shapes={shapes}
+								pointsInside={pointsInside}
+								id={id}
+								legendInfo={legendInfo}
+								userDefinedOptions={userDefinedOptions}
+								pointSize={pointSize}
+								pointSizeStep={pointSizeStep}
+								radius={clusterRadiusValue ?? 0}
+							>
 								{locArray.reduce((acc, loc, j) => {
-									if (
-										!(
-											legendInfo &&
-											legendInfo.mode === "discreet" &&
-											legendInfo.hidden?.includes(loc[legendInfo.field as string])
-										)
-									) {
+									if (!(
+										legendInfo &&
+										legendInfo.mode === "discreet" &&
+										legendInfo.hidden?.includes(loc[legendInfo.field as string])
+									)) {
 										acc.push(
 											<Marker key={j} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
 												<PopupWithSearch

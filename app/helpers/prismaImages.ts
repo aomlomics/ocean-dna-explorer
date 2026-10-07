@@ -1,4 +1,4 @@
-import { PrismaClient } from "../generated/prismaImages/client";
+import { PrismaClient } from "@/app/generated/prismaImages/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const globalForPrismaImages = global as unknown as {

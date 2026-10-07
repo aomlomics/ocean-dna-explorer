@@ -1,21 +1,50 @@
 "use client";
 
-import { Image as DbImage } from "@/app/generated/prismaImages/client";
-import { Attribution } from "@/prismaImages/generated/zod";
+import type { ImageModel } from "@/app/generated/prismaImages/models/Image";
 import Image from "next/image";
 import AttributionBadge from "./AttributionBadge";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import type { AttributionModel } from "@/app/generated/prismaImages/models";
 
-export default function Carousel({ images }: { images: (DbImage & { Attribution?: Attribution | null })[] }) {
+function subscribeNever() {
+	return () => {};
+}
+
+function shuffleImages<T>(list: T[]): T[] {
+	const copy = [...list];
+	for (let i = copy.length - 1; i > 0; i--) {
+		const randomIndex = Math.floor(Math.random() * i + 1);
+		[copy[i], copy[randomIndex]] = [copy[randomIndex]!, copy[i]!];
+	}
+	return copy;
+}
+
+export default function Carousel({ images }: { images: (ImageModel & { Attribution: AttributionModel | null })[] }) {
+	// Start with the server order so the first client paint matches SSR HTML.
+	// Shuffle after mount; Math.random() during render would mismatch.
+	const [shuffledImages, setShuffledImages] = useState(images);
+	const [shuffleSource, setShuffleSource] = useState(images);
+	const [hasClientShuffle, setHasClientShuffle] = useState(false);
 	const [currIndex, setCurrIndex] = useState(0);
+	const mounted = useSyncExternalStore(
+		subscribeNever,
+		() => true,
+		() => false
+	);
+
+	if (mounted && (!hasClientShuffle || shuffleSource !== images)) {
+		setHasClientShuffle(true);
+		setShuffleSource(images);
+		setShuffledImages(shuffleImages(images));
+	}
 
 	useEffect(() => {
-		if (images.length <= 1) {
+		if (shuffledImages.length <= 1) {
 			return;
 		}
 
 		const timer = setTimeout(() => {
-			setCurrIndex(currIndex === images.length - 1 ? 0 : currIndex + 1);
+			setCurrIndex(currIndex === shuffledImages.length - 1 ? 0 : currIndex + 1);
 		}, 10000);
 
 		return () => clearTimeout(timer);
@@ -23,10 +52,10 @@ export default function Carousel({ images }: { images: (DbImage & { Attribution?
 
 	return (
 		<div className="absolute inset-0 overflow-hidden bg-base-100">
-			{images[currIndex] ? (
+			{shuffledImages[currIndex] ? (
 				<>
 					<div
-						key={images[currIndex].url}
+						key={shuffledImages[currIndex].url}
 						className="absolute inset-0 opacity-0 animate-[fade-in-out_10s_ease-in-out]"
 						style={{
 							WebkitMaskImage: "radial-gradient(ellipse 75% 75% at 80% 35%, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 85%)",
@@ -34,14 +63,14 @@ export default function Carousel({ images }: { images: (DbImage & { Attribution?
 						}}
 					>
 						<Image
-							src={images[currIndex].url}
-							alt={images[currIndex].description || "A background image"}
+							src={shuffledImages[currIndex].url}
+							alt={shuffledImages[currIndex].description || "A background image"}
 							fill
 							className="object-cover opacity-50 [html[data-theme='dark']_&]:opacity-70"
 							priority
 						/>
 					</div>
-					<AttributionBadge image={images[currIndex]} />
+					<AttributionBadge image={shuffledImages[currIndex]} />
 				</>
 			) : (
 				<></>

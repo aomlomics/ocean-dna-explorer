@@ -1,6 +1,7 @@
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import DashCard from "@/app/components/dataSummary/DashCard";
-import { Sample } from "@/app/generated/prisma/client";
+import type { SampleModel } from "@/app/generated/prisma/models/Sample";
+import { exploreUrl } from "@/app/helpers/utils";
 
 type DepthStats = {
 	min: number | null;
@@ -8,23 +9,23 @@ type DepthStats = {
 	max: number | null;
 };
 
-export async function DepthCoverageCard({ project_id }: { project_id?: Sample["project_id"] }) {
+export async function DepthCoverageCard({ project_id }: { project_id?: SampleModel["project_id"] }) {
 	// -9999 is the project sentinel for "not applicable". Filtering depths
 	// to >= 0 strips both that sentinel and any other negative noise.
-	const [minAgg, maxAgg, avgMinAgg, avgMaxAgg] = await prisma.$transaction([
-		prisma.sample.aggregate({
+	const [minAgg, maxAgg, avgMinAgg, avgMaxAgg] = await trustedPrisma.$transaction([
+		trustedPrisma.sample.aggregate({
 			where: { project_id, minimumDepthInMeters: { gte: 0 } },
 			_min: { minimumDepthInMeters: true }
 		}),
-		prisma.sample.aggregate({
+		trustedPrisma.sample.aggregate({
 			where: { project_id, maximumDepthInMeters: { gte: 0 } },
 			_max: { maximumDepthInMeters: true }
 		}),
-		prisma.sample.aggregate({
+		trustedPrisma.sample.aggregate({
 			where: { project_id, minimumDepthInMeters: { gte: 0 } },
 			_avg: { minimumDepthInMeters: true }
 		}),
-		prisma.sample.aggregate({
+		trustedPrisma.sample.aggregate({
 			where: { project_id, maximumDepthInMeters: { gte: 0 } },
 			_avg: { maximumDepthInMeters: true }
 		})
@@ -55,7 +56,7 @@ export async function DepthCoverageCard({ project_id }: { project_id?: Sample["p
 					links: [
 						{
 							label: project_id ? "Browse this project's samples" : "Browse samples",
-							href: project_id ? `/explore/project/${encodeURIComponent(project_id)}` : "/explore/sample"
+							href: project_id ? exploreUrl({ table: "project", project_id }) : "/explore/sample"
 						}
 					]
 				}}

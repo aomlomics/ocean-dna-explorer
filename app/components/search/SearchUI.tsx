@@ -1,8 +1,7 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
 import { getTableNameSafe, getZodType } from "@/app/helpers/schema";
-import {
+import type {
 	ParamsArray,
 	ParamsArrayElement,
 	ParamsArrayField,
@@ -12,13 +11,13 @@ import {
 	QueryMode
 } from "@/types/globals";
 import { GlobalOmit } from "@/types/objects";
-import TableMetadata, { TableNames } from "@/types/tableMetadata";
+import TableMetadata, { type ModelName, TableNames } from "@/types/tableMetadata";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import Modal from "@/app/components/Modal";
 import { DeadValues } from "@/types/enums";
-import { getRelationPath } from "@/app/helpers/schema";
-import { buildWhereParams } from "@/app/helpers/queries";
+import { buildParams } from "@/app/helpers/api";
+import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 type Operator = "AND" | "OR";
 
@@ -54,11 +53,22 @@ const MODE_TEXTS = {
 	notNull: "is not null"
 };
 
-function isGroupElement(e: ParamsArrayElement): e is [ParamsLogicalOperator, ...ParamsArrayElement[]] {
+function paramsValueToInputDefault(value: unknown, mode: string): string {
+	if (value === undefined || value === null) return "";
+	if (mode === "in" || mode === "notIn") {
+		return JSON.stringify(value);
+	}
+	if (Array.isArray(value)) {
+		return value.join(",");
+	}
+	return String(value);
+}
+
+function isGroupElement(e: ParamsArrayElement | undefined): e is [ParamsLogicalOperator, ...ParamsArrayElement[]] {
 	return Array.isArray(e) && typeof e[0] === "string" && (e[0] === "AND" || e[0] === "OR");
 }
 
-function isLegacyOrGroup(e: ParamsArrayElement): e is ParamsArray {
+function isLegacyOrGroup(e: ParamsArrayElement | undefined): e is ParamsArray {
 	return Array.isArray(e) && Array.isArray(e[0]);
 }
 
@@ -72,25 +82,37 @@ function createEmptyGroup(depth = 0): SearchGroupNode {
 	};
 }
 
+function searchNodeId(kind: "g" | "r", path: number[]): string {
+	return `${kind}-${path.join("-")}`;
+}
+
 function paramsArrayToSearchTree(advancedParsed: ParamsArray | undefined): SearchGroupNode {
-	// Root group is always present
-	const root = createEmptyGroup(0);
+	// Stable root id so URL-hydrated trees match between SSR and client.
+	const root: SearchGroupNode = {
+		id: "root",
+		type: "group",
+		operator: "AND",
+		children: [],
+		depth: 0
+	};
 	if (!advancedParsed || !advancedParsed.length) {
 		return root;
 	}
 
-	function buildFromParams(params: ParamsArrayElement[], depth: number): SearchNode[] {
+	function buildFromParams(params: ParamsArrayElement[], depth: number, pathPrefix: number[] = []): SearchNode[] {
 		const result: SearchNode[] = [];
 
-		for (const element of params) {
+		for (const [i, element] of params.entries()) {
+			const nodePath = [...pathPrefix, i];
+
 			// Explicit logical groups: ["AND", ...] or ["OR", ...]
 			if (isGroupElement(element)) {
 				const [, ...childrenElements] = element;
 				result.push({
-					id: crypto.randomUUID(),
+					id: searchNodeId("g", nodePath),
 					type: "group",
 					operator: element[0],
-					children: buildFromParams(childrenElements, depth + 1),
+					children: buildFromParams(childrenElements, depth + 1, nodePath),
 					depth
 				});
 				continue;
@@ -99,10 +121,10 @@ function paramsArrayToSearchTree(advancedParsed: ParamsArray | undefined): Searc
 			// Legacy OR-group: nested ParamsArray
 			if (isLegacyOrGroup(element)) {
 				result.push({
-					id: crypto.randomUUID(),
+					id: searchNodeId("g", nodePath),
 					type: "group",
 					operator: "OR",
-					children: buildFromParams(element as ParamsArrayElement[], depth + 1),
+					children: buildFromParams(element as ParamsArrayElement[], depth + 1, nodePath),
 					depth
 				});
 				continue;
@@ -111,7 +133,7 @@ function paramsArrayToSearchTree(advancedParsed: ParamsArray | undefined): Searc
 			// Otherwise this is a single rule (field or relation filter)
 			const tuple = element as ParamsArrayField | ParamsArrayRelation;
 			result.push({
-				id: crypto.randomUUID(),
+				id: searchNodeId("r", nodePath),
 				type: "rule",
 				initialParams: tuple
 			});
@@ -120,23 +142,59 @@ function paramsArrayToSearchTree(advancedParsed: ParamsArray | undefined): Searc
 		return result;
 	}
 
+	// Root OR is serialized as [["OR", ...children]] so the backend sees an explicit OR.
+	// Promote that lone top-level group to the root so Search doesn't rebuild it as a nested card.
+	// AND(OR(A, B)) is the same as OR(A, B), so flattening a single wrapping group is safe.
+	const onlyElement = advancedParsed[0];
+	if (advancedParsed.length === 1 && onlyElement && isGroupElement(onlyElement)) {
+		const [operator, ...childrenElements] = onlyElement;
+		root.operator = operator;
+		root.children = buildFromParams(childrenElements, 1);
+		return root;
+	}
+
 	root.children = buildFromParams(advancedParsed as ParamsArrayElement[], 1);
 	return root;
 }
 
-export default function SearchUI({ noTable }: { noTable?: true }) {
+function searchTreeFromSearchParams(searchParams: {
+	get: (key: string) => string | null;
+	toString: () => string;
+}): SearchGroupNode {
+	if (!searchParams.toString()) return createEmptyGroup(0);
+	const advanced = searchParams.get("advanced");
+	if (!advanced) return createEmptyGroup(0);
+	try {
+		return paramsArrayToSearchTree(JSON.parse(advanced) as ParamsArray);
+	} catch {
+		try {
+			return paramsArrayToSearchTree(JSON.parse(decodeURIComponent(advanced)) as ParamsArray);
+		} catch {
+			console.error("Failed to parse advanced query parameter", advanced);
+			return createEmptyGroup(0);
+		}
+	}
+}
+
+export default function SearchUI({ noTable, ignoreParams }: { noTable?: true; ignoreParams?: string[] }) {
 	//hooks
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
 	const router = useRouter();
+	const { trusted } = useTrusted();
+
 	const [searchTable, setSearchTable] = useState(() => {
 		const paramTable = searchParams.get("table");
 		return getTableNameSafe(paramTable);
 	}); //either noTable or searchTable will always exist, parent without noTable redirects to ?table=project
-	const [searchTree, setSearchTree] = useState<SearchGroupNode>(() => createEmptyGroup(0));
+	const [searchTree, setSearchTree] = useState<SearchGroupNode>(() => searchTreeFromSearchParams(searchParams));
+	const searchParamsKey = searchParams.toString();
+	const [prevSearchParamsKey, setPrevSearchParamsKey] = useState(searchParamsKey);
+
 	const formRef = useRef<HTMLFormElement>(null);
 	const helpModalRef = useRef<HTMLDialogElement>(null);
 	const apiFieldsModalRef = useRef<HTMLDialogElement>(null);
+
 	const [apiCopied, setApiCopied] = useState(false);
 	const [apiDropdownOpen, setApiDropdownOpen] = useState(false);
 	const apiDropdownRef = useRef<HTMLDivElement | null>(null);
@@ -146,34 +204,11 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 	const [queryDescription, setQueryDescription] = useState("");
 	const [triggerQueryDescription, setTriggerQueryDescription] = useState(false); //delay updating query description by a render cycle
 
-	useEffect(() => {
+	if (searchParamsKey !== prevSearchParamsKey) {
+		setPrevSearchParamsKey(searchParamsKey);
 		try {
-			if (searchParams.toString()) {
-				const advanced = searchParams.get("advanced");
-				if (advanced) {
-					let advancedParsed: ParamsArray | undefined;
-					try {
-						advancedParsed = JSON.parse(advanced) as ParamsArray;
-					} catch {
-						// Fallback for URLs where "advanced" may be percent-encoded JSON
-						try {
-							advancedParsed = JSON.parse(decodeURIComponent(advanced)) as ParamsArray;
-						} catch {
-							console.error("Failed to parse advanced query parameter", advanced);
-						}
-					}
-
-					if (advancedParsed) {
-						setSearchTree(paramsArrayToSearchTree(advancedParsed));
-					} else {
-						setSearchTree(createEmptyGroup(0));
-					}
-				} else {
-					// Clear filters when switching tables without advanced parameter.
-					// Initialize with an empty root group.
-					setSearchTree(createEmptyGroup(0));
-				}
-
+			if (searchParamsKey) {
+				setSearchTree(searchTreeFromSearchParams(searchParams));
 				const paramTable = searchParams.get("table");
 				const table = getTableNameSafe(paramTable);
 				if (table) {
@@ -183,81 +218,6 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		} catch (err) {
 			//ignore bad urls
 			console.log(err);
-		}
-	}, [searchParams]);
-
-	// Ensure we always have a root group
-	useEffect(() => {
-		if (searchTree.children.length === 0) {
-			setQueryDescription("");
-		} else {
-			handleQueryDescription();
-		}
-	}, [searchTree]);
-
-	useEffect(() => {
-		if (Object.keys(searchTree).length === 1 && !Object.values(searchTree)[0].children.length) {
-			handleQueryDescription();
-		}
-	}, [queryDescription]);
-
-	useEffect(() => {
-		handleQueryDescription();
-	}, [triggerQueryDescription]);
-
-	useEffect(() => {
-		// Set default table parameter without creating a new history entry
-		if (searchTable && !searchParams.has("advanced") && !searchParams.has("table")) {
-			const newParams = new URLSearchParams(searchParams.toString());
-			newParams.set("table", searchTable);
-			router.replace(`${pathname}?${newParams.toString()}`);
-		}
-	}, [searchTable, searchParams, pathname, router]);
-
-	useEffect(() => {
-		function handleClickOutside(event: MouseEvent) {
-			if (apiDropdownRef.current && !apiDropdownRef.current.contains(event.target as Node)) {
-				setApiDropdownOpen(false);
-			}
-		}
-
-		if (apiDropdownOpen) {
-			document.addEventListener("mousedown", handleClickOutside);
-		}
-
-		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
-		};
-	}, [apiDropdownOpen]);
-
-	//functions
-	function getAvailableApiFields(table: Uncapitalize<Prisma.ModelName> | undefined) {
-		if (table) {
-			const omit = new Set(GlobalOmit);
-			const meta = TableMetadata[table];
-			const allFields = meta.enumSchema.options as string[];
-
-			const ordered: string[] = [];
-
-			if (meta.fieldOrder && meta.fieldOrder.length) {
-				for (const f of meta.fieldOrder) {
-					if (!omit.has(f)) {
-						ordered.push(f);
-					}
-				}
-			}
-
-			for (const head of allFields) {
-				if (ordered.includes(head)) continue;
-				if (head === "id") continue;
-				if (omit.has(head)) continue;
-
-				ordered.push(head);
-			}
-
-			return ordered;
-		} else {
-			return [];
 		}
 	}
 
@@ -332,6 +292,81 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		);
 	}
 
+	// Ensure we always have a root group
+	useEffect(() => {
+		if (searchTree.children.length === 0) {
+			return;
+		} else {
+			handleQueryDescription();
+		}
+	}, [searchTree]);
+
+	useEffect(() => {
+		if (Object.keys(searchTree).length === 1 && !Object.values(searchTree)[0].children.length) {
+			handleQueryDescription();
+		}
+	}, [queryDescription]);
+
+	useEffect(() => {
+		handleQueryDescription();
+	}, [triggerQueryDescription]);
+
+	useEffect(() => {
+		// Set default table parameter without creating a new history entry
+		if (searchTable && !searchParams.has("advanced") && !searchParams.has("table")) {
+			const newParams = new URLSearchParams(searchParams.toString());
+			newParams.set("table", searchTable);
+			router.replace(`${pathname}?${newParams.toString()}`);
+		}
+	}, [searchTable, searchParams, pathname, router]);
+
+	useEffect(() => {
+		function handleClickOutside(event: MouseEvent) {
+			if (apiDropdownRef.current && !apiDropdownRef.current.contains(event.target as Node)) {
+				setApiDropdownOpen(false);
+			}
+		}
+
+		if (apiDropdownOpen) {
+			document.addEventListener("mousedown", handleClickOutside);
+		}
+
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+		};
+	}, [apiDropdownOpen]);
+
+	//functions
+	function getAvailableApiFields(table: Uncapitalize<ModelName> | undefined) {
+		if (table) {
+			const omit = new Set(GlobalOmit);
+			const meta = TableMetadata[table];
+			const allFields = meta.enumSchema.options as string[];
+
+			const ordered: string[] = [];
+
+			if (meta.fieldOrder && meta.fieldOrder.length) {
+				for (const f of meta.fieldOrder) {
+					if (!omit.has(f)) {
+						ordered.push(f);
+					}
+				}
+			}
+
+			for (const head of allFields) {
+				if (ordered.includes(head)) continue;
+				if (head === "id") continue;
+				if (omit.has(head)) continue;
+
+				ordered.push(head);
+			}
+
+			return ordered;
+		} else {
+			return [];
+		}
+	}
+
 	function getParamsArrayFromTree(root: SearchGroupNode) {
 		if (!formRef.current) return [] as ParamsArray;
 
@@ -348,7 +383,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 					? (formRef.current[`relation_${id}`].value as string)
 					: "";
 
-			const table = (relation ? relation : searchTable) as Prisma.ModelName;
+			const table = (relation ? relation : searchTable) as ModelName;
 			const field = formRef.current[`field_${id}`].value as string;
 
 			if (!field) {
@@ -464,7 +499,12 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 	function reset() {
 		setSearchTree(createEmptyGroup(0));
 		setQueryDescription("");
-		router.push(pathname + "?table=" + searchTable);
+
+		const keepParams = [] as string[];
+		if (!noTable) keepParams.push("table=" + searchTable);
+		if (ignoreParams) ignoreParams.forEach((param) => keepParams.push(param + "=" + searchParams.get(param)));
+
+		router.push(pathname + (keepParams.length ? "?" + keepParams.join("&") : ""));
 	}
 
 	function search() {
@@ -473,8 +513,10 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 			newParams.set("table", searchTable!);
 		}
 
-		buildWhereParams(searchParams, newParams);
+		buildParams(searchParams, newParams);
 
+		// I drop the previous advanced so Search uses the builder as it is now, even when it's empty
+		newParams.delete("advanced");
 		const advanced = getParamsArrayFromTree(searchTree);
 		if (advanced && advanced.length) {
 			newParams.set("advanced", JSON.stringify(advanced));
@@ -501,37 +543,17 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 
 		const baseUrl = typeof window !== "undefined" ? window.location.origin : process.env.NEXT_PUBLIC_URL;
 
-		// Prefer the current URL params so the API box always matches what the backend sees after a search
-		const paramsFromUrl = new URLSearchParams(searchParams.toString());
-		let advancedStr = paramsFromUrl.get("advanced");
+		// I copy the live URL instead of listing options, so BLAST and shapes all come along
+		const newParams = new URLSearchParams(searchParams);
+		newParams.delete("table"); //the table is the endpoint, not an option
 
-		// If there's no advanced parameter in the URL yet, build it from the current tree state
-		if (!advancedStr) {
-			const advanced = getParamsArrayFromTree(searchTree);
-			if (advanced && advanced.length) {
-				advancedStr = JSON.stringify(advanced);
-			}
-		}
+		newParams.set("trusted", trusted ? "true" : "false");
 
-		const newParams = new URLSearchParams();
-		if (advancedStr) {
-			newParams.set("advanced", advancedStr);
+		newParams.delete("advanced");
+		const advanced = getParamsArrayFromTree(searchTree);
+		if (advanced && advanced.length) {
+			newParams.set("advanced", JSON.stringify(advanced));
 		}
-
-		//maintain BLAST
-		searchParams.getAll("blastQuery").forEach((q) => newParams.set("blastQuery", q));
-		const blastDatabase = searchParams.get("blastDatabase");
-		if (blastDatabase) {
-			newParams.set("blastDatabase", blastDatabase);
-		}
-		const blastSave = searchParams.get("blastSave");
-		if (blastSave) {
-			newParams.set("blastSave", blastSave);
-		}
-
-		//maintain shapes
-		searchParams.getAll("polygon").forEach((poly) => newParams.set("polygon", poly));
-		searchParams.getAll("circle").forEach((cir) => newParams.set("circle", cir));
 
 		let fieldsForTable = undefined as string[] | undefined;
 		if (customFields === null) {
@@ -548,6 +570,9 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		if (fieldsForTable && fieldsForTable.length) {
 			newParams.set("fields", fieldsForTable.join(","));
 		}
+
+		//ignore specified params
+		ignoreParams?.forEach((param) => newParams.delete(param));
 
 		const queryString = newParams.toString();
 
@@ -576,13 +601,13 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		field.toLowerCase().includes(fieldSearchText.toLowerCase())
 	);
 	const allFieldsSelected = availableApiFields.length > 0 && fieldSelectionDraft.length === availableApiFields.length;
-	const hasActiveConditions = queryDescription.trim().length > 0;
+	const shownQueryDescription = searchTree.children.length === 0 ? "" : queryDescription;
 
 	const rootFooter = (
 		<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-4">
 			<div className="flex-1 text-sm md:text-base text-base-content whitespace-pre-wrap">
-				{queryDescription ? (
-					<p className="text-left">{queryDescription}</p>
+				{shownQueryDescription ? (
+					<p className="text-left">{shownQueryDescription}</p>
 				) : (
 					<p className="text-base-content/60 italic text-sm text-left">
 						Begin selecting filters and relations, and your query will be displayed here...
@@ -590,7 +615,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 				)}
 			</div>
 
-			<div className="flex items-center justify-end gap-3">
+			<div className="flex flex-wrap items-center justify-end gap-2 md:gap-3">
 				{noTable ? (
 					<></>
 				) : (
@@ -688,9 +713,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 				)}
 				<button
 					type="button"
-					className={`btn btn-md gap-2 ${
-						hasActiveConditions ? "btn-error" : "bg-base-200 text-base-content hover:bg-base-300 border-base-300"
-					}`}
+					className="btn btn-md gap-2 bg-base-200 text-base-content hover:bg-base-300 border-base-300"
 					onClick={reset}
 				>
 					<svg
@@ -705,12 +728,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 					</svg>
 					Clear
 				</button>
-				<button
-					type="submit"
-					className={`btn btn-md gap-2 ${
-						hasActiveConditions ? "btn-primary" : "bg-base-200 text-base-content hover:bg-base-300 border-base-300"
-					}`}
-				>
+				<button type="button" className="btn btn-md gap-2 btn-primary" onClick={search}>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						fill="none"
@@ -735,8 +753,8 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 
 	return (
 		<>
-			<div className="collapse collapse-arrow overflow-visible rounded-xl border border-base-300 bg-base-200/30 shadow-sm">
-				<input defaultChecked type="checkbox" />
+			<div className="collapse collapse-arrow relative z-raised min-w-0 overflow-hidden rounded-xl border border-base-300 bg-base-200/30 shadow-sm has-[>input:checked]:overflow-visible">
+				<input defaultChecked type="checkbox" className="peer" />
 				<div className="collapse-title py-2.5 px-4 text-base font-medium text-base-content">
 					<div className="flex items-center gap-2">
 						<svg
@@ -756,10 +774,10 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 						<span>Query Builder</span>
 					</div>
 				</div>
-				<div className="collapse-content overflow-visible px-4">
+				<div className="collapse-content overflow-hidden px-2 md:px-4 peer-checked:overflow-visible">
 					<form
 						ref={formRef}
-						className="relative overflow-visible bg-transparent pb-4"
+						className="search-focus-border relative bg-transparent pb-4"
 						onSubmit={(e) => {
 							e.preventDefault();
 							search();
@@ -842,14 +860,14 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 							<button
 								type="button"
 								className="btn btn-primary"
-								disabled={!fieldSelectionDraft.length}
 								onClick={() => {
 									const normalizedSelection = availableApiFields.filter((field) => fieldSelectionDraft.includes(field));
 									const selectionIsAll = normalizedSelection.length === availableApiFields.length;
 
 									setApiFieldSelections((prev) => {
 										if (!normalizedSelection.length || selectionIsAll) {
-											const { [searchTable]: _omit, ...rest } = prev;
+											const rest = { ...prev };
+											delete rest[searchTable];
 											return rest;
 										}
 
@@ -898,7 +916,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 								<p className="font-mono text-sm mb-1">Examples:</p>
 								<p className="font-mono text-xs">
 									Project tab: Field = <span className="font-normal">institution</span>, Condition ={" "}
-									<span className="font-normal">contains</span>, Value = <span className="font-normal">"NOAA"</span>
+									<span className="font-normal">contains</span>, Value = <span className="font-normal">{'"NOAA"'}</span>
 								</p>
 								<p className="font-mono text-xs">
 									Sample tab: Field = <span className="font-normal">minimumDepthInMeters</span>, Condition ={" "}
@@ -965,9 +983,9 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 							<div className="bg-base-200 p-3 rounded-md mt-2">
 								<p className="font-mono text-sm mb-1">Example (field + relation):</p>
 								<p className="font-mono text-xs">
-									(Project.institution = "NOAA" OR Project.institution = "EPA")
+									{`(Project.institution = "NOAA" OR Project.institution = "EPA")`}
 									{" AND "}
-									(Sample.geo_loc_name contains "Gulf of Mexico" OR Sample.geo_loc_name contains "Caribbean Sea")
+									{`(Sample.geo_loc_name contains "Gulf of Mexico" OR Sample.geo_loc_name contains "Caribbean Sea")`}
 								</p>
 								<p className="text-xs text-base-content/70 mt-1">
 									To build this, create one nested group for the two Project field filters (institution) with ANY (OR),
@@ -999,10 +1017,7 @@ function SearchGroupComponent({
 	onDelete?: () => void;
 	footer?: ReactNode;
 	onHelpClick?: () => void;
-} & (
-	| { searchTable: Uncapitalize<Prisma.ModelName>; noTable?: undefined }
-	| { searchTable?: undefined; noTable: true }
-)) {
+} & ({ searchTable: Uncapitalize<ModelName>; noTable?: undefined } | { searchTable?: undefined; noTable: true })) {
 	function updateGroup(updater: (group: SearchGroupNode) => void) {
 		const clone = { ...group, children: [...group.children] } as SearchGroupNode;
 		updater(clone);
@@ -1049,9 +1064,11 @@ function SearchGroupComponent({
 				isRoot ? "" : "card bg-base-100 shadow-sm border border-base-300"
 			} ${!isRoot ? "bg-base-200/60" : ""}`}
 		>
-			<div className={`${isRoot ? "space-y-2" : "card-body p-4"} space-y-2 relative ${!isRoot ? "pl-8" : ""}`}>
-				<div className="flex items-center justify-between gap-2">
-					<div className="flex items-center text-sm text-base-content/70">
+			<div
+				className={`${isRoot ? "space-y-2" : "card-body p-3 md:p-4"} space-y-2 relative ${!isRoot ? "pl-3 md:pl-8" : ""}`}
+			>
+				<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+					<div className="flex flex-wrap items-center text-sm text-base-content/70">
 						{isRoot && (
 							<>
 								<span>Show</span>
@@ -1089,14 +1106,14 @@ function SearchGroupComponent({
 								<span className="w-5 h-5 rounded-full bg-base-300 flex items-center justify-center text-sm font-semibold">
 									?
 								</span>
-								<span className="text-xs md:text-sm normal-case">Help me use the query builder</span>
+								<span className="hidden sm:inline text-xs md:text-sm normal-case">Help me use the query builder</span>
 							</button>
 						)}
 
 						{!isRoot && onDelete && (
 							<button
 								type="button"
-								className="btn btn-xs btn-square btn-primary"
+								className="btn btn-sm btn-square btn-primary"
 								onClick={onDelete}
 								aria-label="Remove group"
 							>
@@ -1139,7 +1156,10 @@ function SearchGroupComponent({
 					{group.children.reduce((acc: ReactNode[], child, index) => {
 						if (index > 0) {
 							acc.push(
-								<div key={child.id + "_op"} className="grid grid-cols-[30px_15%_18%_18%_1fr] px-3">
+								<div
+									key={child.id + "_op"}
+									className="flex justify-center px-3 py-1 md:grid md:grid-cols-[2rem_15%_18%_18%_1fr] md:py-0"
+								>
 									<div className="flex justify-center items-center">
 										<span className="text-xs text-base-content/60 font-semibold tracking-wide">{group.operator}</span>
 									</div>
@@ -1193,6 +1213,10 @@ function SearchGroupComponent({
 	);
 }
 
+function MobileFieldLabel({ children }: { children: string }) {
+	return <span className="text-xs text-base-content/50 md:hidden">{children}</span>;
+}
+
 function SearchRuleComponent({
 	node,
 	searchTable,
@@ -1201,20 +1225,14 @@ function SearchRuleComponent({
 }: {
 	node: SearchRuleNode;
 	onChange: (node: SearchRuleNode | null) => void;
-} & (
-	| { searchTable: Uncapitalize<Prisma.ModelName>; noTable?: undefined }
-	| { searchTable?: undefined; noTable: true }
-)) {
+} & ({ searchTable: Uncapitalize<ModelName>; noTable?: undefined } | { searchTable?: undefined; noTable: true })) {
 	const paramsArray = node.initialParams;
 	const [type, setType] = useState(noTable || (paramsArray && paramsArray.length === 4) ? "relation" : "field");
 	const paramsOffset = type === "relation" ? 1 : 0;
 	const [relation, setRelation] = useState(
-		(paramsArray && type === "relation" ? getTableNameSafe(paramsArray[0]) || "" : "") as
-			| Uncapitalize<Prisma.ModelName>
-			| ""
+		(paramsArray && type === "relation" ? getTableNameSafe(paramsArray[0]) || "" : "") as Uncapitalize<ModelName> | ""
 	);
 	const [field, setField] = useState(paramsArray ? (paramsArray[0 + paramsOffset] as string) : "");
-	const [loaded, setLoaded] = useState(false);
 
 	const table = relation ? relation : searchTable;
 	const invalidField =
@@ -1223,118 +1241,153 @@ function SearchRuleComponent({
 	useEffect(() => {
 		if (invalidField) {
 			onChange(null);
-		} else {
-			setLoaded(true);
 		}
 	}, []);
 
-	if (invalidField && !loaded) {
+	if (invalidField) {
 		return <></>;
 	}
 
 	const omit = [...GlobalOmit, "id", "userDefined"];
 	const nameSuffix = node.id;
+	const defaultMode = paramsArray ? `${paramsArray[1 + paramsOffset]}` : "";
+	const defaultValue = paramsArray ? paramsValueToInputDefault(paramsArray[2 + paramsOffset], defaultMode) : "";
 
 	return (
 		<div
-			className={`grid ${
-				type === "relation" && !noTable ? "grid-cols-[30px_14%_14%_20%_1fr]" : "grid-cols-[30px_14%_26%_1fr]"
-			} gap-2 items-center py-1.5 px-3 rounded-md hover:bg-base-200/60 transition-colors`}
+			className={`grid grid-cols-1 gap-2 rounded-md py-2 px-1 hover:bg-base-200/60 transition-colors md:items-start md:gap-2 md:py-1.5 md:px-3 ${
+				type === "relation" && !noTable ? "md:grid-cols-[2rem_14%_14%_20%_1fr]" : "md:grid-cols-[2rem_14%_26%_1fr]"
+			}`}
 		>
-			<div className="flex justify-center">
-				<button
-					className="btn btn-xs btn-square btn-primary"
-					type="button"
-					onClick={() => onChange(null)}
-					aria-label="Remove filter"
-				>
-					<span className="text-primary-content text-sm leading-none">×</span>
-				</button>
+			<div className="flex items-start gap-2 md:contents">
+				<div className="flex justify-center pt-1">
+					<button
+						className="btn btn-sm btn-square btn-primary"
+						type="button"
+						onClick={() => onChange(null)}
+						aria-label="Remove filter"
+					>
+						<span className="text-primary-content text-sm leading-none">×</span>
+					</button>
+				</div>
+				{noTable ? (
+					<select
+						className="select invisible"
+						hidden
+						value={type}
+						onChange={(e) => {
+							setType(e.target.value);
+							setRelation("");
+							setField("");
+						}}
+						required
+						name={`type_${nameSuffix}`}
+					>
+						<option value="" disabled>
+							Select Type
+						</option>
+						<option value="field">Field</option>
+						<option value="relation">Relation</option>
+					</select>
+				) : (
+					<label className="flex min-w-0 flex-1 flex-col gap-1 md:contents">
+						<MobileFieldLabel>Type</MobileFieldLabel>
+						<select
+							className="select w-full min-w-0"
+							value={type}
+							onChange={(e) => {
+								setType(e.target.value);
+								setRelation("");
+								setField("");
+							}}
+							required
+							name={`type_${nameSuffix}`}
+						>
+							<option value="" disabled>
+								Select Type
+							</option>
+							<option value="field">Field</option>
+							<option value="relation">Relation</option>
+						</select>
+					</label>
+				)}
 			</div>
-			<select
-				className={`select ${noTable ? "invisible" : ""}`}
-				hidden={noTable}
-				value={type}
-				onChange={(e) => {
-					setType(e.target.value);
-					setRelation("");
-					setField("");
-				}}
-				required
-				name={`type_${nameSuffix}`}
-			>
-				<option value="" disabled>
-					Select Type
-				</option>
-				<option value="field">Field</option>
-				<option value="relation">Relation</option>
-			</select>
 
 			{type === "relation" && (
-				<select
-					className="select"
-					value={relation}
-					onChange={(e) => {
-						setRelation(e.target.value as Uncapitalize<Prisma.ModelName>);
-						setField("");
-					}}
-					required
-					name={`relation_${nameSuffix}`}
-				>
-					<option value="" disabled>
-						Select {noTable ? "Table" : "Relation"}
-					</option>
-					{TableNames.reduce((acc, t) => {
-						if (!searchTable || (t !== searchTable && getRelationPath(searchTable, t))) {
-							acc.push(
-								<option key={t} title={t}>
-									{t}
-								</option>
-							);
-						}
+				<label className="flex min-w-0 flex-col gap-1 md:contents">
+					<MobileFieldLabel>Relation</MobileFieldLabel>
+					<select
+						className="select w-full min-w-0"
+						value={relation}
+						onChange={(e) => {
+							setRelation(e.target.value as Uncapitalize<ModelName>);
+							setField("");
+						}}
+						required
+						name={`relation_${nameSuffix}`}
+					>
+						<option value="" disabled>
+							Select {noTable ? "Table" : "Relation"}
+						</option>
+						{TableNames.reduce((acc, t) => {
+							if (!searchTable || (t !== searchTable && TableMetadata[searchTable].relationPaths[t])) {
+								acc.push(
+									<option key={t} title={t}>
+										{t}
+									</option>
+								);
+							}
 
-						return acc;
-					}, [] as ReactNode[])}
-				</select>
+							return acc;
+						}, [] as ReactNode[])}
+					</select>
+				</label>
 			)}
 
 			{table ? (
 				<>
 					{type === "field" || relation ? (
-						<select
-							className="select"
-							value={field}
-							onChange={(e) => setField(e.target.value)}
-							required
-							name={`field_${nameSuffix}`}
-						>
-							<option value="" disabled>
-								Select Field
-							</option>
-							{TableMetadata[table].enumSchema.options.reduce((acc, val) => {
-								if (!omit.includes(val)) {
-									acc.push(
-										<option key={val} value={val} title={val}>
-											{val}
-										</option>
-									);
-								}
+						<label className="flex min-w-0 flex-col gap-1 md:contents">
+							<MobileFieldLabel>Field</MobileFieldLabel>
+							<select
+								className="select w-full min-w-0"
+								value={field}
+								onChange={(e) => setField(e.target.value)}
+								required
+								name={`field_${nameSuffix}`}
+							>
+								<option value="" disabled>
+									Select Field
+								</option>
+								{TableMetadata[table].enumSchema.options.reduce((acc, val) => {
+									if (!omit.includes(val)) {
+										acc.push(
+											<option key={val} value={val} title={val}>
+												{val}
+											</option>
+										);
+									}
 
-								return acc;
-							}, [] as ReactNode[])}
-						</select>
+									return acc;
+								}, [] as ReactNode[])}
+							</select>
+						</label>
 					) : (
 						<></>
 					)}
 
 					{field ? (
-						<InputElement
-							nameSuffix={nameSuffix}
-							table={table}
-							field={field}
-							defaultMode={paramsArray ? `${paramsArray[1 + paramsOffset]}` : ""}
-							defaultValue={paramsArray ? `${paramsArray[2 + paramsOffset]}` : ""}
-						/>
+						<div className="flex min-w-0 flex-col gap-1 md:contents">
+							<MobileFieldLabel>Value</MobileFieldLabel>
+							<InputElement
+								key={`${nameSuffix}:${field}:${defaultMode}:${defaultValue}`}
+								nameSuffix={nameSuffix}
+								table={table}
+								field={field}
+								defaultMode={defaultMode}
+								defaultValue={defaultValue}
+							/>
+						</div>
 					) : (
 						<></>
 					)}
@@ -1346,6 +1399,81 @@ function SearchRuleComponent({
 	);
 }
 
+function InValuesField({
+	nameSuffix,
+	values,
+	onChange,
+	inputType,
+	placeholder,
+	numeric
+}: {
+	nameSuffix: string;
+	values: string[];
+	onChange: (values: string[]) => void;
+	inputType: "text" | "number";
+	placeholder: string;
+	numeric?: "integer" | "float";
+}) {
+	const rows = values.length > 0 ? values : [""];
+
+	function serializedValues() {
+		const filled = rows.filter((v) => v.trim() !== "");
+		if (numeric === "integer") {
+			return filled.map((v) => parseInt(v, 10));
+		}
+		if (numeric === "float") {
+			return filled.map((v) => parseFloat(v));
+		}
+		return filled;
+	}
+
+	return (
+		<div className="flex w-full min-w-0 flex-col gap-1.5 rounded-lg border border-base-300 bg-base-100 p-1.5 md:flex-1">
+			{rows.map((val, idx) => (
+				<div key={idx} className="flex min-w-0 items-center gap-1">
+					<input
+						type={inputType}
+						className="input input-sm min-h-8 h-8 w-full min-w-0"
+						placeholder={placeholder}
+						value={val}
+						onChange={(e) => {
+							const next = [...rows];
+							next[idx] = e.currentTarget.value;
+							onChange(next);
+						}}
+						name={`filter_${nameSuffix}_${idx}`}
+					/>
+					<button
+						type="button"
+						className="btn btn-xs btn-square btn-primary shrink-0"
+						onClick={() => {
+							const next = rows.filter((_, i) => i !== idx);
+							onChange(next.length > 0 ? next : [""]);
+						}}
+						aria-label="Remove value"
+					>
+						<span className="text-primary-content leading-none">×</span>
+					</button>
+				</div>
+			))}
+			<button type="button" className="btn btn-sm btn-primary self-start" onClick={() => onChange([...rows, ""])}>
+				+ Add value
+			</button>
+			<input type="hidden" name={`filter_${nameSuffix}`} value={JSON.stringify(serializedValues())} />
+		</div>
+	);
+}
+
+function dateInputValue(iso: string | undefined) {
+	return iso?.split("T")[0] ?? "";
+}
+
+// type="time" only displays HH:MM. Seconds or a timezone suffix make the box look empty.
+function timeInputValue(iso: string | undefined) {
+	const time = iso?.split("T")[1];
+	return time ? time.slice(0, 5) : "";
+}
+
 function InputElement({
 	nameSuffix,
 	table,
@@ -1354,17 +1482,12 @@ function InputElement({
 	defaultValue
 }: {
 	nameSuffix: string;
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	field: string;
 	defaultMode: string;
 	defaultValue: string;
 }) {
-	const [gteDateSelected, setGteDateSelected] = useState(
-		defaultValue.split(",").length === 2 && !!defaultValue.split(",")[0].split("T")[0]
-	);
-	const [lteDateSelected, setLteDateSelected] = useState(
-		defaultValue.split(",").length === 2 && !!defaultValue.split(",")[1].split("T")[0]
-	);
+	const [defaultGte, defaultLte] = defaultValue.split(",");
 
 	const type = getZodType(table, field).type;
 
@@ -1382,23 +1505,38 @@ function InputElement({
 		if (defaultMode === "in" || defaultMode === "notIn") {
 			try {
 				const parsed = JSON.parse(defaultValue);
-				return Array.isArray(parsed) ? parsed.map((e) => (typeof e !== "string" ? e.toString() : e)) : [];
+				const values = Array.isArray(parsed) ? parsed.map((e) => (typeof e !== "string" ? e.toString() : e)) : [];
+				return values.length > 0 ? values : [""];
 			} catch {
-				return [];
+				return [""];
 			}
 		}
 		return [];
 	});
 
+	function handleModeChange(e: React.ChangeEvent<HTMLSelectElement>) {
+		const next = e.target.value;
+		setMode(next);
+		if ((next === "in" || next === "notIn") && inValues.length === 0) {
+			setInValues([""]);
+		}
+	}
+
+	const listMode = mode === "in" || mode === "notIn";
+	const wrapClass = listMode
+		? "flex w-full min-w-0 flex-col items-stretch gap-2 md:flex-row md:items-start"
+		: "flex w-full min-w-0 flex-col items-stretch gap-2 md:flex-row md:items-center";
+	const modeSelectClass = "select w-full min-w-0 md:w-40 md:shrink-0";
+
 	if (type === "integer" || type === "float") {
 		return (
-			<div className="px-2 grid grid-cols-[30%_70%]">
+			<div className={wrapClass}>
 				<select
-					className="select rounded-r-none"
+					className={modeSelectClass}
 					required
 					name={`mode_${nameSuffix}`}
 					value={mode}
-					onChange={(e) => setMode(e.target.value)}
+					onChange={handleModeChange}
 				>
 					<option value="equals">Equals</option>
 					<option value="range">Range</option>
@@ -1413,65 +1551,31 @@ function InputElement({
 					<option value="deadValue">Dead value</option>
 				</select>
 				{mode === "null" || mode === "notNull" ? (
-					<div className="bg-base-300/30 rounded-l-md px-4 py-2 text-sm text-base-content/60 flex items-center">
+					<div className="flex min-h-10 w-full min-w-0 items-center rounded-lg bg-base-200 px-3 text-sm text-base-content/60 md:flex-1">
 						{mode === "null" ? "is empty" : "is not empty"}
 					</div>
-				) : mode === "in" || mode === "notIn" ? (
-					<div className="rounded-l-md space-y-2 py-2">
-						{inValues.map((val, idx) => (
-							<div key={idx} className="flex gap-2 items-center">
-								<input
-									type="number"
-									className="input input-primary input-sm w-full"
-									placeholder={`Value ${idx + 1}`}
-									value={val}
-									onChange={(e) => {
-										const newValues = [...inValues];
-										newValues[idx] = e.target.value;
-										setInValues(newValues);
-									}}
-									name={`filter_${nameSuffix}_${idx}`}
-								/>
-								<button
-									type="button"
-									className="btn btn-xs btn-ghost text-error"
-									onClick={() => {
-										setInValues(inValues.filter((_, i) => i !== idx));
-									}}
-									aria-label="Remove value"
-								>
-									×
-								</button>
-							</div>
-						))}
-						<button
-							type="button"
-							className="btn btn-xs btn-primary w-full"
-							onClick={() => setInValues([...inValues, ""])}
-						>
-							+ Add Value
-						</button>
-						<input
-							type="hidden"
-							name={`filter_${nameSuffix}`}
-							value={JSON.stringify(
-								inValues.filter((v) => v.trim() !== "").map((v) => (type === "integer" ? parseInt(v) : parseFloat(v)))
-							)}
-						/>
-					</div>
+				) : listMode ? (
+					<InValuesField
+						nameSuffix={nameSuffix}
+						values={inValues}
+						onChange={setInValues}
+						inputType="number"
+						placeholder="Value"
+						numeric={type === "integer" ? "integer" : "float"}
+					/>
 				) : mode === "range" ? (
-					<div className="grid grid-cols-[45%_10%_45%] items-center justify-items-center">
+					<div className="grid min-w-0 flex-1 grid-cols-1 items-center gap-1 md:grid-cols-[1fr_auto_1fr]">
 						<input
-							className="input input-primary w-full rounded-none"
+							className="input w-full min-w-0"
 							placeholder="Lower bound"
 							name={`filter_${nameSuffix}_gte`}
 							defaultValue={defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[0] : ""}
 							type="number"
 							required
 						/>
-						<span className="text-4xl text-primary">-</span>
+						<span className="px-1 text-xl leading-none text-base-content/40">–</span>
 						<input
-							className="input input-primary w-full rounded-l-none"
+							className="input w-full min-w-0"
 							placeholder="Upper bound"
 							name={`filter_${nameSuffix}_lte`}
 							defaultValue={defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[1] : ""}
@@ -1481,7 +1585,7 @@ function InputElement({
 					</div>
 				) : mode === "deadValue" ? (
 					<select
-						className="select select-primary rounded-l-md"
+						className="select w-full min-w-0 md:flex-1"
 						defaultValue={defaultValue && DeadValues.includes(defaultValue) ? defaultValue : "any"}
 						name={`filter_${nameSuffix}`}
 					>
@@ -1494,7 +1598,7 @@ function InputElement({
 					</select>
 				) : (
 					<input
-						className="input input-primary w-full rounded-l-none"
+						className="input w-full min-w-0 md:flex-1"
 						placeholder="Filter..."
 						name={`filter_${nameSuffix}`}
 						defaultValue={defaultValue && defaultValue.split(",").length === 1 ? defaultValue : undefined}
@@ -1506,13 +1610,13 @@ function InputElement({
 		);
 	} else if (type === "date") {
 		return (
-			<div className="px-2 grid grid-cols-[30%_70%]">
+			<div className={wrapClass}>
 				<select
-					className="select rounded-r-none"
+					className={modeSelectClass}
 					required
 					name={`mode_${nameSuffix}`}
 					value={mode}
-					onChange={(e) => setMode(e.target.value)}
+					onChange={handleModeChange}
 				>
 					<option value="equals">Equals</option>
 					<option value="range">Range</option>
@@ -1527,53 +1631,20 @@ function InputElement({
 					<option value="deadValue">Dead value</option>
 				</select>
 				{mode === "null" || mode === "notNull" ? (
-					<div className="bg-base-300/30 rounded-l-md px-4 py-2 text-sm text-base-content/60 flex items-center">
+					<div className="flex min-h-10 w-full min-w-0 items-center rounded-lg bg-base-200 px-3 text-sm text-base-content/60 md:flex-1">
 						{mode === "null" ? "is empty" : "is not empty"}
 					</div>
-				) : mode === "in" || mode === "notIn" ? (
-					<div className="rounded-l-md space-y-2 py-2">
-						{inValues.map((val, idx) => (
-							<div key={idx} className="flex gap-2 items-center">
-								<input
-									type="text"
-									className="input input-primary input-sm w-full"
-									placeholder={`ISO 8601 Date (${idx + 1})`}
-									value={val}
-									onChange={(e) => {
-										const newValues = [...inValues];
-										newValues[idx] = e.target.value;
-										setInValues(newValues);
-									}}
-									name={`filter_${nameSuffix}_${idx}`}
-								/>
-								<button
-									type="button"
-									className="btn btn-xs btn-ghost text-error"
-									onClick={() => {
-										setInValues(inValues.filter((_, i) => i !== idx));
-									}}
-									aria-label="Remove value"
-								>
-									×
-								</button>
-							</div>
-						))}
-						<button
-							type="button"
-							className="btn btn-xs btn-primary w-full"
-							onClick={() => setInValues([...inValues, ""])}
-						>
-							+ Add Date
-						</button>
-						<input
-							type="hidden"
-							name={`filter_${nameSuffix}`}
-							value={JSON.stringify(inValues.filter((v) => v.trim() !== ""))}
-						/>
-					</div>
+				) : listMode ? (
+					<InValuesField
+						nameSuffix={nameSuffix}
+						values={inValues}
+						onChange={setInValues}
+						inputType="text"
+						placeholder="ISO 8601 date"
+					/>
 				) : mode === "deadValue" ? (
 					<select
-						className="select select-primary rounded-l-md"
+						className="select w-full min-w-0 md:flex-1"
 						defaultValue={defaultValue && DeadValues.includes(defaultValue) ? defaultValue : "any"}
 						name={`filter_${nameSuffix}`}
 					>
@@ -1585,73 +1656,61 @@ function InputElement({
 						))}
 					</select>
 				) : mode === "range" ? (
-					<div className="grid grid-cols-[45%_10%_45%] items-center justify-items-center">
-						<div className="input input-primary w-full rounded-none">
+					<div className="grid min-w-0 flex-1 grid-cols-1 items-center gap-2 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+						<div className="flex min-w-0 flex-col gap-1">
 							<input
 								name={`filter_${nameSuffix}_gte_date`}
-								className={`w-5 ${gteDateSelected ? "text-success" : "text-error"}`}
-								defaultValue={
-									defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[0].split("T")[0] : ""
-								}
-								onChange={(e) => setGteDateSelected(!!e.target.value)}
+								className="input w-full min-w-0 text-base-content"
+								defaultValue={dateInputValue(defaultGte)}
 								type="date"
 								required
 							/>
 							<input
 								type="time"
-								className="text-center"
-								defaultValue={
-									defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[0].split("T")[1] : ""
-								}
+								className="input w-full min-w-0"
+								defaultValue={timeInputValue(defaultGte)}
 								name={`filter_${nameSuffix}_gte_time`}
 							/>
 						</div>
-						<span className="text-4xl text-primary">-</span>
-						<div className="input input-primary w-full rounded-l-none">
+						<span className="px-1 text-xl leading-none text-base-content/40">–</span>
+						<div className="flex min-w-0 flex-col gap-1">
 							<input
 								name={`filter_${nameSuffix}_lte_date`}
-								className={`w-5 ${lteDateSelected ? "text-success" : "text-error"}`}
-								defaultValue={
-									defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[1].split("T")[0] : ""
-								}
-								onChange={(e) => setLteDateSelected(!!e.target.value)}
+								className="input w-full min-w-0 text-base-content"
+								defaultValue={dateInputValue(defaultLte)}
 								type="date"
 								required
 							/>
 							<input
 								type="time"
-								className="text-center"
-								defaultValue={
-									defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[1].split("T")[1] : ""
-								}
+								className="input w-full min-w-0"
+								defaultValue={timeInputValue(defaultLte)}
 								name={`filter_${nameSuffix}_lte_time`}
 							/>
 						</div>
 					</div>
 				) : (
-					<div className="flex justify-start">
-						<div className="input input-primary w-full max-w-xs">
-							<input
-								name={`filter_${nameSuffix}_date`}
-								className="w-1/2"
-								defaultValue={defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[0] : ""}
-								type="date"
-								required
-							/>
-							<input
-								type="time"
-								className="text-center w-1/2"
-								defaultValue={defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[1] : ""}
-								name={`filter_${nameSuffix}_time`}
-							/>
-						</div>
+					<div className="input w-full min-w-0 md:flex-1">
+						<input
+							name={`filter_${nameSuffix}_date`}
+							className="w-1/2"
+							defaultValue={defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[0] : ""}
+							type="date"
+							required
+						/>
+						<input
+							type="time"
+							className="text-center w-1/2"
+							defaultValue={defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[1] : ""}
+							name={`filter_${nameSuffix}_time`}
+						/>
 					</div>
 				)}
 			</div>
 		);
 	} else if (type === "boolean") {
 		return (
-			<div className="px-2 grid grid-cols-[30%_70%]">
+			<div className="flex min-w-0 items-center gap-2 px-0">
 				<input type="hidden" name={`mode_${nameSuffix}`} value="boolean" />
 				<input
 					type="checkbox"
@@ -1663,13 +1722,13 @@ function InputElement({
 		);
 	} else {
 		return (
-			<div className="px-2 grid grid-cols-[30%_70%]">
+			<div className={wrapClass}>
 				<select
-					className="select rounded-r-none"
+					className={modeSelectClass}
 					required
 					name={`mode_${nameSuffix}`}
 					value={mode}
-					onChange={(e) => setMode(e.target.value)}
+					onChange={handleModeChange}
 				>
 					<option value="contains">Contains</option>
 					<option value="equals">Equals</option>
@@ -1682,53 +1741,20 @@ function InputElement({
 					<option value="deadValue">Dead value</option>
 				</select>
 				{mode === "null" || mode === "notNull" ? (
-					<div className="bg-base-300/30 rounded-l-md px-4 py-2 text-sm text-base-content/60 flex items-center">
+					<div className="flex min-h-10 w-full min-w-0 items-center rounded-lg bg-base-200 px-3 text-sm text-base-content/60 md:flex-1">
 						{mode === "null" ? "is empty" : "is not empty"}
 					</div>
-				) : mode === "in" || mode === "notIn" ? (
-					<div className="rounded-l-md space-y-2 py-2">
-						{inValues.map((val, idx) => (
-							<div key={idx} className="flex gap-2 items-center">
-								<input
-									type="text"
-									className="input input-primary input-sm w-full"
-									placeholder={`Value ${idx + 1}`}
-									value={val}
-									onChange={(e) => {
-										const newValues = [...inValues];
-										newValues[idx] = e.target.value;
-										setInValues(newValues);
-									}}
-									name={`filter_${nameSuffix}_${idx}`}
-								/>
-								<button
-									type="button"
-									className="btn btn-xs btn-ghost text-error"
-									onClick={() => {
-										setInValues(inValues.filter((_, i) => i !== idx));
-									}}
-									aria-label="Remove value"
-								>
-									×
-								</button>
-							</div>
-						))}
-						<button
-							type="button"
-							className="btn btn-xs btn-primary w-full"
-							onClick={() => setInValues([...inValues, ""])}
-						>
-							+ Add Value
-						</button>
-						<input
-							type="hidden"
-							name={`filter_${nameSuffix}`}
-							value={JSON.stringify(inValues.filter((v) => v.trim() !== ""))}
-						/>
-					</div>
+				) : listMode ? (
+					<InValuesField
+						nameSuffix={nameSuffix}
+						values={inValues}
+						onChange={setInValues}
+						inputType="text"
+						placeholder="Value"
+					/>
 				) : mode === "deadValue" ? (
 					<select
-						className="select select-primary rounded-l-md"
+						className="select w-full min-w-0 md:flex-1"
 						defaultValue={defaultValue && DeadValues.includes(defaultValue) ? defaultValue : "any"}
 						name={`filter_${nameSuffix}`}
 					>
@@ -1741,7 +1767,7 @@ function InputElement({
 					</select>
 				) : (
 					<input
-						className="input input-primary w-full rounded-l-none"
+						className="input w-full min-w-0 md:flex-1"
 						placeholder="Filter..."
 						name={`filter_${nameSuffix}`}
 						defaultValue={defaultValue === "undefined" ? undefined : defaultValue}

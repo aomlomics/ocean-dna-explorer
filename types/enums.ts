@@ -12,7 +12,7 @@ export enum DeadValueEnum {
 	"missing: restricted access: endangered species",
 	"missing: restricted access: human-identifiable",
 	"missing: restricted access",
-	"missing",
+	missing,
 	"not collected",
 	"not provided",
 	"restricted access",
@@ -25,8 +25,11 @@ export enum DeadValueEnum {
 	"missing: endangered species",
 	"missing: human-identifiable"
 }
-export const DeadValues = Object.values(DeadValueEnum).filter((v) => isNaN(Number(v))) as string[];
-export const DeadValueNumbers = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
+export const DeadValues = Object.values(DeadValueEnum).filter((v) => typeof v === "string") as [string, ...string[]];
+export const DeadValueNumbers = Object.values(DeadValueEnum).filter((v) => typeof v === "number") as [
+	number,
+	...number[]
+];
 
 export const DeadBooleanToEnum = {
 	false: "false",

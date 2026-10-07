@@ -1,10 +1,12 @@
-import { BlastRequest, NetworkPacket, Role } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
-import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
-import { BlastQuery, BlastQueryResult } from "../generated/prisma/client";
+import type { BlastRequest, NetworkPacket, Role } from "@/types/globals";
+import { AppError, RolePermissions } from "@/types/objects";
+import type { BlastQueryModel, BlastQueryResultModel } from "@/app/generated/prisma/models";
 import { COMPRESSION_FORMAT, decompressURIComponent } from "./utils";
 
-export function parseBlastRequest(searchParams: URLSearchParams, options?: { safe?: true; noPrefix?: true }) {
+export function parseBlastRequest(
+	searchParams: URLSearchParams,
+	options?: { safe?: true; noPrefix?: true; noDelete?: true }
+) {
 	const tempQueries = searchParams.getAll(options?.noPrefix ? "query" : "blastQuery");
 	let queries = tempQueries.reduce(
 		(acc, q) => {
@@ -12,14 +14,14 @@ export function parseBlastRequest(searchParams: URLSearchParams, options?: { saf
 			//ignore queries with too many args
 			if (split.length > 2) {
 				if (!options?.safe)
-					throw new Error("Format is either <sequence> or <query>,<sequence>. More than 2 values were provided.");
+					throw new AppError("Format is either <sequence> or <query>,<sequence>. More than 2 values were provided.");
 			} else {
 				//ignore queries with too few args when more than one query is provided
 				if (tempQueries.length > 1 && split.length === 1) {
 					if (!options?.safe)
-						throw new Error("If more than one sequence is provided, all sequences must have query names.");
+						throw new AppError("If more than one sequence is provided, all sequences must have query names.");
 				} else {
-					acc.push(q.startsWith(COMPRESSION_FORMAT) || split.length === 1 ? q : [split[0], split[1]]);
+					acc.push(q.startsWith(COMPRESSION_FORMAT) || split.length === 1 ? q : [split[0]!, split[1]!]);
 				}
 			}
 
@@ -34,52 +36,56 @@ export function parseBlastRequest(searchParams: URLSearchParams, options?: { saf
 			!Array.isArray(queries) ||
 			!queries.every((e) => typeof e === "string" || (Array.isArray(e) && e.every((ee) => typeof ee === "string")))
 		) {
-			throw new Error(
+			throw new AppError(
 				`Compressed queries must be an array of strings or string arrays in ${COMPRESSION_FORMAT} format.`
 			);
 		}
 	}
 
-	searchParams.delete(options?.noPrefix ? "query" : "blastQuery");
 	const database = searchParams.get(options?.noPrefix ? "database" : "blastDatabase");
-	searchParams.delete(options?.noPrefix ? "database" : "blastDatabase");
 	const save = searchParams.get(options?.noPrefix ? "save" : "blastSave");
-	searchParams.delete(options?.noPrefix ? "save" : "blastSave");
 
 	//options
 	const task = searchParams.get("task");
-	searchParams.delete("task");
 	const max_target_seqs = searchParams.get("max_target_seqs");
-	searchParams.delete("max_target_seqs");
 	const evalue = searchParams.get("evalue");
-	searchParams.delete("evalue");
 	const perc_identity = searchParams.get("perc_identity");
-	searchParams.delete("perc_identity");
 	const qcov_hsp_perc = searchParams.get("qcov_hsp_perc");
-	searchParams.delete("qcov_hsp_perc");
+
+	if (!options?.noDelete) {
+		searchParams.delete(options?.noPrefix ? "query" : "blastQuery");
+		searchParams.delete(options?.noPrefix ? "database" : "blastDatabase");
+		searchParams.delete(options?.noPrefix ? "save" : "blastSave");
+
+		searchParams.delete("task");
+		searchParams.delete("max_target_seqs");
+		searchParams.delete("evalue");
+		searchParams.delete("perc_identity");
+		searchParams.delete("qcov_hsp_perc");
+	}
 
 	try {
 		if (!queries.length) {
 			if (database != null) {
-				throw new Error("Must provide a blast query with blastDatabase option.");
+				throw new AppError("Must provide a blast query with blastDatabase option.");
 			}
 			if (task != null) {
-				throw new Error("Must provide a blast query with task option.");
+				throw new AppError("Must provide a blast query with task option.");
 			}
 			if (max_target_seqs != null) {
-				throw new Error("Must provide a blast query with max_target_seqs option.");
+				throw new AppError("Must provide a blast query with max_target_seqs option.");
 			}
 			if (evalue != null) {
-				throw new Error("Must provide a blast query with evalue option.");
+				throw new AppError("Must provide a blast query with evalue option.");
 			}
 			if (perc_identity != null) {
-				throw new Error("Must provide a blast query with perc_identity option.");
+				throw new AppError("Must provide a blast query with perc_identity option.");
 			}
 			if (qcov_hsp_perc != null) {
-				throw new Error("Must provide a blast query with qcov_hsp_perc option.");
+				throw new AppError("Must provide a blast query with qcov_hsp_perc option.");
 			}
 			if (save != null) {
-				throw new Error("Must provide a blast query with blastSave option.");
+				throw new AppError("Must provide a blast query with blastSave option.");
 			}
 		}
 
@@ -95,7 +101,7 @@ export function parseBlastRequest(searchParams: URLSearchParams, options?: { saf
 				} else if (save.toLowerCase() === "false") {
 					blast.save = false;
 				} else {
-					throw new Error('The blastSave option must be "true" or "false"');
+					throw new AppError('The blastSave option must be "true" or "false"');
 				}
 			}
 
@@ -105,30 +111,30 @@ export function parseBlastRequest(searchParams: URLSearchParams, options?: { saf
 				blastOptions.task = task;
 			}
 			if (max_target_seqs) {
-				const parsed = parseInt(max_target_seqs);
-				if (isNaN(parsed)) {
-					throw new Error("The max_target_seqs must be an integer.");
+				const parsed = Number(max_target_seqs);
+				if (!Number.isInteger(parsed)) {
+					throw new AppError("The max_target_seqs must be an integer.");
 				}
 				blastOptions.max_target_seqs = parsed;
 			}
 			if (evalue) {
-				const parsed = parseFloat(evalue);
-				if (isNaN(parsed)) {
-					throw new Error("The evalue must be a float.");
+				const parsed = Number(evalue);
+				if (!Number.isFinite(parsed)) {
+					throw new AppError("The evalue must be a float.");
 				}
 				blastOptions.evalue = parsed;
 			}
 			if (perc_identity) {
-				const parsed = parseFloat(perc_identity);
-				if (isNaN(parsed)) {
-					throw new Error("The perc_identity must be a float.");
+				const parsed = Number(perc_identity);
+				if (!Number.isFinite(parsed)) {
+					throw new AppError("The perc_identity must be a float.");
 				}
 				blastOptions.perc_identity = parsed;
 			}
 			if (qcov_hsp_perc) {
-				const parsed = parseFloat(qcov_hsp_perc);
-				if (isNaN(parsed)) {
-					throw new Error("The qcov_hsp_perc must be a float.");
+				const parsed = Number(qcov_hsp_perc);
+				if (!Number.isFinite(parsed)) {
+					throw new AppError("The qcov_hsp_perc must be a float.");
 				}
 				blastOptions.qcov_hsp_perc = parsed;
 			}
@@ -155,52 +161,6 @@ export function insertBlastIntoQuery(blast: BlastRequest | undefined, query: URL
 	}
 }
 
-export function blastCookieHasBlast(blast: BlastRequest | undefined, cookie: string | undefined) {
-	if (blast && cookie) {
-		let bad = false;
-		const parsedCookie = decodeURIComponent(cookie)
-			.split(";")
-			.reduce((acc, c) => {
-				const trimmed = c.trim();
-				if (trimmed) {
-					const parsed = parseBlastRequest(new URLSearchParams(trimmed), { noPrefix: true, safe: true });
-					if (parsed) {
-						acc.push(parsed);
-					} else {
-						bad = true;
-					}
-				}
-
-				return acc;
-			}, [] as BlastRequest[]);
-
-		if (bad) {
-			return false;
-		}
-
-		if (
-			parsedCookie.some(
-				(pc) =>
-					blast.assay_name === pc.assay_name &&
-					blast.queries.every((q) =>
-						typeof q === "string"
-							? pc.queries.includes(q)
-							: pc.queries.find((pcq) => Array.isArray(pcq) && pcq[0] === q[0] && pcq[1] === q[1])
-					) &&
-					((!blast.options && !pc.options) ||
-						(blast.options &&
-							pc.options &&
-							Object.keys(blast.options).length === Object.keys(pc.options).length &&
-							Object.entries(blast.options).every(([k, v]) => v === pc.options![k as keyof typeof pc.options])))
-			)
-		) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
 function blastRequestToString(blast: BlastRequest) {
 	return (
 		blast.queries.map((q) => `query=${q}`).join("&") +
@@ -214,27 +174,24 @@ function blastRequestToString(blast: BlastRequest) {
 	);
 }
 
-export async function fetchBlast(
-	blast: BlastRequest,
-	auth?: { role: Role | undefined; token: string | null },
-	cookieStore?: ReadonlyRequestCookies
-) {
+export async function fetchBlast(blast: BlastRequest, auth?: { role: Role | undefined; token: string | null }) {
 	if (blast.save && (!auth?.role || !RolePermissions[auth.role].includes("contribute"))) {
-		throw new Error("You must be signed in with the contribute permission to save BLAST queries.");
-	}
+		if (!auth) {
+			throw new AppError("You must be signed in to save BLAST queries.", 401);
+		}
 
-	let shouldblastSave = false;
-	const savedBlasts = cookieStore?.get("savedBlasts")?.value || "";
-	if (blast.save && auth?.token && !blastCookieHasBlast(blast, savedBlasts)) {
-		shouldblastSave = true;
+		if (!auth.role || !RolePermissions[auth.role].includes("contribute")) {
+			throw new AppError("You must be signed in with the contribute permission to save BLAST queries.", 403);
+		}
 	}
 
 	let res;
 	const blastRequestString = blastRequestToString(blast);
+
 	try {
 		res = await fetch(
 			`${process.env.NEXT_PUBLIC_SERVER_URL}/blast?${blastRequestString}`,
-			shouldblastSave
+			blast.save
 				? {
 						method: "POST",
 						headers: {
@@ -243,26 +200,22 @@ export async function fetchBlast(
 					}
 				: undefined
 		);
-	} catch (err) {
-		throw new Error("Could not reach BLAST server.");
+	} catch {
+		throw new AppError("Could not reach BLAST server.", 503);
 	}
+
 	if (res.ok) {
 		const response = (await res.json()) as NetworkPacket;
-		if (response.statusMessage === "success") {
-			if (shouldblastSave && !response.dateCalculated) {
-				cookieStore?.set("savedBlasts", savedBlasts + blastRequestString + ";", { maxAge: 8 * 60 * 60 });
-			}
 
-			return {
-				BlastQueryResults: response.result as BlastQueryResult[],
-				existingBlastDate: response.dateCalculated as BlastQuery["dateCalculated"]
-			};
-		} else if (response.statusMessage === "error") {
-			throw new Error("Response from BLAST server: " + response.error);
-		} else {
-			throw new Error("Could not reach BLAST server.");
+		if (response.statusMessage === "error") {
+			throw new AppError("Response from BLAST server: " + response.error, 500);
 		}
+
+		return {
+			BlastQueryResults: response.result as BlastQueryResultModel[],
+			existingBlastDate: response.dateCalculated as BlastQueryModel["dateCalculated"]
+		};
 	} else {
-		throw new Error("Could not reach BLAST server.");
+		throw new AppError(`BLAST server returned HTTP ${res.status}.`, res.status);
 	}
 }

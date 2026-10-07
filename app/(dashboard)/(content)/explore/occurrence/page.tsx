@@ -1,12 +1,14 @@
 import ExplorePage from "@/app/components/explore/ExplorePage";
-import { Metadata } from "next";
+import TableMetadata from "@/types/tableMetadata";
+import type { Metadata } from "next";
 
+const tableMeta = TableMetadata.occurrence;
+const title = "Explore " + tableMeta.plural;
 export const metadata: Metadata = {
-	title: "Explore Occurrences"
+	title,
+	description: title + ": " + tableMeta.description
 };
 
-const Page = async () => {
+export default function Occurrence() {
 	return <ExplorePage table="occurrence" tableConfig={[]} />;
-};
-
-export default Page;
+}

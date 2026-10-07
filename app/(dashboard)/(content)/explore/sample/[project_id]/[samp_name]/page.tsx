@@ -1,23 +1,61 @@
-import DataDisplay from "@/app/components/DataDisplay";
-import { prisma } from "@/app/helpers/prisma";
+import DataDisplay from "@/app/components/explore/DataDisplay";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import MapComponent from "@/app/components/map/Map";
 import TableMetadata from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 import TaxonomyDonutChart from "@/app/components/charts/TaxonomyDonutChart";
-import { Suspense } from "react";
 import StatCard from "@/app/components/explore/StatCard";
 import DropdownCard from "@/app/components/explore/DropdownCard";
-import { EyeIcon, AnalysisIcon, AssayIcon, FishIcon, LocationIcon } from "@/app/components/icons";
-import { Assay, Sample } from "@/app/generated/prisma/client";
+import {
+	SampleIcon,
+	OccurrenceIcon,
+	AnalysisIcon,
+	AssayIcon,
+	TaxonomyIcon,
+	LocationIcon
+} from "@/app/components/icons";
+import type { AnalysisModel, AssayModel } from "@/app/generated/prisma/models";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{ project_id: string; samp_name: string }>;
+}): Promise<Metadata> {
+	const { project_id, samp_name } = await decodeRouteParams(params);
+
+	const sample = await trustedPrisma.sample.findUnique({
+		where: {
+			project_id_samp_name: {
+				project_id,
+				samp_name
+			}
+		},
+		select: {
+			id: true
+		}
+	});
+
+	if (sample) {
+		return {
+			title: `${samp_name} | ${TableMetadata.sample.plural}`
+		};
+	} else {
+		return {
+			title: "Sample not found"
+		};
+	}
+}
 
 export default async function Samp_name({ params }: { params: Promise<{ project_id: string; samp_name: string }> }) {
 	const { project_id, samp_name } = await decodeRouteParams(params);
 
-	const sample = await prisma.sample.findUnique({
+	const sample = await trustedPrisma.sample.findUnique({
 		where: {
 			project_id_samp_name: {
 				project_id,
@@ -25,12 +63,29 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 			}
 		},
 		include: {
+			Taxonomies: {
+				omit: {
+					id: true,
+					verbatimIdentification: true
+				}
+			},
 			Libraries: {
 				select: {
+					_count: {
+						select: {
+							Occurrences: true
+						}
+					},
 					Assay: {
 						select: {
 							assay_name: true,
 							target_gene: true
+						}
+					},
+					Analyses: {
+						distinct: ["analysis_run_name"],
+						select: {
+							analysis_run_name: true
 						}
 					}
 				}
@@ -39,13 +94,22 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 	});
 
 	if (!sample) notFound();
-	const { Libraries: _, ...justSample } = sample;
-	const uniqueAssays = [] as { assay_name: Assay["assay_name"]; target_gene: Assay["target_gene"] }[];
-	for (const lib of sample.Libraries) {
+	const { Taxonomies, Libraries, ...justSample } = sample;
+
+	const uniqueAssays = [] as { assay_name: AssayModel["assay_name"]; target_gene: AssayModel["target_gene"] }[];
+	for (const lib of Libraries) {
 		if (!uniqueAssays.some((a) => lib.Assay.assay_name === a.assay_name)) {
 			uniqueAssays.push(lib.Assay);
 		}
 	}
+
+	const uniqueAnalyses = Libraries.reduce(
+		(acc, lib) => {
+			lib.Analyses.forEach((a) => acc.add(a.analysis_run_name));
+			return acc;
+		},
+		new Set() as Set<AnalysisModel["analysis_run_name"]>
+	);
 
 	return (
 		<div id="sample" className="space-y-6 pb-8">
@@ -58,10 +122,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 						</Link>
 					</li>
 					<li>
-						<Link
-							href={`/explore/project/${encodeURIComponent(project_id)}`}
-							className="text-primary hover:text-primary-focus"
-						>
+						<Link href={exploreUrl({ table: "project", project_id })} className="text-primary hover:text-primary-focus">
 							{project_id}
 						</Link>
 					</li>
@@ -77,15 +138,15 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 			<header>
 				<div className="flex gap-2 items-center">
 					<TitleHoverTooltip tooltip={TableMetadata.sample.description}>
-						<h1 className="text-4xl font-semibold text-primary mb-2">{samp_name}</h1>
+						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+							<SampleIcon className="size-8! shrink-0" />
+							<span className="min-w-0 wrap-anywhere">{samp_name}</span>
+						</h1>
 					</TitleHoverTooltip>
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This sample is a part of the{" "}
-					<Link
-						href={`/explore/project/${encodeURIComponent(project_id)}`}
-						className="text-primary hover:text-primary-focus"
-					>
+					<Link href={exploreUrl({ table: "project", project_id })} className="text-primary hover:text-primary-focus">
 						{project_id}
 					</Link>{" "}
 					project
@@ -112,22 +173,8 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 					<div className="grid grid-cols-3 gap-4">
 						<StatCard
 							title="Occurrences"
-							query={async () =>
-								(
-									await prisma.occurrence.findMany({
-										where: {
-											Library: {
-												project_id,
-												samp_name
-											}
-										},
-										select: {
-											featureid: true
-										}
-									})
-								).length
-							}
-							icon={<EyeIcon />}
+							value={Libraries.reduce((count, lib) => count + lib._count.Occurrences, 0)}
+							icon={<OccurrenceIcon />}
 							link={`/search?table=occurrence&advanced=[["sample","samp_name","equals","${samp_name}"]]`}
 							layout="horizontal"
 							tooltip="View as Search"
@@ -136,53 +183,21 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 						<DropdownCard
 							table="analysis"
 							icon={<AnalysisIcon />}
-							query={async () =>
-								await prisma.analysis.findMany({
-									where: {
-										Occurrences: {
-											some: {
-												Library: {
-													project_id,
-													samp_name
-												}
-											}
-										}
-									},
-									select: {
-										analysis_run_name: true
-									}
-								})
-							}
+							items={Array.from(uniqueAnalyses).reduce(
+								(acc, analysis_run_name) => [...acc, { project_id, analysis_run_name }],
+								[] as {
+									project_id: AnalysisModel["project_id"];
+									analysis_run_name: AnalysisModel["analysis_run_name"];
+								}[]
+							)}
 						/>
 
 						<DropdownCard table="assay" items={uniqueAssays.map((a) => a.assay_name)} icon={<AssayIcon />} />
 
 						<StatCard
 							title="Taxonomies"
-							query={async () =>
-								(
-									await prisma.taxonomy.findMany({
-										where: {
-											Assignments: {
-												some: {
-													Occurrences: {
-														some: {
-															Library: {
-																project_id,
-																samp_name
-															}
-														}
-													}
-												}
-											}
-										},
-										select: {
-											taxonomy: true
-										}
-									})
-								).length
-							}
-							icon={<FishIcon />}
+							value={Taxonomies.length}
+							icon={<TaxonomyIcon />}
 							link={`/search?table=taxonomy&advanced=[["sample","samp_name","equals","${samp_name}"]]`}
 							layout="horizontal"
 							tooltip="View as Search"
@@ -207,54 +222,15 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 			</div>
 
 			{/* Taxonomy Relative Abundance Chart */}
-			<Suspense>
-				<SuspenseTaxonomyDonutChart project_id={project_id} samp_name={samp_name} />
-			</Suspense>
-		</div>
-	);
-}
-
-async function SuspenseTaxonomyDonutChart({
-	project_id,
-	samp_name
-}: {
-	project_id: Sample["project_id"];
-	samp_name: Sample["samp_name"];
-}) {
-	const taxonomies = await prisma.taxonomy.findMany({
-		where: {
-			Assignments: {
-				some: {
-					Occurrences: {
-						some: {
-							Library: {
-								project_id,
-								samp_name
-							}
-						}
-					}
-				}
-			}
-		},
-		omit: {
-			id: true,
-			verbatimIdentification: true
-		}
-	});
-
-	if (!taxonomies.length) {
-		return <></>;
-	}
-
-	return (
-		<div id="taxonomyChart">
-			<h2 className="text-xl font-medium mb-4">
-				<span className="text-base-content/90">
-					Taxonomies found in this <span className="text-primary font-bold">Sample</span>
-				</span>
-			</h2>
-			<div className="w-full">
-				<TaxonomyDonutChart taxonomies={taxonomies} />
+			<div id="taxonomyChart">
+				<h2 className="text-xl font-medium mb-4">
+					<span className="text-base-content/90">
+						Taxonomies found in this <span className="text-primary font-bold">Sample</span>
+					</span>
+				</h2>
+				<div className="w-full">
+					<TaxonomyDonutChart taxonomies={Taxonomies} />
+				</div>
 			</div>
 		</div>
 	);

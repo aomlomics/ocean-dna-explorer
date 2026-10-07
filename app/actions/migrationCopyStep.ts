@@ -1,12 +1,10 @@
 "use server";
 
-import TableMetadata, { TableNames } from "@/types/tableMetadata";
-import { Prisma } from "../generated/prisma/client";
+import TableMetadata, { type ModelName, TableNames } from "@/types/tableMetadata";
 import { prisma } from "../helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { parseSchemaToObject } from "../helpers/schema";
-import { capitalizeTable, uncapitalizeTable } from "../helpers/utils";
 import { updateManyRaw } from "../helpers/queries";
 
 function exists(value: any) {
@@ -35,14 +33,14 @@ export default async function migrationCopyStepAction() {
 
 				return acc;
 			},
-			{} as Record<Uncapitalize<Prisma.ModelName>, string[]>
+			{} as Record<Uncapitalize<ModelName>, string[]>
 		);
 
 		await prisma.$transaction(async (tx) => {
 			for (const t in oldFieldsByTable) {
-				const table = t as Uncapitalize<Prisma.ModelName>;
+				const table = t as Uncapitalize<ModelName>;
 
-				// @ts-ignore
+				// @ts-expect-error dynamically accessing prisma client
 				const result = (await tx[table].findMany({
 					select: {
 						...oldFieldsByTable[table].reduce(
@@ -54,31 +52,29 @@ export default async function migrationCopyStepAction() {
 				})) as Record<string, any>[];
 
 				if (result.length) {
-					for (let i = 0; i < result.length; i++) {
+					for (const row of result) {
 						for (const field of oldFieldsByTable[table]) {
-							if (exists(result[i][field])) {
-								parseSchemaToObject(field + "__TEMP", result[i][field].toString(), result[i], table);
+							if (exists(row[field])) {
+								parseSchemaToObject(field + "__TEMP", row[field].toString(), row, table);
 							} else {
-								result[i][field + "__TEMP"] = null;
+								row[field + "__TEMP"] = null;
 							}
 
-							delete result[i][field];
+							delete row[field];
 						}
 					}
 
-					//only update rows where the changed fields had a value
-					const filteredResult = result.filter((row) =>
-						Object.entries(row).some(([field, value]) => field !== "id" && value)
+					await updateManyRaw(
+						tx,
+						table,
+						result.filter((row) => Object.entries(row).some(([field, value]) => field !== "id" && value)),
+						"id"
 					);
-					if (filteredResult.length) {
-						const modelName = capitalizeTable(table);
-						await updateManyRaw(tx, modelName, filteredResult);
-					}
 				}
 			}
 		});
 	} catch (err) {
-		console.log(err);
+		console.error(err);
 		throw err;
 	}
 }

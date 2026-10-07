@@ -134,6 +134,33 @@
 	z-index: var(--z-max);
 }
 
+/* Bottom-left FAB flower: daisyUI's arc is the top-left quadrant. Reuse their
+   RTL --flip-degree math so a left-corner FAB opens up and to the right.
+   Viewport placement lives on the wrapper in TrustedFab, so undo daisyUI's
+   fixed/end-4/bottom-4 on this node. Skip the trigger and close control —
+   those stay at --position: 0 so the closed shield is not translated up the arc. */
+.fab.fab-start {
+	position: relative;
+	inset: auto;
+}
+
+.fab-flower.fab-start > *:not(:first-child):not(.fab-close) {
+	transform: translateX(calc(cos(var(--flip-degree)) * var(--position)))
+		translateY(calc(sin(var(--flip-degree)) * -1 * var(--position)));
+}
+
+/* DaisyUI select/input already have a border. Their default focus, focus-within,
+   and :open states add an offset outline on top of that, which reads as a double ring.
+   One indicator: the existing border turns primary. */
+.search-focus-border :is(.select, .input):focus,
+.search-focus-border :is(.select, .input):focus-visible,
+.search-focus-border :is(.select, .input):focus-within,
+.search-focus-border :is(.select, .input):open {
+	outline: none;
+	outline-offset: 0;
+	border-color: var(--color-primary);
+}
+
 @keyframes gradient-organic {
 	0% {
 		transform: translate(0, 0) scale(1);
@@ -177,6 +204,24 @@
 }
 
 @tailwind utilities;
+
+/*
+  daisyUI table-pin-cols is `sticky; left: 0; right: 0` on EVERY <th>.
+  Our explore tables use <th> for all column headers, so they stack over each other.
+  Keep freeze-pane on the first and last columns only.
+*/
+.table-pin-cols thead th:not(:first-child):not(:last-child) {
+	left: auto;
+	right: auto;
+}
+
+.table-pin-cols tr > th:first-child {
+	right: auto;
+}
+
+.table-pin-cols tr > th:last-child {
+	left: auto;
+}
 
 @layer base {
 	:root {
@@ -362,6 +407,51 @@
 	display: none !important;
 }
 
+/* Same two-file swap as NodeLogo: Clerk's <img> sizes the slot, CSS paints both theme files. */
+.ode-signin-page [class*="cl-logoBox"] {
+	position: relative;
+	width: 100%;
+	max-width: 22.5rem;
+	height: 5rem;
+	margin-inline: auto;
+}
+
+.ode-signin-page [class*="cl-logoImage"] {
+	opacity: 0;
+	width: 100% !important;
+	height: 100% !important;
+	max-height: none !important;
+}
+
+.ode-signin-page [class*="cl-logoBox"]::before,
+.ode-signin-page [class*="cl-logoBox"]::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	pointer-events: none;
+}
+
+.ode-signin-page [class*="cl-logoBox"]::before {
+	background-image: url("/images/node_logo_dark_mode.svg");
+	opacity: 0;
+}
+
+.ode-signin-page [class*="cl-logoBox"]::after {
+	background-image: url("/images/node_logo_light_mode.svg");
+	opacity: 1;
+}
+
+[data-theme="dark"] .ode-signin-page [class*="cl-logoBox"]::before {
+	opacity: 1;
+}
+
+[data-theme="dark"] .ode-signin-page [class*="cl-logoBox"]::after {
+	opacity: 0;
+}
+
 /* cl-socialButtonsRoot is the outer wrapper; its direct child (cl-socialButtons) is
    the actual flex container. Force row layout and centering here since Clerk's own
    stylesheet overrides Tailwind utility classes passed via appearance.elements. */
@@ -381,11 +471,11 @@
 /* Clerk renders button text in a child span (cl-socialButtonsBlockButtonText) with its
    own grey color that doesn't inherit from the parent button element. */
 [data-theme="dark"] .ode-signin-page [class*="cl-socialButtonsBlockButtonText"] {
-	color: #E2E8F0 !important;
+	color: #e2e8f0 !important;
 }
 [data-theme="light"] .ode-signin-page [class*="cl-socialButtonsBlockButtonText"],
 .ode-signin-page [class*="cl-socialButtonsBlockButtonText"] {
-	color: #233D7F !important;
+	color: #233d7f !important;
 }
 
 /* ============================================================
@@ -402,6 +492,16 @@ body:has(.tour-layout-root) #unfocusButton {
 
 body:has(.tour-layout-root) {
 	overflow: hidden;
+}
+
+/* Tour pages sit inside the regular content <main>, which is otherwise a
+   centered 75–85% column. Make that shell full-viewport so the tour does not
+   have to break out with 100vw (that is what caused the right-side gap). */
+body:has(.tour-layout-root) #main-content {
+	width: 100%;
+	max-width: none;
+	margin: 0;
+	min-height: 100dvh;
 }
 
 /* Shared motion background (login-page style, slightly more movement). */
@@ -478,11 +578,11 @@ body:has(.tour-layout-root) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.ambient-word-breathe {
+	.ambient-word-breathe,
+	.ambient-logo {
 		animation: none;
 	}
 }
-
 
 /* ---------- /sponsors ---------- */
 .sponsors-title {
@@ -555,7 +655,6 @@ body:has(.tour-layout-root) {
 	}
 }
 
-
 @keyframes sponsorsTitleIn {
 	from {
 		opacity: 0;
@@ -577,3 +676,27 @@ body:has(.tour-layout-root) {
 	}
 }
 
+/* 404 page ROV icon — theme color comes from bg-primary on the element */
+.not-found-rov {
+	-webkit-mask: url("/images/icons/rov_icon.svg") top center / contain no-repeat;
+	mask: url("/images/icons/rov_icon.svg") top center / contain no-repeat;
+}
+
+:root {
+	--clerk-color-primary: #233d7f;
+	--clerk-color-background: #f4f3f2;
+	--clerk-color-foreground: #2d3748;
+	--clerk-color-text-secondary: #233d7f;
+}
+
+[data-theme="dark"] {
+	--clerk-color-primary: #233d7f;
+	--clerk-color-background: #141824;
+	--clerk-color-foreground: #e2e8f0;
+	--clerk-color-text-secondary: #7dbae5;
+}
+
+.map-popup .leaflet-popup-content {
+	min-width: var(--map-popup-min-width);
+	max-width: var(--map-popup-max-width);
+}

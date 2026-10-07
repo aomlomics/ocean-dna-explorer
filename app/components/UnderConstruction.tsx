@@ -19,7 +19,9 @@ export default function UnderConstruction({ message }: UnderConstructionProps) {
 						priority
 					/>
 				</div>
-				<h1 className="text-primary font-bold text-6xl text-center -mt-14 mb-4">The Ocean DNA Explorer is Under Construction</h1>
+				<h1 className="text-primary font-bold text-6xl text-center -mt-14 mb-4">
+					The Ocean DNA Explorer is Under Construction
+				</h1>
 				<div className="bg-base-200 shadow-sm rounded-3xl p-8">
 					<p className="text-main text-center mb-6">{message || defaultMessage}</p>
 				</div>

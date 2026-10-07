@@ -1,17 +1,25 @@
-import { prisma } from "@/app/helpers/prisma";
-import { assay_type } from "@/app/generated/prisma/client";
+import { trustedPrisma } from "@/app/helpers/prisma";
+import { assay_type } from "@/app/generated/prisma/enums";
 import { getOptions } from "@/app/helpers/utils";
 import ExplorePage from "@/app/components/explore/ExplorePage";
-import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
+import type { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
+import TableMetadata from "@/types/tableMetadata";
+import type { Metadata } from "next";
+
+const tableMeta = TableMetadata.project;
+const title = "Explore " + tableMeta.plural;
+export const metadata: Metadata = {
+	title,
+	description: title + ": " + tableMeta.description
+};
 
 export default async function Project() {
-	const projects = await prisma.project.findMany({
+	const projects = await trustedPrisma.project.findMany({
 		select: {
 			institution: true,
 			study_factor: true
 		}
 	});
-	if (!projects) return <>Loading...</>;
 
 	const filterOptions = getOptions(projects);
 

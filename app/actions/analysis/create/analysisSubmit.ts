@@ -1,12 +1,17 @@
 "use server";
 
-import { Analysis, Occurrence, Tag } from "@/app/generated/prisma/client";
+import type { AnalysisModel, AssignmentModel, OccurrenceModel, TagModel } from "@/app/generated/prisma/models";
 import { parseAnalysisFiles } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
-import { Channel, createProgressStream } from "@/app/helpers/progress";
-import { handlePrismaError } from "@/app/helpers/queries";
+import { type Channel, createProgressStream } from "@/app/helpers/progress";
+import {
+	connectFeatsToSamples,
+	connectTaxaToSamples,
+	handlePrismaError,
+	PRISMA_PARAM_LIMIT
+} from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
-import { RolePermissions } from "@/types/objects";
+import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";
 
@@ -14,8 +19,8 @@ async function doSubmit(
 	analysisChannel: Channel,
 	assignmentsChannel: Channel,
 	occurrencesChannel: Channel,
-	trusted: Analysis["trusted"],
-	tagNames: Tag["tagName"][]
+	trusted: AnalysisModel["trusted"],
+	tagNames: TagModel["tagName"][]
 ) {
 	const { userId, sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -25,8 +30,9 @@ async function doSubmit(
 		return;
 	}
 
+	let parseResult;
 	try {
-		const parseResult = await parseAnalysisFiles({
+		parseResult = await parseAnalysisFiles({
 			analysisChannel,
 			assignmentsChannel,
 			occurrencesChannel,
@@ -35,7 +41,12 @@ async function doSubmit(
 		if (!parseResult) {
 			return;
 		}
-		const { analysis, features, taxonomies, assignments, occurrences } = parseResult;
+	} catch {
+		return;
+	}
+
+	try {
+		const { analysis, features, taxonomies, assignments, occurrences, libIds } = parseResult;
 
 		await analysisChannel.stream.message(
 			"All files successfully parsed into database format. Parsing data into database.",
@@ -50,78 +61,89 @@ async function doSubmit(
 			75
 		);
 
-		//check that lib_ids in occurrences are part of the project for this analysis AND they have the assay for this analysis
-		const libIds = new Set() as Set<Occurrence["lib_id"]>;
-		for (const occ of occurrences) {
-			libIds.add(occ.lib_id);
-		}
-
 		//error checks
-		const [dbProject, dbAssay, dbLibraries, dbTags] = await prisma.$transaction([
-			prisma.project.findUnique({
-				where: {
-					project_id: analysis.project_id
-				},
-				select: {
-					userIds: true
-				}
-			}),
-			prisma.assay.findUnique({
-				where: {
-					assay_name: analysis.assay_name
-				},
-				select: {
-					assay_name: true
-				}
-			}),
-			prisma.library.findMany({
-				where: {
-					project_id: analysis.project_id,
-					assay_name: analysis.assay_name,
-					lib_id: {
-						in: Array.from(libIds)
+		const { dbProject, dbAssay, dbLibraries, dbTags, dbOccs } = await prisma.$transaction(
+			async (tx) => {
+				const dbProject = await tx.project.findUnique({
+					where: {
+						project_id: analysis.project_id
+					},
+					select: {
+						userIds: true
 					}
-				},
-				select: {
-					lib_id: true,
-					Occurrences: trusted
-						? {
-								where: {
-									Analysis: {
-										trusted: true
-									}
-								},
-								select: {
-									analysis_run_name: true,
-									featureid: true
-								}
-							}
-						: false
-				}
-			}),
-			prisma.tag.findMany({
-				where: {
-					tagName: {
-						in: tagNames
+				});
+
+				const dbAssay = await tx.assay.findUnique({
+					where: {
+						assay_name: analysis.assay_name
+					},
+					select: {
+						assay_name: true
 					}
-				},
-				select: {
-					tagName: true
-				}
-			})
-		]);
+				});
+
+				const dbLibraries = await tx.library.findMany({
+					where: {
+						project_id: analysis.project_id,
+						assay_name: analysis.assay_name,
+						lib_id: {
+							in: Array.from(libIds)
+						}
+					},
+					select: {
+						lib_id: true
+					}
+				});
+
+				const dbTags = await tx.tag.findMany({
+					where: {
+						tagName: {
+							in: tagNames
+						}
+					},
+					select: {
+						tagName: true
+					}
+				});
+
+				const dbOccs = await tx.occurrence.findMany({
+					where: {
+						project_id: analysis.project_id,
+						lib_id: {
+							in: Array.from(libIds)
+						},
+						featureid: {
+							in: features.map((f) => f.featureid)
+						},
+						Analysis: {
+							trusted: true
+						}
+					},
+					distinct: ["analysis_run_name"],
+					select: {
+						analysis_run_name: true
+					}
+				});
+
+				return { dbProject, dbAssay, dbLibraries, dbTags, dbOccs };
+			},
+			{ timeout: 0.5 * 60 * 1000 }
+		);
 
 		if (!dbProject) {
-			throw new Error(`Project with project_id of ${analysis.project_id} does not exist.`);
+			await analysisChannel.stream.error(`Project with project_id of ${analysis.project_id} does not exist.`);
+			return;
 		} else if (!dbProject.userIds.includes(userId)) {
-			throw new Error(
+			await analysisChannel.stream.error(
 				`Permission denied for adding analysis to Project with project_id of ${analysis.project_id}. Please contact submission owner with a request to be added to the Project.`
 			);
+			return;
 		}
 
 		//check if assay is valid
 		if (!dbAssay) {
-			throw new Error(`The Assay with assay_name of "${analysis.assay_name}" does not exist.`);
+			await analysisChannel.stream.error(`The Assay with assay_name of "${analysis.assay_name}" does not exist.`);
+			return;
 		}
 
 		//check if any provided tags are missing from database query
@@ -130,21 +152,22 @@ async function doSubmit(
 
 			if (invalidTagNames.length) {
 				if (invalidTagNames.length === 1) {
-					throw new Error(`A tag is invalid. The invalid tagName is "${invalidTagNames[0]}".`);
+					await analysisChannel.stream.error(`A tag is invalid. The invalid tagName is "${invalidTagNames[0]}".`);
 				} else {
-					throw new Error(
+					await analysisChannel.stream.error(
 						`Some tags are invalid. The invalid tagNames are ${invalidTagNames
 							.map((tagName, i) => (i === invalidTagNames.length - 1 ? `and "${tagName}"` : `"${tagName}"`))
 							.join(", ")}.`
 					);
 				}
+				return;
 			}
 		}
 
 		await analysisChannel.stream.message("All checks successful.", 80);
 
 		//check if any provided libraries are missing from database query
-		if (libIds.size !== dbLibraries.length) {
+		if (libIds.length !== dbLibraries.length) {
 			const invalidLibIds = [] as string[];
 			for (const lib_id of libIds) {
 				if (!dbLibraries.some((lib) => lib.lib_id === lib_id)) {
@@ -154,47 +177,43 @@ async function doSubmit(
 
 			if (invalidLibIds.length) {
 				if (invalidLibIds.length === 1) {
-					throw new Error(`A library in occurrence file is invalid. The invalid lib_id is "${invalidLibIds[0]}".`);
+					await occurrencesChannel.stream.error(
+						`A library in occurrence file is invalid. The invalid lib_id is "${invalidLibIds[0]}".`
+					);
 				} else {
-					throw new Error(
+					await occurrencesChannel.stream.error(
 						`Some libraries in occurrence file are invalid. The invalid lib_ids are ${invalidLibIds
 							.map((lib_id, i) => (i === invalidLibIds.length - 1 ? `and "${lib_id}"` : `"${lib_id}"`))
 							.join(", ")}.`
 					);
 				}
+				return;
 			}
 		}
 
 		await occurrencesChannel.stream.message("All checks successful.", 80);
 
 		//check if any libraries have another trusted analysis with shared features
-		const otherTrusted = [] as Analysis["analysis_run_name"][];
-		if (trusted) {
-			for (const lib of dbLibraries) {
-				for (const occ of lib.Occurrences) {
-					if (
-						!otherTrusted.includes(occ.analysis_run_name) &&
-						features.find((feat) => feat.featureid === occ.featureid)
-					) {
-						otherTrusted.push(occ.analysis_run_name);
-					}
-				}
-			}
+		const trustedWithSharedFeatures = new Set(dbOccs.map((occ) => occ.analysis_run_name));
+
+		//map taxonomies to the lib_id (sample) they were found in
+		const taxaByFeat = {} as Record<AssignmentModel["featureid"], AssignmentModel["taxonomy"]>;
+		for (const a of assignments) {
+			taxaByFeat[a.featureid] = a.taxonomy;
 		}
+		const taxaByLibId = occurrences.reduce(
+			(acc, occ) => {
+				(acc[occ.lib_id] ??= new Set()).add(taxaByFeat[occ.featureid]!);
+				return acc;
+			},
+			{} as Record<OccurrenceModel["lib_id"], Set<AssignmentModel["taxonomy"]>>
+		);
+
+		const taxaNames = taxonomies.map((taxa) => taxa.taxonomy);
 
 		//submission
 		await prisma.$transaction(
 			async (tx) => {
-				await tx.analysis.create({
-					//@ts-ignore issue with Json database type
-					data: {
-						...analysis,
-						Tags: {
-							connect: dbTags
-						}
-					}
-				});
-
 				await tx.feature.createMany({
 					data: features,
 					skipDuplicates: true
@@ -205,6 +224,58 @@ async function doSubmit(
 					skipDuplicates: true
 				});
 
+				await tx.analysis.create({
+					//@ts-expect-error issue with Json database type
+					data: {
+						...analysis,
+						Tags: {
+							connect: dbTags
+						}
+					}
+				});
+
+				//connect libraries in chunks
+				const connectLibs = libIds.map((lib_id) => ({
+					project_id_lib_id: { project_id: analysis.project_id, lib_id }
+				}));
+				for (let i = 0; i < connectLibs.length; i += PRISMA_PARAM_LIMIT / 2) {
+					await tx.analysis.update({
+						where: {
+							project_id_analysis_run_name: {
+								project_id: analysis.project_id,
+								analysis_run_name: analysis.analysis_run_name
+							}
+						},
+						data: {
+							Libraries: {
+								connect: connectLibs.slice(i, i + PRISMA_PARAM_LIMIT / 2)
+							}
+						}
+					});
+				}
+
+				//connect taxonomies in chunks
+				const connectTaxa = taxaNames.map((taxonomy) => ({ taxonomy }));
+				for (let i = 0; i < connectTaxa.length; i += PRISMA_PARAM_LIMIT) {
+					await tx.analysis.update({
+						where: {
+							project_id_analysis_run_name: {
+								project_id: analysis.project_id,
+								analysis_run_name: analysis.analysis_run_name
+							}
+						},
+						data: {
+							Taxonomies: {
+								connect: connectTaxa.slice(i, i + PRISMA_PARAM_LIMIT)
+							}
+						}
+					});
+				}
+
+				await connectFeatsToSamples(tx, analysis.project_id, occurrences);
+
+				await connectTaxaToSamples(tx, analysis.project_id, taxaByLibId);
+
 				await tx.assignment.createMany({
 					data: assignments
 				});
@@ -213,11 +284,12 @@ async function doSubmit(
 					data: occurrences
 				});
 
-				if (otherTrusted.length) {
+				if (trustedWithSharedFeatures.size) {
 					await tx.analysis.updateMany({
 						where: {
+							project_id: analysis.project_id,
 							analysis_run_name: {
-								in: otherTrusted
+								in: Array.from(trustedWithSharedFeatures)
 							}
 						},
 						data: {
@@ -233,7 +305,7 @@ async function doSubmit(
 
 		// await prisma.$transaction([
 		// 	prisma.analysis.create({
-		// 		//@ts-ignore issue with Json database type
+		// 		//@ts-expect-error issue with Json database type
 		// 		data: {
 		// 			...analysis,
 		// 			Tags: {
@@ -287,36 +359,42 @@ async function doSubmit(
 
 		return true;
 	} catch (err: any) {
+		console.error(err);
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			await analysisChannel.stream.error(prismaErr.error);
 			await assignmentsChannel.stream.error(prismaErr.error);
 			await occurrencesChannel.stream.error(prismaErr.error);
 		} else {
-			const error = err as Error;
-			await analysisChannel.stream.error(error.message);
-			await assignmentsChannel.stream.error(error.message);
-			await occurrencesChannel.stream.error(error.message);
+			const message = err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR;
+			await analysisChannel.stream.error(message);
+			await assignmentsChannel.stream.error(message);
+			await occurrencesChannel.stream.error(message);
 		}
 	}
 }
 
 export default async function analysisSubmitAction(
-	analysisFileUrl: Analysis["analysisMetadataFileUrl_ODE"],
-	assignmentsFileUrl: Analysis["asvFileUrl_ODE"],
-	occurrencesFileUrl: Analysis["occurrenceFileUrl_ODE"],
-	trusted: Analysis["trusted"],
-	tagNames: Tag["tagName"][]
+	analysisFileUrl: AnalysisModel["analysisMetadataFileUrl_ODE"],
+	assignmentsFileUrl: AnalysisModel["asvFileUrl_ODE"],
+	occurrencesFileUrl: AnalysisModel["occurrenceFileUrl_ODE"],
+	trusted: AnalysisModel["trusted"],
+	tagNames: TagModel["tagName"][]
 ) {
 	const analysisStream = createProgressStream();
 	const assignmentsStream = createProgressStream();
 	const occurrencesStream = createProgressStream();
 
-	const validBlobs = await validateBlobs([analysisFileUrl, assignmentsFileUrl, occurrencesFileUrl]);
-	if (!validBlobs) {
-		analysisStream.error("Files are not valid");
-		assignmentsStream.error("Files are not valid");
-		occurrencesStream.error("Files are not valid");
+	try {
+		await validateBlobs([analysisFileUrl, assignmentsFileUrl, occurrencesFileUrl]);
+	} catch (err) {
+		console.error(err);
+
+		const message = err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR;
+		analysisStream.error(message);
+		assignmentsStream.error(message);
+		occurrencesStream.error(message);
 
 		analysisStream.close();
 		assignmentsStream.close();

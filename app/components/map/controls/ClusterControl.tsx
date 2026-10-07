@@ -1,11 +1,11 @@
 "use client";
 
-import { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import LeafletControl from "./LeafletControl";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
 import ResetButtonMap from "../utils/ResetButtonMap";
 import { DEFAULT_CLUSTER_RADIUS } from "../utils/mapUtils";
-import InfoButton from "../../InfoButton";
+import InfoButton from "@/app/components/InfoButton";
 
 export default function ClusterControl({
 	cluster,
@@ -23,7 +23,7 @@ export default function ClusterControl({
 	}
 
 	return (
-		<LeafletControl click className="leaflet-bar border-none!">
+		<LeafletControl click className="leaflet-bar border-none! hidden lg:block">
 			<CollapsibleMapContainer dir="left" defaultCollapse hiddenText="Show cluster control">
 				<div className="w-35 pl-2 pr-1 pt-1 pb-2 flex flex-col gap-1">
 					<div className="flex justify-between">

@@ -3,19 +3,19 @@
 import { useAuth } from "@clerk/nextjs";
 import Modal from "../Modal";
 import UserAdder from "../UserAdder";
-import { SubmitEvent, Fragment, useEffect, useRef, useState } from "react";
+import { type SubmitEvent, Fragment, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
 import projectSubmitAction from "@/app/actions/project/create/projectSubmit";
-import { NetworkProgressPacket } from "@/types/globals";
+import type { NetworkProgressPacket } from "@/types/globals";
 import { useRouter } from "next/navigation";
 import SubmitFormSection from "./SubmitFormSection";
 import { doProgressActionManyGlobal } from "@/app/helpers/progress";
 import { upload } from "@vercel/blob/client";
 import Link from "next/link";
-import { Attribution } from "@/app/generated/prismaImages/client";
-import { AttributionOptionalDefaults, ImagePartial } from "@/prismaImages/generated/zod";
+import type { AttributionModel } from "@/app/generated/prismaImages/models/Attribution";
+import ImageSubmitForm, { getAttributionFromForm, getImageFile, getImageFromForm } from "../ImageSubmitForm";
 
-export default function ProjectSubmit({ attributions }: { attributions: Attribution[] }) {
+export default function ProjectSubmit() {
 	const { userId } = useAuth();
 	const [userIds, setUserIds] = useState([userId] as string[]);
 
@@ -24,14 +24,14 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 
 	//state variables for image submission
 	const [newAttribution, setNewAttribution] = useState(false);
-	const [currAttribution, setCurrAttribution] = useState(undefined as Attribution | undefined);
+	const [currAttribution, setCurrAttribution] = useState(undefined as AttributionModel | undefined);
 	const [showCoverImage, setShowCoverImage] = useState(false);
 
 	//response state variables that will have information streamed to them
-	const [globalResponse, setGlobalResponse] = useState(undefined as NetworkProgressPacket);
-	const [projectResponse, setProjectResponse] = useState(undefined as NetworkProgressPacket);
-	const [sampleResponse, setSampleResponse] = useState(undefined as NetworkProgressPacket);
-	const [libraryResponse, setLibraryResponse] = useState(undefined as NetworkProgressPacket);
+	const [globalResponse, setGlobalResponse] = useState(undefined as NetworkProgressPacket | undefined);
+	const [projectResponse, setProjectResponse] = useState(undefined as NetworkProgressPacket | undefined);
+	const [sampleResponse, setSampleResponse] = useState(undefined as NetworkProgressPacket | undefined);
+	const [libraryResponse, setLibraryResponse] = useState(undefined as NetworkProgressPacket | undefined);
 
 	//state variable that will have any error passed to it
 	const [errorMessage, setErrorMessage] = useState("");
@@ -41,39 +41,31 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 	const modalXRef = useRef<HTMLButtonElement>(null);
 	const modalClickOffRef = useRef<HTMLButtonElement>(null);
 
-	//detect when there's an error
-	useEffect(() => {
-		if (projectResponse?.statusMessage === "error") {
-			doError(projectResponse.error);
-		}
-	}, [projectResponse]);
-	useEffect(() => {
-		if (sampleResponse?.statusMessage === "error") {
-			doError(sampleResponse.error);
-		}
-	}, [sampleResponse]);
-	useEffect(() => {
-		if (libraryResponse?.statusMessage === "error") {
-			doError(libraryResponse.error);
-		}
-	}, [libraryResponse]);
+	function doError(err: string) {
+		setLoading(false);
+		setErrorMessage(err);
+		modalRef.current?.showModal();
+	}
 
-	//detect when entire submission was successful
-	useEffect(() => {
-		if (globalResponse?.statusMessage === "success") {
+	function updateResponse(setter: (res: NetworkProgressPacket) => void, res: NetworkProgressPacket) {
+		setter(res);
+
+		if (res?.statusMessage === "error") {
+			doError(res.error);
+		}
+	}
+
+	function updateGlobalResponse(res: NetworkProgressPacket) {
+		setGlobalResponse(res);
+
+		if (res?.statusMessage === "success") {
 			setLoading(false);
 			modalXRef.current!.disabled = true;
 			modalClickOffRef.current!.disabled = true;
 			modalRef.current?.showModal();
-		} else if (globalResponse?.statusMessage === "error") {
-			doError(globalResponse.error);
+		} else if (res?.statusMessage === "error") {
+			doError(res.error);
 		}
-	}, [globalResponse]);
-
-	async function doError(err: string) {
-		setLoading(false);
-		setErrorMessage(err);
-		modalRef.current?.showModal();
 	}
 
 	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
@@ -93,12 +85,13 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			behavior: "smooth"
 		});
 
+		const form = event.currentTarget;
 		//get all files from event beforehand
-		const projectFile = event.currentTarget.project.files[0] as File;
-		const sampleFile = event.currentTarget.sample.files[0] as File;
-		const libraryFile = event.currentTarget.library.files[0] as File;
+		const projectFile = (event.currentTarget.elements.namedItem("project") as HTMLInputElement).files!.item(0)!;
+		const sampleFile = (event.currentTarget.elements.namedItem("sample") as HTMLInputElement).files!.item(0)!;
+		const libraryFile = (event.currentTarget.elements.namedItem("library") as HTMLInputElement).files!.item(0)!;
 
-		const imageFile = event.currentTarget.image.files[0] as File | undefined;
+		const imageFile = getImageFile(form);
 		let imageInfo;
 		if (imageFile) {
 			if (!imageFile.type.startsWith("image")) {
@@ -107,23 +100,8 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			}
 
 			imageInfo = {
-				image: {
-					name: event.currentTarget.imageName.value,
-					attributionTitle:
-						!newAttribution && currAttribution
-							? currAttribution.attributionTitle
-							: event.currentTarget.attributionTitle.value,
-					description: event.currentTarget.imageDescription.value,
-					location: event.currentTarget.imageLocation.value,
-					dateTaken: event.currentTarget.imageDateTaken.value
-				} as ImagePartial,
-				attribution: newAttribution
-					? ({
-							attributionTitle: event.currentTarget.attributionTitle.value,
-							attributionUrl: event.currentTarget.attributionUrl.value,
-							attributionInstitution: event.currentTarget.attributionInstitution.value
-						} as AttributionOptionalDefaults)
-					: undefined
+				image: getImageFromForm(form, newAttribution, currAttribution),
+				attribution: getAttributionFromForm(form, newAttribution)
 			};
 		}
 
@@ -134,7 +112,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			const projectFileUrl = (
 				await upload(`submissions/${encodeURIComponent(projectFile.name)}`, projectFile, {
 					access: "public",
-					handleUploadUrl: "/api/file/upload",
+					handleUploadUrl: "/api/internal/file/upload",
 					multipart: projectFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 				})
 			).url;
@@ -145,7 +123,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			const sampleFileUrl = (
 				await upload(`submissions/${encodeURIComponent(sampleFile.name)}`, sampleFile, {
 					access: "public",
-					handleUploadUrl: "/api/file/upload",
+					handleUploadUrl: "/api/internal/file/upload",
 					multipart: sampleFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 				})
 			).url;
@@ -156,7 +134,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			const libraryFileUrl = (
 				await upload(`submissions/${encodeURIComponent(libraryFile.name)}`, libraryFile, {
 					access: "public",
-					handleUploadUrl: "/api/file/upload",
+					handleUploadUrl: "/api/internal/file/upload",
 					multipart: libraryFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 				})
 			).url;
@@ -166,7 +144,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 				const imageUrl = (
 					await upload(`submissions/${encodeURIComponent(imageFile.name)}`, imageFile, {
 						access: "public",
-						handleUploadUrl: "/api/file/upload"
+						handleUploadUrl: "/api/internal/file/upload"
 					})
 				).url;
 				imageInfo!.image.url = imageUrl;
@@ -175,8 +153,12 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			//trigger streamed action
 			doProgressActionManyGlobal(
 				projectSubmitAction,
-				[setProjectResponse, setSampleResponse, setLibraryResponse],
-				setGlobalResponse,
+				[
+					(res) => updateResponse(setProjectResponse, res),
+					(res) => updateResponse(setSampleResponse, res),
+					(res) => updateResponse(setLibraryResponse, res)
+				],
+				updateGlobalResponse,
 				projectFileUrl,
 				sampleFileUrl,
 				libraryFileUrl,
@@ -194,7 +176,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			<form
 				className="grid grid-cols-12 gap-12 w-full"
 				onSubmit={(e) => {
-					if (e.currentTarget.image.files.length) {
+					if (e.currentTarget.imageFile.files.length) {
 						setShowCoverImage(true);
 					}
 					handleSubmit(e);
@@ -215,127 +197,13 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 							/>
 							<div className="collapse-title">{showCoverImage ? "Hide" : "Show"}</div>
 							<div className="collapse-content">
-								<fieldset className="fieldset">
-									<legend className="fieldset-legend">Image name</legend>
-									<input name="imageName" type="text" className="input" placeholder="Image name" disabled={loading} />
-								</fieldset>
-
-								<fieldset className="fieldset">
-									<legend className="fieldset-legend">Image file</legend>
-									<input name="image" type="file" className="file-input" accept="image/*" disabled={loading} />
-								</fieldset>
-
-								<div className="border border-primary rounded-sm p-2 my-2">
-									<div className="grid grid-cols-2 gap-5">
-										<fieldset className="fieldset">
-											<legend className="fieldset-legend">Attribution</legend>
-											<select
-												className="select"
-												disabled={loading || newAttribution}
-												value={currAttribution?.attributionTitle}
-												onChange={(e) =>
-													setCurrAttribution(attributions.find((attr) => attr.attributionTitle === e.target.value))
-												}
-											>
-												<option value="">No attribution</option>
-												{attributions.map((attr) => (
-													<option key={attr.id}>{attr.attributionTitle}</option>
-												))}
-											</select>
-											<span className="label">Optional</span>
-										</fieldset>
-
-										<label className="label">
-											<input
-												type="checkbox"
-												className="toggle"
-												disabled={loading}
-												checked={newAttribution}
-												onChange={(e) => setNewAttribution(e.target.checked)}
-											/>
-											New attribution
-										</label>
-									</div>
-
-									<fieldset className="fieldset">
-										<legend className="fieldset-legend">Attribution title</legend>
-										<input
-											name="attributionTitle"
-											type="text"
-											className="input"
-											placeholder="Attribution title"
-											disabled={loading || !newAttribution}
-											required={!!currAttribution || newAttribution}
-											defaultValue={currAttribution && !newAttribution ? currAttribution.attributionTitle : undefined}
-										/>
-									</fieldset>
-
-									{/* TODO: add names inputs with add button */}
-
-									<fieldset className="fieldset">
-										<legend className="fieldset-legend">Attribution URL</legend>
-										<input
-											name="attributionUrl"
-											type="text"
-											className="input"
-											placeholder="Attribution URL"
-											disabled={loading || !newAttribution}
-											defaultValue={
-												currAttribution && !newAttribution && currAttribution.attributionUrl
-													? currAttribution.attributionUrl
-													: undefined
-											}
-										/>
-										<p className="label">Optional</p>
-									</fieldset>
-
-									<fieldset className="fieldset">
-										<legend className="fieldset-legend">Attribution Institution</legend>
-										<input
-											name="attributionInstitution"
-											type="text"
-											className="input"
-											placeholder="Attribution Institution"
-											disabled={loading || !newAttribution}
-											defaultValue={
-												currAttribution && !newAttribution && currAttribution.attributionInstitution
-													? currAttribution.attributionInstitution
-													: undefined
-											}
-										/>
-										<p className="label">Optional</p>
-									</fieldset>
-								</div>
-
-								<fieldset className="fieldset">
-									<legend className="fieldset-legend">Description</legend>
-									<input
-										type="text"
-										className="input"
-										placeholder="Description"
-										name="imageDescription"
-										disabled={loading}
-									/>
-									<p className="label">Optional</p>
-								</fieldset>
-
-								<fieldset className="fieldset">
-									<legend className="fieldset-legend">Location</legend>
-									<input type="text" className="input" placeholder="Location" name="imageLocation" disabled={loading} />
-									<p className="label">Optional</p>
-								</fieldset>
-
-								<fieldset className="fieldset">
-									<legend className="fieldset-legend">Date taken</legend>
-									<input
-										type="date"
-										className="input"
-										placeholder="Date taken"
-										name="imageDateTaken"
-										disabled={loading}
-									/>
-									<p className="label">Optional</p>
-								</fieldset>
+								<ImageSubmitForm
+									newAttribution={newAttribution}
+									setNewAttribution={setNewAttribution}
+									currAttribution={currAttribution}
+									setCurrAttribution={setCurrAttribution}
+									loading={loading}
+								/>
 							</div>
 						</div>
 					</SubmitFormSection>
@@ -431,6 +299,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 					</SubmitFormSection>
 				</div>
 			</form>
+
 			<Modal ref={modalRef} xRef={modalXRef} clickOffRef={modalClickOffRef}>
 				<h3 className={`text-lg font-bold mb-2 ${errorMessage ? "text-error" : "text-success"}`}>
 					{errorMessage ? "Submission Failed" : "Project Submitted Successfully"}

@@ -2,13 +2,7 @@
 
 import { type ReactNode, useCallback, useLayoutEffect, useRef, useState } from "react";
 
-export default function TitleHoverTooltip({
-	tooltip,
-	children
-}: {
-	tooltip: string;
-	children: ReactNode;
-}) {
+export default function TitleHoverTooltip({ tooltip, children }: { tooltip: string; children: ReactNode }) {
 	const wrapperRef = useRef<HTMLDivElement | null>(null);
 	const tipRef = useRef<HTMLDivElement | null>(null);
 	const [hovering, setHovering] = useState(false);
@@ -29,10 +23,7 @@ export default function TitleHoverTooltip({
 	}, []);
 
 	useLayoutEffect(() => {
-		if (!hovering) {
-			setShiftX(0);
-			return;
-		}
+		if (!hovering) return;
 		clampToViewport();
 		const onResize = () => clampToViewport();
 		window.addEventListener("resize", onResize);
@@ -44,11 +35,15 @@ export default function TitleHoverTooltip({
 			ref={wrapperRef}
 			className="relative inline-flex"
 			onMouseEnter={() => setHovering(true)}
-			onMouseLeave={() => setHovering(false)}
+			onMouseLeave={() => {
+				setHovering(false);
+				setShiftX(0);
+			}}
 			onFocus={() => setHovering(true)}
 			onBlur={(event) => {
 				if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
 					setHovering(false);
+					setShiftX(0);
 				}
 			}}
 		>

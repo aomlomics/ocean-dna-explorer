@@ -1,0 +1,35 @@
+import { parseApiQuery } from "@/app/helpers/api";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
+import { getTableName } from "@/app/helpers/schema";
+import type { NetworkPacket } from "@/types/globals";
+import { AppError, GLOBAL_SERVER_ERROR } from "@/types/objects";
+import { NextResponse } from "next/server";
+
+export async function GET(
+	request: Request,
+	{ params }: { params: Promise<{ table: string }> }
+): Promise<NextResponse<NetworkPacket>> {
+	const { table } = await params;
+
+	try {
+		const model = getTableName(table);
+
+		const { searchParams } = new URL(request.url);
+
+		const { trusted, query } = parseApiQuery(model, searchParams, { swapToTable: true });
+		const client = trusted ? trustedPrisma : prisma;
+
+		//@ts-expect-error dynamically accessing prisma client
+		const result = await client[model].findMany(query);
+
+		return NextResponse.json({ statusMessage: "success", result });
+	} catch (err) {
+		console.error(err);
+
+		if (err instanceof AppError) {
+			return NextResponse.json({ statusMessage: "error", error: err.message }, { status: err.statusCode });
+		}
+
+		return NextResponse.json({ statusMessage: "error", error: GLOBAL_SERVER_ERROR }, { status: 500 });
+	}
+}

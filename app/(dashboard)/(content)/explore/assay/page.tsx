@@ -1,12 +1,21 @@
-import { target_gene } from "@/app/generated/prisma/client";
-import { prisma } from "@/app/helpers/prisma";
+import { target_gene } from "@/app/generated/prisma/enums";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
 import { DeadBooleanToEnum } from "@/types/enums";
-import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
+import type { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import ExplorePage from "@/app/components/explore/ExplorePage";
+import TableMetadata from "@/types/tableMetadata";
+import type { Metadata } from "next";
+
+const tableMeta = TableMetadata.assay;
+const title = "Explore " + tableMeta.plural;
+export const metadata: Metadata = {
+	title,
+	description: title + ": " + tableMeta.description
+};
 
 export default async function Assay() {
-	const assays = await prisma.assay.findMany({
+	const assays = await trustedPrisma.assay.findMany({
 		select: {
 			target_subfragment: true,
 			pcr_primer_forward: true,
@@ -17,6 +26,7 @@ export default async function Assay() {
 	});
 
 	const filterOptions = getOptions(assays);
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const { "0": _, "1": __, ...deadBooleanOptions } = DeadBooleanToEnum;
 
 	const tableConfig: FilterConfig[] = [

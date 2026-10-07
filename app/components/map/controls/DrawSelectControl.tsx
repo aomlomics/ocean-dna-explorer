@@ -1,17 +1,15 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
-import { getWhereAdvancedHref, LegendInfo } from "../utils/mapUtils";
-import { Map } from "leaflet";
-import { RefObject, useEffect, useState } from "react";
-import { MapShape } from "@/types/globals";
+import { getWhereAdvancedHref, type LegendInfo } from "../utils/mapUtils";
+import type { Map } from "leaflet";
+import { type RefObject, useEffect, useState } from "react";
+import type { MapShape, MapLocation } from "@/types/globals";
 import LeafletControl from "./LeafletControl";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
-import TableMetadata, { TableMetadataValue } from "@/types/tableMetadata";
+import TableMetadata, { type ModelName, type TableMetadataValue } from "@/types/tableMetadata";
 import ResizableMapContainer from "../containers/ResizableMapContainer";
 import { circleToString, polygonToString } from "@/app/helpers/utils";
 import PopupWithSearchBody from "../popups/PopupWithSearchBody";
-import { Location } from "@/types/globals";
 
 export default function DrawSelectedControl({
 	pointsInside,
@@ -24,8 +22,8 @@ export default function DrawSelectedControl({
 	shapes,
 	disableSearch
 }: {
-	pointsInside: Location[];
-	table: Uncapitalize<Prisma.ModelName>;
+	pointsInside: MapLocation[];
+	table: Uncapitalize<ModelName>;
 	where?: Record<string, string>;
 	id: TableMetadataValue["titleField"];
 	legendInfo: LegendInfo;
@@ -38,9 +36,8 @@ export default function DrawSelectedControl({
 	const [delayedPointsInside, setDelayedPointsInside] = useState(pointsInside);
 
 	//delay changing state variable by 1 render cycle to allow for resizable to work
-	useEffect(() => {
-		setDelayedPointsInside(pointsInside);
-	}, [pointsInside]);
+	// eslint-disable-next-line react-hooks/set-state-in-effect
+	useEffect(() => setDelayedPointsInside(pointsInside), [pointsInside]);
 
 	return (
 		<LeafletControl click scroll>

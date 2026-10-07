@@ -1,4 +1,11 @@
-import { Analysis, Assignment, Feature, Occurrence, Prisma, Taxonomy } from "../../generated/prisma/client";
+import type { Prisma } from "@/app/generated/prisma/client";
+import type {
+	AnalysisModel,
+	AssignmentModel,
+	FeatureModel,
+	OccurrenceModel,
+	TaxonomyModel
+} from "@/app/generated/prisma/models";
 import { md5 } from "js-md5";
 import { parse } from "csv-parse";
 import {
@@ -11,8 +18,10 @@ import {
 	TaxonomyScalarFieldEnumSchema
 } from "@/prisma/generated/zod";
 import { parseSchemaToObject } from "../schema";
-import { Channel } from "../progress";
+import type { Channel } from "../progress";
 import { get } from "@vercel/blob";
+import { getSchemaParseError, schemaParseErrorFunction } from "../queries";
+import { AppError, GLOBAL_SERVER_ERROR } from "@/types/objects";
 
 export async function parseAnalysisFile({
 	channel,
@@ -24,249 +33,50 @@ export async function parseAnalysisFile({
 	channel: Channel;
 	assignmentsUrl: string;
 	occurrencesUrl: string;
-	trusted?: Analysis["trusted"];
+	trusted?: AnalysisModel["trusted"];
 	oldChecksum?: string;
 }) {
-	const analysisCol = {} as Record<string, string>;
-	const userDefined = {} as PrismaJson.UserDefinedType;
+	try {
+		const analysisCol = {} as Record<string, string>;
+		const userDefined = {} as PrismaJson.UserDefinedType;
 
-	//fetch file from blob storage
-	await channel.stream.message("Downloading file", 10);
-	const fileResponse = await get(channel.url, { access: "public" });
-	if (!fileResponse || fileResponse.statusCode === 304) {
-		await channel.stream.error(`Analysis file does not exist at provided URL: ${channel.url}.`);
-		return;
-	}
-
-	await channel.stream.message("Reading file into memory", 15);
-	const text = await new Response(fileResponse.stream).text();
-	const analysisMd5 = md5(text);
-
-	if (oldChecksum === analysisMd5) {
-		await channel.stream.error(
-			"Checksum for submitted analysisMetadata file matches the checksum of the previous file. Please submit a new file."
-		);
-		return;
-	}
-
-	const parser = parse(text, { columns: true, delimiter: "\t", relax_quotes: true });
-	await channel.stream.message("File read into memory", 25);
-
-	let i = 0;
-	for await (const record of parser) {
-		const field = record.term_name;
-		if (field) {
-			i++;
-
-			const value = record.values;
-
-			//User defined
-			if (!AnalysisScalarFieldEnumSchema.safeParse(field).success) {
-				userDefined[field] = value;
-			} else {
-				parseSchemaToObject(field, value, analysisCol, "analysis");
-			}
+		//fetch file from blob storage
+		await channel.stream.message("Downloading file", 10);
+		const fileResponse = await get(channel.url, { access: "public" });
+		if (!fileResponse || fileResponse.statusCode === 304) {
+			await channel.stream.error(`Analysis file does not exist at provided URL: ${channel.url}.`);
+			return;
 		}
 
-		//add to progress bar every 10 percent
-		if (i % (parser.info.records / 10) === 0) {
-			await channel.stream.message(
-				`Processed line ${i} of ${parser.info.records}.`,
-				(i / parser.info.records) * 50 + 25
+		await channel.stream.message("Reading file into memory", 15);
+		const text = await new Response(fileResponse.stream).text();
+		const analysisMd5 = md5(text);
+
+		if (oldChecksum === analysisMd5) {
+			await channel.stream.error(
+				"Checksum for submitted analysisMetadata file matches the checksum of the previous file. Please submit a new file."
 			);
+			return;
 		}
-	}
 
-	const parsedAnalysis = AnalysisOptionalDefaultsSchema.safeParse(
-		{
-			...analysisCol,
-			trusted: trusted === undefined ? false : trusted,
-			editHistory: "JsonNull",
-			analysisMetadataFileUrl_ODE: channel.url,
-			analysisMetadataFileChecksum_ODE: analysisMd5,
-			asvFileUrl_ODE: assignmentsUrl,
-			occurrenceFileUrl_ODE: occurrencesUrl,
-			//placeholders, must override later
-			asvFileChecksum_ODE: "",
-			occurrenceFileChecksum_ODE: ""
-		},
-		{
-			error: (iss) => {
-				return {
-					message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
-				};
-			}
-		}
-	);
+		const parser = parse(text, { columns: true, delimiter: "\t", relax_quotes: true });
+		await channel.stream.message("File read into memory", 25);
 
-	if (!parsedAnalysis.success) {
-		await channel.stream.error(
-			`Table: Analysis\n` +
-				`Key: ${analysisCol.analysis_run_name}\n\n` +
-				`${parsedAnalysis.error.issues.map((e) => e.message).join("\n\n")}`
-		);
-		return;
-	}
+		let i = 0;
+		for await (const record of parser) {
+			const field = record.term_name;
+			if (field) {
+				i++;
 
-	//unset all optional fields that were not provided
-	for (const field of AnalysisScalarFieldEnumSchema.options) {
-		if (field !== "id" && field !== "dateSubmitted" && !(field in parsedAnalysis.data)) {
-			//@ts-ignore
-			parsedAnalysis.data[field] = null;
-		}
-	}
+				const value = record.values;
 
-	return { analysis: parsedAnalysis.data, analysisMd5 };
-}
-
-export async function parseAssignmentsFile({
-	channel,
-	project_id,
-	analysis_run_name,
-	oldChecksum
-}: {
-	channel: Channel;
-	project_id: Assignment["project_id"];
-	analysis_run_name: Assignment["analysis_run_name"];
-	oldChecksum?: string;
-}) {
-	const features = [] as Prisma.FeatureCreateManyInput[];
-	const taxonomies = [] as Prisma.TaxonomyCreateManyInput[];
-	const assignments = [] as Prisma.AssignmentCreateManyInput[];
-
-	//fetch file from blob storage
-	await channel.stream.message("Downloading file", 10);
-	const fileResponse = await get(channel.url, { access: "public" });
-	if (!fileResponse || fileResponse.statusCode === 304) {
-		await channel.stream.error(
-			`Assignment file for ${analysis_run_name} does not exist at provided URL: ${channel.url}.`
-		);
-		return;
-	}
-
-	await channel.stream.message("Reading file into memory", 15);
-	const text = await new Response(fileResponse.stream).text();
-	const assignmentsMd5 = md5(text);
-
-	if (oldChecksum === assignmentsMd5) {
-		await channel.stream.error(
-			"Checksum for submitted ASV file matches the checksum of the previous file. Please submit a new file."
-		);
-		return;
-	}
-
-	const parser = parse(text, { columns: true, delimiter: "\t", relax_quotes: true });
-	await channel.stream.message("File read into memory", 25);
-
-	let i = 0;
-	for await (const record of parser) {
-		if (record.featureid) {
-			i++;
-
-			const featureRow = {} as Feature;
-			const assignmentRow = {} as Assignment;
-			const taxonomyRow = {} as Taxonomy;
-
-			//iterate over each column
-			for (const [field, v] of Object.entries(record)) {
-				const value = v as string;
-				//feature table
-				parseSchemaToObject(field, value, featureRow, "feature");
-
-				//assignment table
-				parseSchemaToObject(field, value, assignmentRow, "assignment");
-
-				//taxonomy table
-				parseSchemaToObject(field, value, taxonomyRow, "taxonomy");
-			}
-
-			//parse feature
-			const parsedFeature = FeatureOptionalDefaultsSchema.safeParse(
-				{
-					...featureRow,
-					sequenceLength_ODE: featureRow.dna_sequence.length
-				},
-				{
-					error: (iss) => {
-						return {
-							message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
-						};
-					}
-				}
-			);
-
-			if (!parsedFeature.success) {
-				await channel.stream.error(
-					`Table: Feature\n` +
-						`Key: ${featureRow.featureid}\n\n` +
-						`${parsedFeature.error.issues.map((e) => e.message).join("\n\n")}`
-				);
-				return;
-			}
-
-			//no optional fields
-
-			features.push(parsedFeature.data);
-
-			//parse assignment
-			const parsedAssignment = AssignmentOptionalDefaultsSchema.safeParse(
-				{
-					...assignmentRow,
-					project_id,
-					analysis_run_name
-				},
-				{
-					error: (iss) => {
-						return {
-							message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
-						};
-					}
-				}
-			);
-
-			if (!parsedAssignment.success) {
-				await channel.stream.error(
-					`Table: Assignment\n` +
-						`Key: ${assignmentRow.analysis_run_name}\n` +
-						`Key: ${assignmentRow.featureid}\n\n` +
-						`${parsedAssignment.error.issues.map((e) => e.message).join("\n\n")}`
-				);
-				return;
-			}
-
-			//no optional fields
-
-			assignments.push(parsedAssignment.data);
-
-			//parse taxonomy
-			const parsedTaxonomy = TaxonomyOptionalDefaultsSchema.safeParse(taxonomyRow, {
-				error: (iss) => {
-					return {
-						message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
-					};
-				}
-			});
-
-			if (!parsedTaxonomy.success) {
-				await channel.stream.error(
-					`Table: Taxonomy\n` +
-						`Key: ${taxonomyRow.taxonomy}\n\n` +
-						`${parsedTaxonomy.error.issues.map((e) => e.message).join("\n\n")}`
-				);
-				return;
-			}
-
-			//unset all optional fields that were not provided
-			for (const field of TaxonomyScalarFieldEnumSchema.options) {
-				if (field !== "id" && !(field in parsedTaxonomy.data)) {
-					//@ts-ignore
-					parsedTaxonomy.data[field] = null;
+				//User defined
+				if (!AnalysisScalarFieldEnumSchema.safeParse(field).success) {
+					userDefined[field] = value;
+				} else {
+					parseSchemaToObject(field, value, analysisCol, "analysis");
 				}
 			}
-
-			//TODO: verify taxonomy.taxonomy matches all rank fields
-
-			taxonomies.push(parsedTaxonomy.data);
 
 			//add to progress bar every 10 percent
 			if (i % (parser.info.records / 10) === 0) {
@@ -276,9 +86,215 @@ export async function parseAssignmentsFile({
 				);
 			}
 		}
-	}
 
-	return { features, taxonomies, assignments, assignmentsMd5 };
+		const parsedAnalysis = AnalysisOptionalDefaultsSchema.safeParse(
+			{
+				...analysisCol,
+				trusted: trusted === undefined ? false : trusted,
+				editHistory: "JsonNull",
+				analysisMetadataFileUrl_ODE: channel.url,
+				analysisMetadataFileChecksum_ODE: analysisMd5,
+				asvFileUrl_ODE: assignmentsUrl,
+				occurrenceFileUrl_ODE: occurrencesUrl,
+				//placeholders, must override later
+				asvFileChecksum_ODE: "",
+				occurrenceFileChecksum_ODE: ""
+			},
+			{
+				error: schemaParseErrorFunction
+			}
+		);
+
+		if (!parsedAnalysis.success) {
+			await channel.stream.error(
+				getSchemaParseError(parsedAnalysis.error, "Analysis", [
+					analysisCol.analysis_run_name ?? "Unknown analysis_run_name"
+				])
+			);
+			return;
+		}
+
+		//unset all optional fields that were not provided
+		for (const field of AnalysisScalarFieldEnumSchema.options) {
+			if (!(field in parsedAnalysis.data)) {
+				//@ts-expect-error overriding never with null
+				parsedAnalysis.data[field] = null;
+			}
+		}
+		delete parsedAnalysis.data.id;
+		delete parsedAnalysis.data.dateSubmitted;
+
+		return { analysis: parsedAnalysis.data, analysisMd5 };
+	} catch (err) {
+		console.error(err);
+
+		if (err instanceof AppError) {
+			await channel.stream.error(err.message);
+		} else {
+			await channel.stream.error(GLOBAL_SERVER_ERROR);
+		}
+
+		throw err;
+	}
+}
+
+export async function parseAssignmentsFile({
+	channel,
+	project_id,
+	analysis_run_name,
+	oldChecksum
+}: {
+	channel: Channel;
+	project_id: AssignmentModel["project_id"];
+	analysis_run_name: AssignmentModel["analysis_run_name"];
+	oldChecksum?: string;
+}) {
+	try {
+		const features = [] as Prisma.FeatureCreateManyInput[];
+		const uniqueTaxa = new Set() as Set<TaxonomyModel["taxonomy"]>;
+		const taxonomies = [] as Prisma.TaxonomyCreateWithoutAnalysesInput[];
+		const assignments = [] as Prisma.AssignmentCreateManyInput[];
+
+		//fetch file from blob storage
+		await channel.stream.message("Downloading file", 10);
+		const fileResponse = await get(channel.url, { access: "public" });
+		if (!fileResponse || fileResponse.statusCode === 304) {
+			await channel.stream.error(
+				`Assignment file for ${analysis_run_name} does not exist at provided URL: ${channel.url}.`
+			);
+			return;
+		}
+
+		await channel.stream.message("Reading file into memory", 15);
+		const text = await new Response(fileResponse.stream).text();
+		const assignmentsMd5 = md5(text);
+
+		if (oldChecksum === assignmentsMd5) {
+			await channel.stream.error(
+				"Checksum for submitted ASV file matches the checksum of the previous file. Please submit a new file."
+			);
+			return;
+		}
+
+		const parser = parse(text, { columns: true, delimiter: "\t", relax_quotes: true });
+		await channel.stream.message("File read into memory", 25);
+
+		let i = 0;
+		for await (const record of parser) {
+			if (record.featureid !== "") {
+				i++;
+
+				const featureRow = {} as FeatureModel;
+				const assignmentRow = {} as AssignmentModel;
+				const taxonomyRow = {} as TaxonomyModel;
+
+				//iterate over each column
+				for (const [field, v] of Object.entries(record)) {
+					const value = v as string;
+					//feature table
+					parseSchemaToObject(field, value, featureRow, "feature");
+
+					//assignment table
+					parseSchemaToObject(field, value, assignmentRow, "assignment");
+
+					//taxonomy table
+					parseSchemaToObject(field, value, taxonomyRow, "taxonomy");
+				}
+
+				//parse assignment
+				const parsedAssignment = AssignmentOptionalDefaultsSchema.safeParse(
+					{
+						...assignmentRow,
+						project_id,
+						analysis_run_name
+					},
+					{
+						error: schemaParseErrorFunction
+					}
+				);
+
+				if (!parsedAssignment.success) {
+					await channel.stream.error(
+						getSchemaParseError(parsedAssignment.error, "Assignment", [
+							assignmentRow.analysis_run_name,
+							assignmentRow.featureid
+						])
+					);
+					return;
+				}
+
+				delete parsedAssignment.data.id;
+
+				assignments.push(parsedAssignment.data);
+
+				//parse feature
+				const parsedFeature = FeatureOptionalDefaultsSchema.safeParse(
+					{
+						...featureRow,
+						sequenceLength_ODE: featureRow.dna_sequence.length
+					},
+					{
+						error: schemaParseErrorFunction
+					}
+				);
+
+				if (!parsedFeature.success) {
+					await channel.stream.error(getSchemaParseError(parsedFeature.error, "Feature", [featureRow.featureid]));
+					return;
+				}
+
+				delete parsedFeature.data.id;
+
+				features.push(parsedFeature.data);
+
+				//parse taxonomy
+				if (!uniqueTaxa.has(taxonomyRow.taxonomy)) {
+					const parsedTaxonomy = TaxonomyOptionalDefaultsSchema.safeParse(taxonomyRow, {
+						error: schemaParseErrorFunction
+					});
+
+					if (!parsedTaxonomy.success) {
+						await channel.stream.error(getSchemaParseError(parsedTaxonomy.error, "Taxonomy", [taxonomyRow.taxonomy]));
+						return;
+					}
+
+					//unset all optional fields that were not provided
+					for (const field of TaxonomyScalarFieldEnumSchema.options) {
+						if (!(field in parsedTaxonomy.data)) {
+							//@ts-expect-error overriding never with null
+							parsedTaxonomy.data[field] = null;
+						}
+					}
+					delete parsedTaxonomy.data.id;
+
+					//TODO: verify taxonomy.taxonomy matches all rank fields
+
+					taxonomies.push(parsedTaxonomy.data);
+					uniqueTaxa.add(parsedTaxonomy.data.taxonomy);
+				}
+
+				//add to progress bar every 10 percent
+				if (i % (parser.info.records / 10) === 0) {
+					await channel.stream.message(
+						`Processed line ${i} of ${parser.info.records}.`,
+						(i / parser.info.records) * 50 + 25
+					);
+				}
+			}
+		}
+
+		return { features, taxonomies, assignments, assignmentsMd5 };
+	} catch (err) {
+		console.error(err);
+
+		if (err instanceof AppError) {
+			await channel.stream.error(err.message);
+		} else {
+			await channel.stream.error(GLOBAL_SERVER_ERROR);
+		}
+
+		throw err;
+	}
 }
 
 export async function parseOccurrencesFile({
@@ -288,113 +304,128 @@ export async function parseOccurrencesFile({
 	oldChecksum
 }: {
 	channel: Channel;
-	project_id: Occurrence["project_id"];
-	analysis_run_name: Occurrence["analysis_run_name"];
+	project_id: OccurrenceModel["project_id"];
+	analysis_run_name: OccurrenceModel["analysis_run_name"];
 	oldChecksum?: string;
 }) {
-	const occurrences = [] as Prisma.OccurrenceCreateManyInput[];
+	try {
+		const featureids = [] as OccurrenceModel["featureid"][];
+		const occurrences = [] as Prisma.OccurrenceCreateManyInput[];
 
-	//fetch from blob storage
-	await channel.stream.message("Downloading file", 10);
-	const fileResponse = await get(channel.url, { access: "public" });
-	if (!fileResponse || fileResponse.statusCode === 304) {
-		await channel.stream.error(
-			`Occurrence file for ${analysis_run_name} does not exist at provided URL: ${channel.url}.`
-		);
-		return;
-	}
+		//fetch from blob storage
+		await channel.stream.message("Downloading file", 10);
+		const fileResponse = await get(channel.url, { access: "public" });
+		if (!fileResponse || fileResponse.statusCode === 304) {
+			await channel.stream.error(
+				`Occurrence file for ${analysis_run_name} does not exist at provided URL: ${channel.url}.`
+			);
+			return;
+		}
 
-	let headers = [] as string[];
+		await channel.stream.message("Reading file into memory", 15);
+		const text = await new Response(fileResponse.stream).text();
+		const occurrencesMd5 = md5(text);
 
-	await channel.stream.message("Reading file into memory", 15);
-	const text = await new Response(fileResponse.stream).text();
-	const occurrencesMd5 = md5(text);
+		if (oldChecksum === occurrencesMd5) {
+			await channel.stream.error(
+				"Checksum for submitted Occurrence file matches the checksum of the previous file. Please submit a new file."
+			);
+			return;
+		}
 
-	if (oldChecksum === occurrencesMd5) {
-		await channel.stream.error(
-			"Checksum for submitted Occurrence file matches the checksum of the previous file. Please submit a new file."
-		);
-		return;
-	}
+		const parser = parse(text, { delimiter: "\t", relax_quotes: true });
+		await channel.stream.message("File read into memory", 25);
 
-	const parser = parse(text, { delimiter: "\t", relax_quotes: true });
-	await channel.stream.message("File read into memory", 25);
-
-	let i = 0;
-	for await (const record of parser) {
-		//get first row as headers
-		if (!headers.length) {
-			headers = record;
-		} else {
-			i++;
-
-			//iterate over each column
-			const featureid = record[0];
-			if (!featureid) {
-				await channel.stream.error(`No "featureid" found for row ${i}.`);
-				return;
-			}
-			for (let j = 1; j < headers.length; j++) {
-				const lib_id = headers[j];
-				if (!lib_id) {
-					await channel.stream.error(`No "lib_id" found for column ${j}.`);
+		let libIds = [] as OccurrenceModel["lib_id"][];
+		let i = 1;
+		for await (const record of parser) {
+			//get first row as headers
+			if (!libIds.length) {
+				libIds = record.slice(1).map((lib_id: OccurrenceModel["lib_id"]) => lib_id.trim());
+			} else {
+				//iterate over each column
+				const featureid = record[0]?.trim();
+				if (!featureid) {
+					await channel.stream.error(`No "featureid" found for row ${i}.`);
 					return;
 				}
-				const organismQuantity = parseInt(record[j]);
-				if (isNaN(organismQuantity)) {
-					await channel.stream.error(
-						`Organism quantity is not an integer for Feature ${featureid} (row ${i}) and Library ${lib_id} (column ${j}). Value is ${record[j]}.`
-					);
-					return;
-				}
+				featureids.push(featureid);
 
-				if (organismQuantity) {
-					//parse occurrence
-					const parsedOccurrence = OccurrenceOptionalDefaultsSchema.safeParse(
-						{
-							lib_id,
-							featureid,
-							organismQuantity,
-							project_id,
-							analysis_run_name
-						},
-						{
-							error: (iss) => {
-								return {
-									message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
-								};
-							}
-						}
-					);
+				let j = 1;
+				for (const lib_id of libIds) {
+					if (!lib_id) {
+						await channel.stream.error(`No "lib_id" found for column ${j}.`);
+						return;
+					}
 
-					if (!parsedOccurrence.success) {
+					if (record[j] == null || record[j] === "") {
 						await channel.stream.error(
-							`Table: Occurrence\n` +
-								`Key: ${analysis_run_name}\n` +
-								`Key: ${lib_id}\n` +
-								`Key: ${featureid}\n\n` +
-								`${parsedOccurrence.error.issues.map((e) => e.message).join("\n\n")}`
+							`Organism quantity is missing for Feature ${featureid} (row ${i}) and Library ${lib_id} (column ${j}).`
+						);
+						return;
+					}
+					const organismQuantity = Number(record[j]);
+					if (!Number.isInteger(organismQuantity)) {
+						await channel.stream.error(
+							`Organism quantity is not an integer for Feature ${featureid} (row ${i}) and Library ${lib_id} (column ${j}). Value is ${record[j]}.`
 						);
 						return;
 					}
 
-					//no optional fields
+					if (organismQuantity !== 0) {
+						//parse occurrence
+						const parsedOccurrence = OccurrenceOptionalDefaultsSchema.safeParse(
+							{
+								lib_id,
+								featureid,
+								organismQuantity,
+								project_id,
+								analysis_run_name
+							},
+							{
+								error: schemaParseErrorFunction
+							}
+						);
 
-					occurrences.push(parsedOccurrence.data);
+						if (!parsedOccurrence.success) {
+							await channel.stream.error(
+								getSchemaParseError(parsedOccurrence.error, "Occurrence", [analysis_run_name, lib_id, featureid])
+							);
+							return;
+						}
+
+						delete parsedOccurrence.data.id;
+
+						occurrences.push(parsedOccurrence.data);
+					}
+
+					j++;
 				}
+
+				i++;
+			}
+
+			//add to progress bar every 10 percent
+			if (i % (parser.info.records / 10) === 0) {
+				await channel.stream.message(
+					`Processed line ${i} of ${parser.info.records}.`,
+					(i / parser.info.records) * 50 + 25
+				);
 			}
 		}
 
-		//add to progress bar every 10 percent
-		if (i % (parser.info.records / 10) === 0) {
-			await channel.stream.message(
-				`Processed line ${i} of ${parser.info.records}.`,
-				(i / parser.info.records) * 50 + 25
-			);
-		}
-	}
+		return { occurrences, occurrencesMd5, libIds, featureids };
+	} catch (err) {
+		console.error(err);
 
-	return { occurrences, occurrencesMd5 };
+		if (err instanceof AppError) {
+			await channel.stream.error(err.message);
+		} else {
+			await channel.stream.error(GLOBAL_SERVER_ERROR);
+		}
+
+		throw err;
+	}
 }
 
 export async function parseAnalysisFiles({
@@ -407,7 +438,7 @@ export async function parseAnalysisFiles({
 	analysisChannel: Channel;
 	assignmentsChannel: Channel;
 	occurrencesChannel: Channel;
-	trusted: Analysis["trusted"];
+	trusted: AnalysisModel["trusted"];
 	oldChecksums?: { analysisMd5?: string; assignmentsMd5?: string; occurrencesMd5?: string };
 }) {
 	const analysisParseResult = await parseAnalysisFile({
@@ -442,7 +473,7 @@ export async function parseAnalysisFiles({
 	if (!occurrencesParseResult) {
 		return;
 	}
-	const { occurrences, occurrencesMd5 } = occurrencesParseResult;
+	const { occurrences, occurrencesMd5, libIds, featureids } = occurrencesParseResult;
 
 	return {
 		analysis: {
@@ -454,6 +485,8 @@ export async function parseAnalysisFiles({
 		taxonomies,
 		assignments,
 		occurrences,
+		libIds,
+		featureids,
 		checksums: {
 			analysisMd5,
 			assignmentsMd5,

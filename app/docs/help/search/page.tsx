@@ -1,9 +1,15 @@
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Search | Help",
+	description: "Learn how to use Search to query across tables, filter related data, and combine complex conditions."
+};
 
 export default async function HelpSearchPage() {
-	const project = await prisma.project.findFirst({
+	const project = await trustedPrisma.project.findFirst({
 		orderBy: {
 			id: "asc"
 		},
@@ -29,16 +35,15 @@ export default async function HelpSearchPage() {
 						<Link className="link link-primary font-semibold" href="/search">
 							Search
 						</Link>{" "}
-						page allows you to make complex queries across multiple tables using an intuitive search interface. This is
-						different from the{" "}
+						page queries across multiple tables. This is different from the{" "}
 						<Link className="link link-primary font-semibold" href="#explore">
 							Explore
 						</Link>{" "}
 						pages, which only let you filter data within a single table.
 					</p>
 					<p className="mb-4">
-						Use Search when you need to find data based on relationships between tables (e.g., "find all taxonomies in a
-						specific project" or "find all samples from a particular analysis").
+						Use Search when you need to find data based on relationships between tables (e.g., &quot;find all taxonomies
+						in a specific project&quot; or &quot;find all samples from a particular analysis&quot;).
 					</p>
 				</>
 			}
@@ -48,22 +53,13 @@ export default async function HelpSearchPage() {
 					title: "How to Use the Search Page",
 					content: (
 						<>
-							<p className="mb-4">
-								The{" "}
-								<Link className="link link-primary font-semibold" href="/search">
-									Search
-								</Link>{" "}
-								page provides an intuitive query builder that lets you construct complex filters across different data
-								tables.
-							</p>
-
 							<p className="mb-4">To use the Search page:</p>
 							<ol className="list-decimal ml-6 mb-4">
 								<li>Select which table you want to search</li>
 								<li>Add filters using the query builder to specify your search criteria</li>
 								<li>
 									Filters can include conditions based on fields from related tables (e.g., search for Samples where the
-									Project's institution is "NOAA")
+									Project&apos;s institution is &quot;NOAA&quot;)
 								</li>
 								<li>
 									Combine multiple filters using AND/OR logic: Each filter and/or relation is combined with AND logic.
@@ -83,7 +79,6 @@ export default async function HelpSearchPage() {
 					title: "Search vs Explore",
 					content: (
 						<>
-							<p className="mb-4">What's the difference between the Search and Explore pages?</p>
 							<div className="mb-4">
 								<h4>
 									Use{" "}
@@ -109,7 +104,7 @@ export default async function HelpSearchPage() {
 								</h4>
 								<ul className="list-disc ml-6 mb-4">
 									<li>You want to browse all data in a single table</li>
-									<li>You only need to filter within one table's own fields</li>
+									<li>You only need to filter within one table&apos;s own fields</li>
 									<li>You want a quick overview and are not asking a specific question</li>
 								</ul>
 							</div>
@@ -121,9 +116,7 @@ export default async function HelpSearchPage() {
 					title: "Query Examples",
 					content: (
 						<>
-							<p className="mb-4">
-								Unsure where to start? Click the cards below to open the Search page with a pre-filled query builder:
-							</p>
+							<p className="mb-4">Click a card to open Search with that query filled in:</p>
 
 							<div className="flex gap-8">
 								<Link href={`/search?table=sample&advanced=[["project_id","equals","${project?.project_id}"]]`}>

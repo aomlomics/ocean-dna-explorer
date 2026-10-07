@@ -1,7 +1,7 @@
 "use client";
 
-import chroma from "chroma-js";
-import { ReactNode, SetStateAction, useState } from "react";
+import type chroma from "chroma-js";
+import { type ReactNode, type SetStateAction, type TransitionStartFunction, useState } from "react";
 
 export default function Checklist({
 	label,
@@ -9,7 +9,8 @@ export default function Checklist({
 	colorList,
 	listFilter,
 	setListFilter,
-	sideEffect,
+	defaultListFilter = {},
+	startTransition,
 	extraLists,
 	className,
 	buttonClassName,
@@ -18,9 +19,10 @@ export default function Checklist({
 	label: string;
 	list: string[];
 	colorList?: chroma.Color[];
-	listFilter: Record<string, true>;
-	setListFilter: (value: SetStateAction<Record<string, true>>) => void;
-	sideEffect?: () => void;
+	listFilter: Record<string, boolean>;
+	setListFilter: (value: SetStateAction<Record<string, boolean>>) => void;
+	defaultListFilter?: Record<string, true>;
+	startTransition?: TransitionStartFunction;
 	extraLists?: { list: string[]; label: string }[];
 	className?: string;
 	buttonClassName?: string;
@@ -28,10 +30,18 @@ export default function Checklist({
 }) {
 	const [search, setSearch] = useState("");
 
+	function isHidden(item: string) {
+		if (listFilter[item] !== undefined) {
+			return listFilter[item];
+		}
+
+		return !!defaultListFilter[item];
+	}
+
 	return (
 		<div className={`dropdown dropdown-end ${className ?? ""}`}>
 			<button tabIndex={0} className={`btn text-nowrap ${buttonClassName}`} disabled={disabled}>
-				{list.length - Object.keys(listFilter).length}/{list.length} {label}
+				{list.filter((item) => !isHidden(item)).length}/{list.length} {label}
 			</button>
 
 			<div tabIndex={0} className="dropdown-content z-50 w-64 shadow-lg overflow-x-hidden">
@@ -42,28 +52,26 @@ export default function Checklist({
 								<input
 									type="checkbox"
 									onChange={(e) => {
-										if (e.target.checked) {
-											setListFilter({});
-										} else {
-											setListFilter(
-												list.reduce((acc: Record<string, true>, head) => {
-													if (!listFilter[head]) {
-														return { ...acc, [head]: true };
-													} else {
-														return { ...acc };
-													}
-												}, {})
-											);
+										const checked = e.target.checked;
+
+										function func() {
+											const temp = { ...listFilter };
+											for (const item of list) {
+												temp[item] = !checked;
+											}
+											setListFilter(temp);
 										}
 
-										if (sideEffect) {
-											sideEffect();
+										if (startTransition) {
+											startTransition(func);
+										} else {
+											func();
 										}
 									}}
-									checked={!Object.values(listFilter).some((bool) => bool)}
+									checked={list.every((item) => !isHidden(item))}
 									className="checkbox checkbox-xs"
 								/>
-								<span className="label-text text-sm">All</span>
+								<span className="label-text text-sm select-none">All</span>
 							</label>
 							<input
 								type="text"
@@ -84,31 +92,33 @@ export default function Checklist({
 										<label className="flex items-center cursor-pointer p-2 hover:bg-base-200 rounded w-full gap-2 min-w-0">
 											<input
 												type="checkbox"
-												checked={!listFilter[head]}
-												onChange={() => {
-													const temp = { ...listFilter };
-													if (listFilter[head]) {
-														delete temp[head];
-													} else {
-														temp[head] = true;
-													}
-													setListFilter(temp);
+												checked={!isHidden(head)}
+												onChange={(e) => {
+													const checked = e.target.checked;
 
-													if (sideEffect) {
-														sideEffect();
+													function func() {
+														const temp = { ...listFilter };
+														temp[head] = !checked;
+														setListFilter(temp);
+													}
+
+													if (startTransition) {
+														startTransition(func);
+													} else {
+														func();
 													}
 												}}
 												className="checkbox checkbox-xs"
 											/>
 
-											<span className="text-sm pl-2 truncate max-w-full">
+											<span className="text-sm pl-2 truncate max-w-full select-none">
 												{head} {extraLabel && <sup className="text-xs">{extraLabel}</sup>}
 											</span>
 
 											{colorList ? (
 												<div
 													className="aspect-square w-[1em] h-[1em]"
-													style={{ backgroundColor: colorList[i].hex() }}
+													style={{ backgroundColor: colorList[i]!.hex() }}
 												></div>
 											) : (
 												<></>

@@ -1,31 +1,42 @@
 "use client";
 
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 const sw = 1.75;
 const stroke = "currentColor";
 
 const segBase =
-	"inline-flex min-h-9 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem] active:brightness-95";
+	"inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:text-[0.9375rem] active:brightness-95 cursor-pointer";
 
 const segOn = "bg-primary text-primary-content shadow-md";
 const segOff = "bg-base-200/90 text-base-content hover:bg-base-300";
 
 function IconWrap({ children }: { children: ReactNode }) {
-	return <span className="flex h-4 w-4 shrink-0 items-center justify-center sm:h-4.5 sm:w-4.5 [&_svg]:h-4 [&_svg]:w-4 sm:[&_svg]:h-4.5 sm:[&_svg]:w-4.5">{children}</span>;
+	return <span className="flex h-5 w-5 shrink-0 items-center justify-center [&_svg]:h-5 [&_svg]:w-5">{children}</span>;
+}
+
+export function ClearAllButton({ onClear }: { onClear: () => void }) {
+	return (
+		<button type="button" onClick={onClear} className={`${segBase} ${segOff}`}>
+			<IconWrap>
+				<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" aria-hidden>
+					<path d="M18 6L6 18M6 6l12 12" />
+				</svg>
+			</IconWrap>
+			Clear all
+		</button>
+	);
 }
 
 export default function ActionBar({
 	activePanel,
 	onPanelChange,
 	activeFilterCount,
-	canClear,
 	onClear
 }: {
 	activePanel: "search" | "filters" | null;
 	onPanelChange: (panel: "search" | "filters") => void;
 	activeFilterCount: number;
-	canClear: boolean;
 	onClear: () => void;
 }) {
 	const filtersActive = activePanel === "filters";
@@ -84,20 +95,7 @@ export default function ActionBar({
 				Filters
 			</button>
 
-			<button
-				type="button"
-				disabled={!canClear}
-				onClick={onClear}
-				className={`${segBase} ${segOff} disabled:pointer-events-none disabled:opacity-35`}
-				aria-disabled={!canClear}
-			>
-				<IconWrap>
-					<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" aria-hidden>
-						<path d="M18 6L6 18M6 6l12 12" />
-					</svg>
-				</IconWrap>
-				Clear all
-			</button>
+			<ClearAllButton onClear={onClear} />
 		</div>
 	);
 }

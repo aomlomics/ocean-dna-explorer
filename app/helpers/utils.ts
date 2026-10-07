@@ -1,16 +1,37 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { Circle, Location, LocationWithValues, MapShape, NullLocation, Point, Polygon } from "@/types/globals";
-import TableMetadata from "@/types/tableMetadata";
+import type {
+	Circle,
+	MapLocation,
+	MapLocationWithValues,
+	MapShape,
+	NetworkPacket,
+	NullLocation,
+	Point,
+	Polygon
+} from "@/types/globals";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import { DeadValueEnum } from "@/types/enums";
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
+import type {
+	AnalysisModel,
+	AssayModel,
+	AssayPrepModel,
+	AssignmentModel,
+	FeatureModel,
+	LibraryModel,
+	OccurrenceModel,
+	ProjectModel,
+	SampleModel,
+	TaxonomyModel
+} from "@/app/generated/prisma/models";
+import { AppError } from "@/types/objects";
 
-export async function fetcher(url: string) {
+export async function fetcher(url: string): Promise<NetworkPacket> {
 	const res = await fetch(url);
-	if (!res.ok) {
-		const data = await res.json();
-		return { error: data.error };
-	}
-	return await res.json();
+	return res.json();
+}
+
+export async function fetcherAll(urls: string[]): Promise<NetworkPacket[]> {
+	return Promise.all(urls.map((url) => fetcher(url)));
 }
 
 export function parseNestedJson(json: string) {
@@ -37,28 +58,43 @@ export function parseNestedJson(json: string) {
 	return parsed;
 }
 
-export function getOptions(arr: Record<string, any>[]) {
-	//create object of sets with keys matching arr
-	const filterOptionsSet = {} as Record<keyof (typeof arr)[0], Set<any>>;
-	for (let field in arr[0]) {
-		filterOptionsSet[field as keyof (typeof arr)[0]] = new Set();
+type OptionKeys<T> = {
+	[K in keyof T]: Exclude<T[K], null> extends string | number ? K : never;
+}[keyof T];
+
+type OptionsResult<T> = {
+	[K in OptionKeys<T>]: string[];
+};
+
+export function getOptions<T extends Record<string, unknown>>(arr: T[]): OptionsResult<T> {
+	if (!arr.length) {
+		return {} as OptionsResult<T>;
 	}
 
-	//fill sets with all possible values
-	for (let e of arr) {
-		for (let [field, value] of Object.entries(e)) {
-			if (value) {
-				filterOptionsSet[field as keyof typeof e].add(value);
+	const filterOptionsSets = {} as Record<string, Set<string>>;
+
+	for (const e of arr) {
+		for (const [field, value] of Object.entries(e)) {
+			if (value != null) {
+				filterOptionsSets[field] ??= new Set();
+
+				if (typeof value === "string") {
+					filterOptionsSets[field].add(value);
+				} else if (typeof value === "number") {
+					if (value in DeadValueEnum) {
+						filterOptionsSets[field].add(DeadValueEnum[value]!);
+					} else {
+						filterOptionsSets[field].add(value.toString());
+					}
+				}
 			}
 		}
 	}
 
-	//convert sets to arrays
-	const filterOptions = {} as Record<keyof (typeof arr)[0], any[]>;
-	for (let e in filterOptionsSet) {
-		filterOptions[e as keyof typeof filterOptions] = Array.from(
-			filterOptionsSet[e as keyof typeof filterOptionsSet]
-		).sort();
+	const filterOptions = {} as OptionsResult<T>;
+
+	for (const field in filterOptionsSets) {
+		filterOptions[field as OptionKeys<T>] = Array.from(filterOptionsSets[field]!).sort();
 	}
 
 	return filterOptions;
@@ -86,16 +122,16 @@ export function deepMerge(target: Record<string, any>, ...sources: Record<string
 	return deepMerge(target, ...sources);
 }
 
-export function uncapitalizeTable(table: Prisma.ModelName) {
-	return (table.slice(0, 1).toLowerCase() + table.slice(1)) as Uncapitalize<Prisma.ModelName>;
+export function uncapitalizeTable(table: ModelName) {
+	return (table.charAt(0).toLowerCase() + table.slice(1)) as Uncapitalize<ModelName>;
 }
 
-export function capitalizeTable(table: Uncapitalize<Prisma.ModelName>) {
-	return (table.slice(0, 1).toUpperCase() + table.slice(1)) as Prisma.ModelName;
+export function capitalizeTable(table: Uncapitalize<ModelName>) {
+	return (table.charAt(0).toUpperCase() + table.slice(1)) as ModelName;
 }
 
-export function depluralizeTable(table: Prisma.ModelName | Uncapitalize<Prisma.ModelName>) {
-	return Object.entries(TableMetadata).find(([_, meta]) => meta.plural === table)![0] as Uncapitalize<Prisma.ModelName>;
+export function depluralizeTable(table: ModelName | Uncapitalize<ModelName>) {
+	return Object.entries(TableMetadata).find((tm) => tm[1].plural === table)![0] as Uncapitalize<ModelName>;
 }
 
 export function getSubmissionFileName(value: string) {
@@ -103,7 +139,7 @@ export function getSubmissionFileName(value: string) {
 	if (url.origin.endsWith("blob.vercel-storage.com") && url.pathname.startsWith("/submissions")) {
 		//reassemble file name without the random suffix
 		const splitPath = url.pathname.split("/");
-		const name = splitPath[splitPath.length - 1];
+		const name = splitPath[splitPath.length - 1]!;
 		const dashSplit = name.split("-"); //file name
 		const dotSplit = name.split("."); //file type
 		return decodeURIComponent(dashSplit.slice(0, dashSplit.length - 1).join("-")) + "." + dotSplit[dotSplit.length - 1];
@@ -121,21 +157,20 @@ function __unfocus() {
 		el.blur();
 	}
 }
-
 export function unfocus() {
 	__unfocus();
 }
 
 function measure(lat1: number, lon1: number, lat2: number, lon2: number) {
 	// generally used geo measurement function
-	var R = 6378.137; // Radius of earth in KM
-	var dLat = (lat2 * Math.PI) / 180 - (lat1 * Math.PI) / 180;
-	var dLon = (lon2 * Math.PI) / 180 - (lon1 * Math.PI) / 180;
-	var a =
+	const R = 6378.137; // Radius of earth in KM
+	const dLat = (lat2 * Math.PI) / 180 - (lat1 * Math.PI) / 180;
+	const dLon = (lon2 * Math.PI) / 180 - (lon1 * Math.PI) / 180;
+	const a =
 		Math.sin(dLat / 2) * Math.sin(dLat / 2) +
 		Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-	var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-	var d = R * c;
+	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+	const d = R * c;
 	return d * 1000; // meters
 }
 
@@ -149,8 +184,11 @@ function isIntersecting([p1, p2]: [Point, Point], [p3, p4]: [Point, Point]) {
 	return Turn(p1, p3, p4) != Turn(p2, p3, p4) && Turn(p1, p2, p3) != Turn(p1, p2, p4);
 }
 
-export function getLocationsInsideShapes(locs: (NullLocation | Location | LocationWithValues)[], shapes: MapShape[]) {
-	const locsInside = [] as Location[];
+export function getLocationsInsideShapes(
+	locs: (NullLocation | MapLocation | MapLocationWithValues)[],
+	shapes: MapShape[]
+) {
+	const locsInside = [] as MapLocation[];
 	for (const l of locs) {
 		if (
 			l.decimalLatitude !== null &&
@@ -174,15 +212,14 @@ export function getLocationsInsideShapes(locs: (NullLocation | Location | Locati
 						] as [Point, Point];
 
 						//get sides of polygon
+						const [first, ...rest] = s.points;
+						let previous = first;
 						const sides = [] as [Point, Point][];
-						for (let i = 0; i < s.points.length; i++) {
-							//last point connects to first point
-							if (i === s.points.length - 1) {
-								sides.push([s.points[i], s.points[0]]);
-							} else {
-								sides.push([s.points[i], s.points[i + 1]]);
-							}
+						for (const point of rest) {
+							sides.push([previous, point]);
+							previous = point;
 						}
+						sides.push([previous, first]);
 
 						//get number of times the ray intersects with the polygon
 						let numIntersections = 0;
@@ -197,7 +234,7 @@ export function getLocationsInsideShapes(locs: (NullLocation | Location | Locati
 							if (l.values) {
 								locsInside.push(...l.values);
 							} else {
-								locsInside.push(l as Location);
+								locsInside.push(l as MapLocation);
 							}
 							break;
 						}
@@ -209,7 +246,7 @@ export function getLocationsInsideShapes(locs: (NullLocation | Location | Locati
 						if (l.values) {
 							locsInside.push(...l.values);
 						} else {
-							locsInside.push(l as Location);
+							locsInside.push(l as MapLocation);
 						}
 						break;
 					}
@@ -223,24 +260,29 @@ export function getLocationsInsideShapes(locs: (NullLocation | Location | Locati
 
 function stringToPolygon(poly: string): Polygon {
 	//format: <lat>/<lng>,<lat>/<lng>,...
-	const points = poly.split(",").map((p) => {
+	const polyArr = poly.split(",");
+	if (polyArr.length < 3) {
+		throw new AppError("Polygon must have at least 3 points.");
+	}
+
+	const points = polyArr.map((p) => {
 		const split = p.split("/");
-		if (split.length !== 2) {
-			throw new Error(`Invalid LatLng format: "${p}". Format must be <lat>/<lng>.`);
+		if (!split[0] || !split[1]) {
+			throw new AppError(`Invalid LatLng format: "${p}". Format must be <lat>/<lng>.`);
 		}
 		const pnt = {
 			lat: parseFloat(split[0]),
 			lng: parseFloat(split[1])
 		};
 		if (isNaN(pnt.lat) || Math.abs(pnt.lat) > 90) {
-			throw new Error(`Invalid format for Lat: "${pnt.lat}". Lat must be a number between -90 and 90.`);
+			throw new AppError(`Invalid format for Lat: "${pnt.lat}". Lat must be a number between -90 and 90.`);
 		}
 		if (isNaN(pnt.lng) || Math.abs(pnt.lat) > 180) {
-			throw new Error(`Invalid format for Lng: "${pnt.lng}". Lng must be a number between -180 and 180.`);
+			throw new AppError(`Invalid format for Lng: "${pnt.lng}". Lng must be a number between -180 and 180.`);
 		}
 
 		return pnt;
-	});
+	}) as Polygon["points"];
 
 	const bounds = { sw: { lat: -90, lng: -180 }, ne: { lat: 90, lng: 180 } };
 	for (const p of points) {
@@ -260,30 +302,30 @@ function stringToPolygon(poly: string): Polygon {
 function stringToCircle(circle: string): Circle {
 	//format: <lat>/<lng>,<radius>
 	const split = circle.split(",");
-	if (split.length !== 2) {
-		throw new Error(
+	if (!split[0] || !split[1]) {
+		throw new AppError(
 			`Invalid circle format: "${circle}". Circle must have a center followed by a radius, separated by a comma.`
 		);
 	}
 
 	const centerSplit = split[0].split("/");
-	if (split.length !== 2) {
-		throw new Error(`Invalid center format: "${split[0]}". Format must be <lat>/<lng>.`);
+	if (!centerSplit[0] || !centerSplit[1]) {
+		throw new AppError(`Invalid center format: "${split[0]}". Format must be <lat>/<lng>.`);
 	}
 	const center = {
 		lat: parseFloat(centerSplit[0]),
 		lng: parseFloat(centerSplit[1])
 	};
 	if (isNaN(center.lat) || Math.abs(center.lat) > 90) {
-		throw new Error(`Invalid format for Lat: "${center.lat}". Lat must be a number between -90 and 90.`);
+		throw new AppError(`Invalid format for Lat: "${center.lat}". Lat must be a number between -90 and 90.`);
 	}
 	if (isNaN(center.lng) || Math.abs(center.lat) > 180) {
-		throw new Error(`Invalid format for Lng: "${center.lng}". Lng must be a number between -180 and 180.`);
+		throw new AppError(`Invalid format for Lng: "${center.lng}". Lng must be a number between -180 and 180.`);
 	}
 
 	const radius = parseFloat(split[1]);
 	if (isNaN(radius)) {
-		throw new Error(`Invalid format for radius: "${split[1]}". Radius must be a number.`);
+		throw new AppError(`Invalid format for radius: "${split[1]}". Radius must be a number.`);
 	}
 
 	return {
@@ -334,12 +376,12 @@ export function getTextColorHex(hex: string) {
 	}
 	// convert 3-digit hex to 6-digits.
 	if (hex.length === 3) {
-		hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+		hex = hex[0]! + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
 	}
 	if (hex.length !== 6) {
 		throw new Error("Invalid HEX color.");
 	}
-	var r = parseInt(hex.slice(0, 2), 16),
+	const r = parseInt(hex.slice(0, 2), 16),
 		g = parseInt(hex.slice(2, 4), 16),
 		b = parseInt(hex.slice(4, 6), 16);
 
@@ -354,10 +396,6 @@ export function compressURIComponent(str: string) {
 
 export function decompressURIComponent(str: string) {
 	return decompressFromEncodedURIComponent(str.substring(COMPRESSION_FORMAT.length + 1));
-}
-
-export function getRandomKey() {
-	return (Math.random() + 1).toString(36).substring(7);
 }
 
 export function getClientSideCookie(name: string) {
@@ -382,9 +420,51 @@ export function getLastModifiedDate(submission: {
 		: submission.dateSubmitted;
 }
 
-export async function decodeRouteParams(params: Promise<Record<string, string>>) {
-	return Object.entries(await params).reduce(
-		(acc, [k, v]) => ({ ...acc, [k]: decodeURIComponent(v) }),
-		{} as Record<string, string>
-	);
+export async function decodeRouteParams<T extends Record<string, string>>(params: Promise<T>): Promise<T> {
+	return Object.entries(await params).reduce((acc, [k, v]) => ({ ...acc, [k]: decodeURIComponent(v) }), {} as T);
+}
+
+export function exploreUrl(
+	args: { params?: Record<string, string> | URLSearchParams; hash?: string } & (
+		| { table: "project"; project_id: ProjectModel["project_id"] }
+		| { table: "sample"; project_id: SampleModel["project_id"]; samp_name: SampleModel["samp_name"] }
+		| { table: "assay"; assay_name: AssayModel["assay_name"] }
+		| { table: "assayPrep"; project_id: AssayPrepModel["project_id"]; assay_name: AssayPrepModel["assay_name"] }
+		| { table: "library"; project_id: LibraryModel["project_id"]; lib_id: LibraryModel["lib_id"] }
+		| {
+				table: "analysis";
+				project_id: AnalysisModel["project_id"];
+				analysis_run_name: AnalysisModel["analysis_run_name"];
+		  }
+		| {
+				table: "occurrence";
+				project_id: OccurrenceModel["project_id"];
+				analysis_run_name: OccurrenceModel["analysis_run_name"];
+				lib_id: OccurrenceModel["lib_id"];
+				featureid: OccurrenceModel["featureid"];
+		  }
+		| {
+				table: "assignment";
+				project_id: AssignmentModel["project_id"];
+				analysis_run_name: AssignmentModel["analysis_run_name"];
+				featureid: AssignmentModel["featureid"];
+		  }
+		| { table: "feature"; featureid: FeatureModel["featureid"] }
+		| { table: "taxonomy"; taxonomy: TaxonomyModel["taxonomy"] }
+	)
+) {
+	const { table, params, hash, ...titleFieldObj } = args;
+	let extra = "";
+	if (params) extra += "?" + new URLSearchParams(params);
+	if (hash) extra += "#" + hash;
+
+	if (typeof TableMetadata[table].titleField === "string") {
+		return `/explore/${table}/${encodeURIComponent(
+			titleFieldObj[TableMetadata[table].titleField as keyof typeof titleFieldObj]
+		)}${extra}`;
+	} else {
+		return `/explore/${table}/${TableMetadata[table].titleField
+			.map((f) => encodeURIComponent(titleFieldObj[f as keyof typeof titleFieldObj]))
+			.join("/")}${extra}`;
+	}
 }

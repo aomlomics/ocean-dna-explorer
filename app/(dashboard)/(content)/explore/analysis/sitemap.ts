@@ -1,6 +1,7 @@
 import { prisma } from "@/app/helpers/prisma";
 import { getLastModifiedDate } from "@/app/helpers/utils";
-import { MetadataRoute } from "next";
+import { exploreUrl } from "@/app/helpers/utils";
+import type { MetadataRoute } from "next";
 
 const URL_LIMIT = 50000; // Google's limit is 50,000 URLs per sitemap
 
@@ -29,6 +30,7 @@ export default async function sitemap({ id }: { id: Promise<number> }): Promise<
 
 	const analyses = await prisma.analysis.findMany({
 		select: {
+			project_id: true,
 			analysis_run_name: true,
 			dateSubmitted: true,
 			editHistory: true
@@ -38,7 +40,9 @@ export default async function sitemap({ id }: { id: Promise<number> }): Promise<
 	});
 
 	return analyses.map((a) => ({
-		url: `${process.env.NEXT_PUBLIC_URL}/explore/analysis/${encodeURIComponent(a.analysis_run_name)}`,
+		url:
+			process.env.NEXT_PUBLIC_URL +
+			exploreUrl({ table: "analysis", project_id: a.project_id, analysis_run_name: a.analysis_run_name }),
 		lastModified: getLastModifiedDate(a)
 	}));
 }

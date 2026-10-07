@@ -91,11 +91,6 @@ export async function GET() {
 		<lastmod>${iso}</lastmod>
 		<changefreq>weekly</changefreq>
 	</url>
-	<url>
-		<loc>${SITE_URL}/contribute</loc>
-		<lastmod>${iso}</lastmod>
-		<changefreq>weekly</changefreq>
-	</url>
 </urlset>`,
 		{ headers: { "Content-Type": "text/xml" } }
 	);

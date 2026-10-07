@@ -1,20 +1,24 @@
 "use server";
 
-import { Project } from "@/app/generated/prisma/client";
+import type { ProjectModel } from "@/app/generated/prisma/models/Project";
 import { prisma } from "@/app/helpers/prisma";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { ProjectSchema } from "@/prisma/generated/zod";
-import { NetworkPacket } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import type { NetworkPacket } from "@/types/globals";
+import { GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";
 
-export default async function projectDeleteAction(target: Project["project_id"]): Promise<NetworkPacket> {
+export default async function projectDeleteAction(target: ProjectModel["project_id"]): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
-	if (!userId || !role || !RolePermissions[role].includes("manageUsers")) {
+	if (
+		!userId ||
+		!role ||
+		!(RolePermissions[role].includes("contribute") || RolePermissions[role].includes("manageUsers"))
+	) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
@@ -50,9 +54,9 @@ export default async function projectDeleteAction(target: Project["project_id"])
 		});
 
 		if (!dbProject) {
-			throw new Error(`No Project with project_id of "${project_id}" found.`);
-		} else if (!dbProject.userIds.includes(userId)) {
-			throw new Error("Unauthorized action.");
+			return { statusMessage: "error", error: `No Project with project_id of "${project_id}" found.` };
+		} else if (!dbProject.userIds.includes(userId) || !RolePermissions[role].includes("manageUsers")) {
+			return { statusMessage: "error", error: "Unauthorized action." };
 		}
 
 		await prisma.project.delete({
@@ -83,12 +87,13 @@ export default async function projectDeleteAction(target: Project["project_id"])
 
 		return { statusMessage: "success" };
 	} catch (err: any) {
+		console.error(err);
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			return prismaErr;
 		}
 
-		const error = err as Error;
-		return { statusMessage: "error", error: error.message };
+		return { statusMessage: "error", error: GLOBAL_SERVER_ERROR };
 	}
 }

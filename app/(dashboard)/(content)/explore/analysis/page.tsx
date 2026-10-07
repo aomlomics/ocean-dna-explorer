@@ -1,11 +1,20 @@
-import { asv_method, target_gene } from "@/app/generated/prisma/client";
-import { prisma } from "@/app/helpers/prisma";
+import { asv_method, target_gene } from "@/app/generated/prisma/enums";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
 import ExplorePage from "@/app/components/explore/ExplorePage";
-import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
+import type { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
+import TableMetadata from "@/types/tableMetadata";
+import type { Metadata } from "next";
+
+const tableMeta = TableMetadata.analysis;
+const title = "Explore " + tableMeta.plural;
+export const metadata: Metadata = {
+	title,
+	description: title + ": " + tableMeta.description
+};
 
 export default async function Analysis() {
-	const analyses = await prisma.analysis.findMany({
+	const analyses = await trustedPrisma.analysis.findMany({
 		select: {
 			project_id: true,
 			assay_name: true,

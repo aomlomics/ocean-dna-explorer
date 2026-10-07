@@ -2,7 +2,7 @@ model Analysis {
     id                Int      @id @default(autoincrement())
     analysis_run_name String
     dateSubmitted     DateTime @default(now())
-    trusted           Boolean
+    trusted           Boolean  @default(false)
     /// [EditHistoryType]
     editHistory       Json?
 
@@ -10,9 +10,11 @@ model Analysis {
     project_id       String
     Project          Project          @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     assay_name       String
-    Assay            Assay            @relation(fields: [assay_name], references: [assay_name])
+    Assay            Assay            @relation(fields: [assay_name], references: [assay_name], onDelete: Restrict)
+    Libraries        Library[]
     Occurrences      Occurrence[]
     Assignments      Assignment[]
+    Taxonomies       Taxonomy[]
     Tags             Tag[]
     AlphaDiversities AlphaDiversity[]
 
@@ -102,6 +104,7 @@ model Analysis {
     percent_query_cover_End_ODE      Float?
 
     @@unique([project_id, analysis_run_name])
+    @@index([trusted])
 }
 
 model Occurrence {
@@ -110,15 +113,16 @@ model Occurrence {
     // Relations
     project_id        String
     Project           Project    @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
-    lib_id            String
-    Library           Library    @relation(fields: [project_id, lib_id], references: [project_id, lib_id], onDelete: Cascade)
     analysis_run_name String
     Analysis          Analysis   @relation(fields: [project_id, analysis_run_name], references: [project_id, analysis_run_name], onDelete: Cascade)
+    lib_id            String
+    Library           Library    @relation(fields: [project_id, lib_id], references: [project_id, lib_id], onDelete: Cascade)
     featureid         String
     Feature           Feature    @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
     Assignment        Assignment @relation(fields: [project_id, analysis_run_name, featureid], references: [project_id, analysis_run_name, featureid], onDelete: Cascade)
 
     // Data
+    ///@zod.number.gt(0, { message: "The organismQuantity must be greater than zero (all zero values are safely ignored)." })
     organismQuantity Int
 
     @@unique([project_id, analysis_run_name, lib_id, featureid])
@@ -156,6 +160,7 @@ model Feature {
     featureid String @unique
 
     // Relations
+    Samples           Sample[]
     Occurrences       Occurrence[]
     Assignments       Assignment[]
     BlastQueryResults BlastQueryResult[]
@@ -170,21 +175,69 @@ model Taxonomy {
     taxonomy String @unique
 
     // Relations
-    Assignments Assignment[]
+    Analyses           Analysis[]
+    Samples            Sample[]
+    Assignments        Assignment[]
+    TaxonomySpotlights TaxonomySpotlight[]
 
     // Data
     verbatimIdentification String
     higherClassification   String?
+    realm                  String?
+    subrealm               String?
     domain                 String?
+    superkingdom           String?
     supergroup             String?
-    division               String?
     kingdom                String?
+    infrakingdom           String?
+    subkingdom             String?
     phylum                 String?
+    division               String?
+    subphylum              String?
+    subdivision            String?
     class                  String?
+    subclass               String?
+    section                String?
+    subsection             String?
     order                  String?
+    suborder               String?
     family                 String?
+    subfamily              String?
     genus                  String?
+    subgenus               String?
     species                String?
+    subspecies             String?
+    varietas               String?
+    forma                  String?
+    biovar                 String?
+    serovar                String?
+    pathovar               String?
+    strain                 String?
+    clade                  String?
+    lineage                String?
+    group                  String?
+    type                   String?
+
+    @@index([kingdom])
+    @@index([family])
+    @@index([genus])
+    @@index([species])
+}
+
+model TaxonomySpotlight {
+    id Int @id @default(autoincrement())
+
+    // Relations
+    project_id String
+    Project    Project  @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    taxonomy   String
+    Taxonomy   Taxonomy @relation(fields: [taxonomy], references: [taxonomy], onDelete: Cascade)
+
+    commonName       String?
+    imageFileUrl_ODE String
+    description      String
+
+    @@unique([project_id, taxonomy])
 }
 
 model Tag {
@@ -240,7 +293,7 @@ model BlastQuery {
 
     // Relations
     database          String?
-    Assay             Assay?             @relation(fields: [database], references: [assay_name], onDelete: Cascade)
+    Assay             Assay?             @relation(fields: [database], references: [assay_name], onDelete: Restrict)
     BlastQueryResults BlastQueryResult[]
 
     databaseVersion Int

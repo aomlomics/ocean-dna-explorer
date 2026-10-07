@@ -10,6 +10,7 @@ import {
 	type FeaturedOrganism,
 	type FeaturedOrganismGroup
 } from "./featuredOrganisms";
+import { exploreUrl } from "@/app/helpers/utils";
 
 type Props = {
 	/**
@@ -238,7 +239,7 @@ function FeaturedOrganismCard({ organism }: { organism: FeaturedOrganism }) {
 
 	const iucnLabel = iucn ? IUCN_LABEL[iucn] : null;
 	const viewHref = organism.taxonomyString
-		? `/explore/taxonomy/${encodeURIComponent(organism.taxonomyString)}`
+		? exploreUrl({ table: "taxonomy", taxonomy: organism.taxonomyString })
 		: "/explore/taxonomy";
 	const imageSrc = organism.imageSrc ?? "";
 
@@ -286,8 +287,6 @@ function FeaturedOrganismCard({ organism }: { organism: FeaturedOrganism }) {
 		return () => {
 			cancelled = true;
 		};
-		// Intentionally tied to the organism identity.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [organism.id]);
 
 	return (
@@ -363,7 +362,7 @@ function FeaturedOrganismCard({ organism }: { organism: FeaturedOrganism }) {
 							<span>{iucnLabel}</span>
 						</span>
 					) : (
-						<span className="shrink-0 text-[11px] text-base-content/60">
+						<span className="shrink-0 text-[11px] text-base-content/70">
 							{loadingMeta ? "Loading IUCN..." : "IUCN unavailable"}
 						</span>
 					)}
