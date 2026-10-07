@@ -1,4 +1,4 @@
-import TableMetadata, { DataTableNames, type ModelName, NonDataTableNames, TableNames } from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames, type ModelName, NonDataTableNames } from "@/types/tableMetadata";
 import { getZodType } from "@/app/helpers/schema";
 import Link from "next/link";
 import { capitalizeTable } from "@/app/helpers/utils";
