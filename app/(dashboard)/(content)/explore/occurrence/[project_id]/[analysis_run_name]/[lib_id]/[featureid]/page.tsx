@@ -4,7 +4,14 @@ import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
-import { AnalysisIcon, FeatureIcon, LibraryIcon, OccurrenceIcon, ProjectIcon, SampleIcon } from "@/app/components/icons";
+import {
+	AnalysisIcon,
+	FeatureIcon,
+	LibraryIcon,
+	OccurrenceIcon,
+	ProjectIcon,
+	SampleIcon
+} from "@/app/components/icons";
 import { TaxonomicRanks } from "@/types/objects";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";

@@ -5,7 +5,7 @@ import { useTrusted } from "@/app/hooks/TrustedProvider";
 import { TaxonomicRanks } from "@/types/objects";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
-import type { NetworkPacket, SuccessPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import type {
 	AssignmentModel,
 	LibraryModel,

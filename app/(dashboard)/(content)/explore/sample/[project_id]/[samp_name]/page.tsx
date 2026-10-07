@@ -7,7 +7,14 @@ import { exploreUrl } from "@/app/helpers/utils";
 import TaxonomyDonutChart from "@/app/components/charts/TaxonomyDonutChart";
 import StatCard from "@/app/components/explore/StatCard";
 import DropdownCard from "@/app/components/explore/DropdownCard";
-import { SampleIcon, OccurrenceIcon, AnalysisIcon, AssayIcon, TaxonomyIcon, LocationIcon } from "@/app/components/icons";
+import {
+	SampleIcon,
+	OccurrenceIcon,
+	AnalysisIcon,
+	AssayIcon,
+	TaxonomyIcon,
+	LocationIcon
+} from "@/app/components/icons";
 import type { AnalysisModel, AssayModel } from "@/app/generated/prisma/models";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";

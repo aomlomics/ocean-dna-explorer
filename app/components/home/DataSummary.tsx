@@ -123,9 +123,7 @@ function DataSummaryItem({ title, value, href, icon }: SummaryItemData) {
 			href={href}
 			className="group flex flex-col items-center text-center p-1.5 rounded-lg hover:bg-base-200 transition-all duration-300 hover:scale-105"
 		>
-			{icon && (
-				<div className="w-14 h-14 mb-1.5 flex shrink-0 items-center justify-center text-primary">{icon}</div>
-			)}
+			{icon && <div className="w-14 h-14 mb-1.5 flex shrink-0 items-center justify-center text-primary">{icon}</div>}
 			<div className="text-2xl sm:text-3xl font-bold text-primary mb-0.5 group-hover:text-primary-focus transition-colors leading-tight">
 				<StatCountUp value={value} />
 			</div>

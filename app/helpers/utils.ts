@@ -6,8 +6,7 @@ import type {
 	NetworkPacket,
 	NullLocation,
 	Point,
-	Polygon,
-	SuccessPacket
+	Polygon
 } from "@/types/globals";
 import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import { DeadValueEnum } from "@/types/enums";

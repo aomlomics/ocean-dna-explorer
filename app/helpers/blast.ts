@@ -1,6 +1,5 @@
 import type { BlastRequest, NetworkPacket, Role } from "@/types/globals";
 import { AppError, RolePermissions } from "@/types/objects";
-import type { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import type { BlastQueryModel, BlastQueryResultModel } from "@/app/generated/prisma/models";
 import { COMPRESSION_FORMAT, decompressURIComponent } from "./utils";
 

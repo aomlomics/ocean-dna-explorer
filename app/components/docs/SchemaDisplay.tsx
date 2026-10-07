@@ -4,32 +4,6 @@ import Link from "next/link";
 import { capitalizeTable } from "@/app/helpers/utils";
 
 export default function SchemaDisplay() {
-	const tables = TableNames.map((t) => {
-		const result = {} as Record<
-			string,
-			{
-				type: string;
-				optional?: boolean;
-				values?: string[];
-			}
-		>;
-
-		for (const f of TableMetadata[t].enumSchema.options) {
-			const type = getZodType(t, f);
-			if (type.type === "json") {
-				if (f === "userDefined") {
-					result[f] = type;
-				} else if (f === "editHistory") {
-					result[f] = { ...type, type: "Edit[]" };
-				}
-			} else {
-				result[f] = type;
-			}
-		}
-
-		return [t, result] as [Uncapitalize<ModelName>, typeof result];
-	});
-
 	return (
 		<div>
 			<h2 className="text-2xl pb-2">Data Tables</h2>
