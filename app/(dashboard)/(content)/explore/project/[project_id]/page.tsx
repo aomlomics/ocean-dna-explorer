@@ -349,7 +349,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 
 	const mapDepthGrid = (
 		<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-			<div className="lg:col-span-2">
+			<div className="flex flex-col gap-8 lg:col-span-2">
 				<Map
 					locations={Samples}
 					where={{ project_id }}
@@ -360,14 +360,6 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					className="lg:h-136 w-full"
 					defaultLegendField="expedition_id"
 				/>
-			</div>
-			<div className="flex flex-col gap-6 lg:row-span-2">
-				<Suspense fallback={<DepthCoverageCardSkeleton />}>
-					<DepthCoverageCard project_id={project_id} />
-				</Suspense>
-				{assaysAndTaxa}
-			</div>
-			<div className="lg:col-span-2">
 				<div className="group bg-base-200 rounded-xl p-6 flex flex-col">
 					<h2 className="mb-4 text-base sm:text-lg font-semibold text-base-content/80 transition-colors group-hover:text-white">
 						Project Metadata
@@ -376,6 +368,12 @@ export default async function Project_id({ params }: { params: Promise<{ project
 						<DataDisplay table="project" data={justProject} omit={["project_id", "imageFileUrl_ODE"]} />
 					</div>
 				</div>
+			</div>
+			<div className="flex flex-col gap-6">
+				<Suspense fallback={<DepthCoverageCardSkeleton />}>
+					<DepthCoverageCard project_id={project_id} />
+				</Suspense>
+				{assaysAndTaxa}
 			</div>
 		</div>
 	);
@@ -586,45 +584,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 
 			{/* No cover: map + depth/assays + metadata below. With cover, metadata sits under map inside mapDepthGrid. */}
 			<section className="mt-2 space-y-8">
-				{!project.imageFileUrl_ODE ? (
-					/*
-					 * No cover image: allow the right column to extend below the map
-					 * without forcing the map taller. We do that by making a 2-row
-					 * grid where the right column spans both rows.
-					 */
-					<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-						<div className="lg:col-span-2">
-							<Map
-								locations={Samples}
-								where={{ project_id }}
-								cluster
-								legend
-								draw
-								legendOmit={["project_id"]}
-								className="lg:h-136 w-full"
-								defaultLegendField="expedition_id"
-							/>
-						</div>
-
-						<div className="flex flex-col gap-6 lg:row-span-2">
-							<Suspense fallback={<DepthCoverageCardSkeleton />}>
-								<DepthCoverageCard project_id={project_id} />
-							</Suspense>
-							{assaysAndTaxa}
-						</div>
-
-						<div className="lg:col-span-2">
-							<div className="group bg-base-200 rounded-xl p-6 flex flex-col">
-								<h2 className="mb-4 text-base sm:text-lg font-semibold text-base-content/80 transition-colors group-hover:text-white">
-									Project Metadata
-								</h2>
-								<div className="max-h-124 overflow-y-auto">
-									<DataDisplay table="project" data={justProject} omit={["project_id", "imageFileUrl_ODE"]} />
-								</div>
-							</div>
-						</div>
-					</div>
-				) : null}
+				{!project.imageFileUrl_ODE ? mapDepthGrid : null}
 			</section>
 		</div>
 	);
