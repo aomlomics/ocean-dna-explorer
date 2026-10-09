@@ -113,24 +113,51 @@ export default function TaxonomyData({ pathnamePrefix }: { pathnamePrefix: strin
 			sampleData.result.map((r: unknown) => SampleResultSchema.parse(r));
 
 		//convert to proper formats
-		const taxaInData = new Set() as Set<AssignmentModel["taxonomy"]>;
-		const libsInData = new Set() as Set<LibraryModel["id"]>;
+		const taxaInAssignData = new Set() as Set<AssignmentModel["taxonomy"]>;
+		const libsInAssignData = new Set() as Set<LibraryModel["id"]>;
 		for (const assign of assignments) {
-			taxaInData.add(assign.taxonomy);
-			for (const occ of assign.Occurrences) libsInData.add(occ.Library.id);
+			taxaInAssignData.add(assign.taxonomy);
+			for (const occ of assign.Occurrences) libsInAssignData.add(occ.Library.id);
 		}
 
+		const taxaInTaxaData = new Set() as Set<AssignmentModel["taxonomy"]>;
 		const taxonomiesByName = Object.fromEntries(
-			taxonomies.filter((taxa) => taxaInData.has(taxa.taxonomy)).map((taxa) => [taxa.taxonomy, taxa])
+			taxonomies
+				.filter((taxa) => taxaInAssignData.has(taxa.taxonomy))
+				.map((taxa) => {
+					taxaInTaxaData.add(taxa.taxonomy);
+					return [taxa.taxonomy, taxa];
+				})
 		);
+		const libsInSampleData = new Set() as Set<LibraryModel["id"]>;
 		const libsWithSampleById = new Map(
 			samples.flatMap((samp) =>
-				samp.Libraries.filter((lib) => libsInData.has(lib.id)).map((lib) => [lib.id, { ...lib, Sample: samp }])
+				samp.Libraries.filter((lib) => libsInAssignData.has(lib.id)).map((lib) => {
+					libsInSampleData.add(lib.id);
+					return [lib.id, { ...lib, Sample: samp }];
+				})
 			)
 		);
 
+		const filteredAssigns = assignments.reduce(
+			(acc, assign) => {
+				//might always be true
+				if (taxaInTaxaData.has(assign.taxonomy)) {
+					const filteredOccs = assign.Occurrences.filter((occ) => libsInSampleData.has(occ.Library.id));
+
+					//should always be true
+					if (filteredOccs.length) {
+						acc.push({ ...assign, Occurrences: filteredOccs });
+					}
+				}
+
+				return acc;
+			},
+			[] as typeof assignments
+		);
+
 		return {
-			assignments,
+			assignments: filteredAssigns,
 			taxonomiesByName,
 			libsWithSampleById
 		};

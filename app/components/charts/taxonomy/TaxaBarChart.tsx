@@ -71,10 +71,13 @@ export default function TaxaBarChart({
 			rankValues.add(rankVal);
 
 			for (const occ of assign.Occurrences) {
-				(libraryRankQuantities[occ.Library.id] ??= { [rankVal]: 0 })[rankVal]! += occ.organismQuantity;
+				const quantities = (libraryRankQuantities[occ.Library.id] ??= {});
+				quantities[rankVal] = (quantities[rankVal] ?? 0) + occ.organismQuantity;
+
 				libraryTotals[occ.Library.id] = (libraryTotals[occ.Library.id] ?? 0) + occ.organismQuantity;
 			}
 		}
+		console.log(libraryRankQuantities);
 
 		const sortedRanks = Array.from(rankValues).sort();
 
@@ -329,7 +332,7 @@ export default function TaxaBarChart({
 						},
 						title: {
 							display: true,
-							text: `${metricType === "relative" ? "Relative Abundance" : "Occurrences"} ${averageBy !== "lib_id" ? `averaged by ${averageBy}` : "in each Library"} colored by Taxonomy (${rank})`,
+							text: `${metricType === "relative" ? "Relative Abundance" : "Occurrences"} ${averageBy !== "lib_id" ? `averaged by ${averageBy}` : "in each Library"} colored by ${rank}`,
 							color: textColor
 						},
 						zoom: {

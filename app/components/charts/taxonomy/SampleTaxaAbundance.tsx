@@ -75,7 +75,14 @@ export default function SampleTaxaAbundance({
 	const [loading, startTransition] = useTransition();
 
 	const [xReverse, setXReverse] = useState(false);
-	const [xField, setXField] = useState(SAMPLE_ABUNDANCE_DEFAULT_FIELD);
+	const libsWithSample = Object.values(libsWithSampleById);
+	const [xField, setXField] = useState(() =>
+		libsWithSample.some((lib) => lib.Sample[SAMPLE_ABUNDANCE_DEFAULT_FIELD] != null)
+			? SAMPLE_ABUNDANCE_DEFAULT_FIELD
+			: sampFields.find(
+					(f) => f !== SAMPLE_ABUNDANCE_DEFAULT_FIELD && libsWithSample.some((lib) => lib.Sample[f] != null)
+				)!
+	);
 	const [legendField, setLegendField] = useState(SAMPLE_ABUNDANCE_DEFAULT_LEGEND_FIELD);
 	const [abundanceRank, setAbundanceRank] = useState(ABUNDANCE_DEFAULT_RANK);
 

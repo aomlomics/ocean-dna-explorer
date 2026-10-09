@@ -161,7 +161,9 @@ export async function GET(
 								`
 							);
 						} else {
-							const stepTitleTable = step.type.startsWith("one") ? (i ? path[i - 1]!.table : capsModel) : step.table;
+							const prevTable = i ? path[i - 1]!.table : capsModel;
+							const stepTitleTable = step.type.startsWith("one") ? prevTable : step.table;
+
 							const tf = TableMetadata[stepTitleTable].titleField;
 							const stepTitleFieldArr = typeof tf === "string" ? [tf] : tf;
 
@@ -171,7 +173,7 @@ export async function GET(
 									ON ${Prisma.join(
 										stepTitleFieldArr.map(
 											(field) =>
-												Prisma.sql`${Prisma.raw(`"${stepTitleTable}"."${field}"`)}
+												Prisma.sql`${Prisma.raw(`"${prevTable}"."${field}"`)}
 													= ${Prisma.raw(`"${step.table}"."${field}"`)}`
 										),
 										" AND "

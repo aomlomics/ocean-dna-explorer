@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-	const [showError, setShowError] = useState(true);
+	const [showError, setShowError] = useState(false);
 	useEffect(() => {
 		// Log the error to an error reporting service
 		console.error(error);

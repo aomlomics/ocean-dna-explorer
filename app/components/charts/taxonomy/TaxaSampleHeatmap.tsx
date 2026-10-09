@@ -46,7 +46,7 @@ export default function TaxaSampleHeatmap({
 			const row = (matrix[taxonomiesByName[assign.taxonomy]![rank] ?? "Unassigned"] ??= new Map());
 
 			for (const occ of assign.Occurrences) {
-				const sampId = libsWithSampleById.get(occ.Library.id)!.id;
+				const sampId = libsWithSampleById.get(occ.Library.id)!.Sample.id;
 				row.set(sampId, (row.get(sampId) ?? 0) + occ.organismQuantity);
 			}
 		}
