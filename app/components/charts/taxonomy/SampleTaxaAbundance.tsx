@@ -75,12 +75,14 @@ export default function SampleTaxaAbundance({
 	const [loading, startTransition] = useTransition();
 
 	const [xReverse, setXReverse] = useState(false);
-	const libsWithSample = Object.values(libsWithSampleById);
+	const libsWithSample = libsWithSampleById.values();
 	const [xField, setXField] = useState(() =>
 		libsWithSample.some((lib) => lib.Sample[SAMPLE_ABUNDANCE_DEFAULT_FIELD] != null)
 			? SAMPLE_ABUNDANCE_DEFAULT_FIELD
 			: sampFields.find(
-					(f) => f !== SAMPLE_ABUNDANCE_DEFAULT_FIELD && libsWithSample.some((lib) => lib.Sample[f] != null)
+					(f) =>
+						f !== SAMPLE_ABUNDANCE_DEFAULT_FIELD &&
+						libsWithSample.some((lib) => lib.Sample[f as keyof SampleModel] != null)
 				)!
 	);
 	const [legendField, setLegendField] = useState(SAMPLE_ABUNDANCE_DEFAULT_LEGEND_FIELD);
@@ -224,7 +226,7 @@ export default function SampleTaxaAbundance({
 		if (userDefinedFields.has(field)) {
 			let tempType = "date" as "number" | "date";
 
-			for (const lib of Object.values(libsWithSampleById)) {
+			for (const lib of libsWithSample) {
 				if (
 					lib.Sample.userDefined &&
 					lib.Sample.userDefined[field] != null &&
