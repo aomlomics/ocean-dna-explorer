@@ -1,8 +1,8 @@
 import CodeBlock from "@/app/components/docs/CodeBlock";
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
+import OdeErdDiagram from "@/app/components/docs/OdeErdDiagram";
 import SchemaDisplay from "@/app/components/docs/SchemaDisplay";
 import Link from "next/link";
-import Image from "next/image";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -38,10 +38,8 @@ export default function ApiSchemaPage() {
 					title: "Entity Relationship Diagram",
 					content: (
 						<>
-							<div className="p-4 rounded-md mb-4 bg-base-200">
-								<div className="relative w-full h-200">
-									<Image fill src="/images/ERD.svg" alt="Database entity relationship diagram" />
-								</div>
+							<div className="my-8 -mx-4 text-primary md:-mx-6 lg:-mx-8">
+								<OdeErdDiagram />
 							</div>
 
 							<p className="mb-4">
