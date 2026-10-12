@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { PhotoIcon } from "@/app/components/icons";
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 
@@ -104,10 +105,7 @@ export default function ProjectCoverPhotoPreview({ src, title }: { src: string; 
 				onFocus={openPreview}
 				onBlur={scheduleClose}
 			>
-				<span
-					className="block w-5 h-5 bg-primary mask-[url('/images/icons/photo_icon.svg')] mask-contain mask-no-repeat mask-center [-webkit-mask-image:url('/images/icons/photo_icon.svg')] [-webkit-mask-size:contain] [-webkit-mask-repeat:no-repeat] [-webkit-mask-position:center]"
-					aria-hidden
-				/>
+				<PhotoIcon />
 			</button>
 			{mounted && preview ? createPortal(preview, document.body) : null}
 		</>

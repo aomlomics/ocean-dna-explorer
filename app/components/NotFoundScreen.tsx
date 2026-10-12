@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RovIcon } from "@/app/components/icons";
 
 export default function NotFoundScreen() {
 	return (
@@ -23,12 +24,12 @@ export default function NotFoundScreen() {
 				</div>
 
 				{/* Full-height column so the tether meets the top of the page */}
-				<div className="relative order-1 h-80 w-36 shrink-0 overflow-hidden md:order-2 md:h-auto md:min-h-0 md:w-44 lg:w-48">
-					<div
-						role="img"
-						aria-label="Remotely operated vehicle suspended on a tether"
-						className="not-found-rov absolute inset-x-0 -top-10 bottom-0 rotate-2 bg-primary md:-top-40 md:bottom-[-15%] lg:-top-44"
-					/>
+				<div
+					role="img"
+					aria-label="Remotely operated vehicle suspended on a tether"
+					className="relative order-1 h-80 w-36 shrink-0 overflow-hidden md:order-2 md:h-auto md:min-h-0 md:w-44 lg:w-48"
+				>
+					<RovIcon className="absolute inset-x-0 -top-10 bottom-0 w-full rotate-2 text-primary md:-top-40 md:bottom-[-15%] lg:-top-44" />
 				</div>
 			</div>
 		</main>

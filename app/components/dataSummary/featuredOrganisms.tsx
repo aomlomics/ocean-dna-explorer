@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { PhotoIcon } from "@/app/components/icons";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { MasonryPhotoAlbum, type Photo, type RenderImageContext, type RenderImageProps } from "react-photo-album";
@@ -1678,7 +1679,7 @@ function ImageAttributionIcon({
 		>
 			<div className="relative">
 				<div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-base-100/70 border border-base-200 backdrop-blur flex items-center justify-center shadow-sm">
-					<span className="block w-5 h-5 bg-primary mask-[url('/images/icons/photo_icon.svg')] mask-contain mask-no-repeat mask-center [-webkit-mask-image:url('/images/icons/photo_icon.svg')] [-webkit-mask-size:contain] [-webkit-mask-repeat:no-repeat] [-webkit-mask-position:center]" />
+					<PhotoIcon />
 				</div>
 				{hover ? (
 					<div className="absolute bottom-full right-0 w-72 max-w-[86vw] rounded-lg border border-base-200 bg-base-100/95 p-2.5 text-xs text-base-content shadow-lg backdrop-blur">
