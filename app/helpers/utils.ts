@@ -266,18 +266,18 @@ function stringToPolygon(poly: string): Polygon {
 	}
 
 	const points = polyArr.map((p) => {
-		const split = p.split("/");
-		if (!split[0] || !split[1]) {
+		const [strLat, strLng] = p.split("/").map((e) => e.trim());
+		if (!strLat || !strLng) {
 			throw new AppError(`Invalid LatLng format: "${p}". Format must be <lat>/<lng>.`);
 		}
 		const pnt = {
-			lat: parseFloat(split[0]),
-			lng: parseFloat(split[1])
+			lat: Number(strLat),
+			lng: Number(strLng)
 		};
-		if (isNaN(pnt.lat) || Math.abs(pnt.lat) > 90) {
+		if (!Number.isFinite(pnt.lat) || Math.abs(pnt.lat) > 90) {
 			throw new AppError(`Invalid format for Lat: "${pnt.lat}". Lat must be a number between -90 and 90.`);
 		}
-		if (isNaN(pnt.lng) || Math.abs(pnt.lat) > 180) {
+		if (!Number.isFinite(pnt.lng) || Math.abs(pnt.lat) > 180) {
 			throw new AppError(`Invalid format for Lng: "${pnt.lng}". Lng must be a number between -180 and 180.`);
 		}
 
@@ -301,31 +301,31 @@ function stringToPolygon(poly: string): Polygon {
 
 function stringToCircle(circle: string): Circle {
 	//format: <lat>/<lng>,<radius>
-	const split = circle.split(",");
-	if (!split[0] || !split[1]) {
+	const [strCenter, strRadius] = circle.split(",").map((e) => e.trim());
+	if (!strCenter || !strRadius) {
 		throw new AppError(
 			`Invalid circle format: "${circle}". Circle must have a center followed by a radius, separated by a comma.`
 		);
 	}
 
-	const centerSplit = split[0].split("/");
-	if (!centerSplit[0] || !centerSplit[1]) {
-		throw new AppError(`Invalid center format: "${split[0]}". Format must be <lat>/<lng>.`);
+	const [centerLat, centerLng] = strCenter.split("/").map((e) => e.trim());
+	if (!centerLat || !centerLng) {
+		throw new AppError(`Invalid center format: "${strCenter}". Format must be <lat>/<lng>.`);
 	}
 	const center = {
-		lat: parseFloat(centerSplit[0]),
-		lng: parseFloat(centerSplit[1])
+		lat: Number(centerLat),
+		lng: Number(centerLng)
 	};
-	if (isNaN(center.lat) || Math.abs(center.lat) > 90) {
+	if (!Number.isFinite(center.lat) || Math.abs(center.lat) > 90) {
 		throw new AppError(`Invalid format for Lat: "${center.lat}". Lat must be a number between -90 and 90.`);
 	}
-	if (isNaN(center.lng) || Math.abs(center.lat) > 180) {
+	if (!Number.isFinite(center.lng) || Math.abs(center.lat) > 180) {
 		throw new AppError(`Invalid format for Lng: "${center.lng}". Lng must be a number between -180 and 180.`);
 	}
 
-	const radius = parseFloat(split[1]);
-	if (isNaN(radius)) {
-		throw new AppError(`Invalid format for radius: "${split[1]}". Radius must be a number.`);
+	const radius = Number(strRadius);
+	if (!Number.isFinite(radius)) {
+		throw new AppError(`Invalid format for radius: "${strRadius}". Radius must be a number.`);
 	}
 
 	return {
@@ -336,8 +336,8 @@ function stringToCircle(circle: string): Circle {
 }
 
 export function getShapesFromUrl(searchParams: URLSearchParams) {
-	const polygons = searchParams.getAll("polygon");
-	const circles = searchParams.getAll("circle");
+	const polygons = searchParams.getAll("polygon").map((e) => e.trim());
+	const circles = searchParams.getAll("circle").map((e) => e.trim());
 	// Only process shapes if at least one polygon or circle was provided
 	if (polygons.length || circles.length) {
 		const shapes = [] as Array<MapShape>;

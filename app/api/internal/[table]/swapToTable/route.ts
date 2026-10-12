@@ -1,4 +1,4 @@
-import { parseApiQuery } from "@/app/helpers/api";
+import { apiObjectToPrisma, parseApiToObject } from "@/app/helpers/api";
 import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { getTableName } from "@/app/helpers/schema";
 import type { NetworkPacket } from "@/types/globals";
@@ -16,8 +16,10 @@ export async function GET(
 
 		const { searchParams } = new URL(request.url);
 
-		const { trusted, query } = parseApiQuery(model, searchParams, { swapToTable: true });
+		const { trusted, queryObject } = parseApiToObject(model, searchParams, { swapToTable: true });
 		const client = trusted ? trustedPrisma : prisma;
+
+		const { query } = apiObjectToPrisma(model, queryObject, { swapToTable: true });
 
 		//@ts-expect-error dynamically accessing prisma client
 		const result = await client[model].findMany(query);

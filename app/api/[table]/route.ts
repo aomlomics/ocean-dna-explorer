@@ -1,5 +1,5 @@
-import { deepWhere } from "@/app/helpers/api";
-import { parseApiQuery } from "@/app/helpers/api";
+import { apiObjectToPrisma, deepWhere } from "@/app/helpers/api";
+import { parseApiToObject } from "@/app/helpers/api";
 import { getTableName } from "@/app/helpers/schema";
 import { deepMerge, getLocationsInsideShapes } from "@/app/helpers/utils";
 import type { NetworkPacket } from "@/types/globals";
@@ -23,16 +23,19 @@ export async function GET(
 
 		const { searchParams } = new URL(request.url);
 
-		const parsedQuery = parseApiQuery(model, searchParams, {
+		const parsedQuery = parseApiToObject(model, searchParams, {
 			extras: {
 				limit: true,
 				blast: true,
 				shapes: true
 			}
 		});
-		const { query, limit, page, blast, shapes } = parsedQuery;
-		let { sampleWhere } = parsedQuery;
+		const { blast, shapes, getSampleWhere } = parsedQuery;
 		const client = parsedQuery.trusted ? trustedPrisma : prisma;
+
+		const prismaQueries = apiObjectToPrisma(model, parsedQuery.queryObject, { getSampleWhere });
+		const { query } = prismaQueries;
+		let { sampleWhere } = prismaQueries;
 
 		let featureidWhere;
 		let BlastQueryResults;
@@ -77,12 +80,9 @@ export async function GET(
 		}
 
 		//skip database pagination if doing later
-		if (limit && !(shapes && !sampleWhere)) {
-			if (page) {
-				//offset pagination
-				query.skip = (page - 1) * limit;
-			}
-			query.take = limit;
+		if (shapes && !sampleWhere) {
+			delete query.take;
+			delete query.skip;
 		}
 
 		//@ts-expect-error dynamically accessing prisma client

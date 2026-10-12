@@ -336,16 +336,14 @@ export function getDataTableName(table: string, err?: string) {
 
 export function getTableNameSafe(table?: string | null) {
 	if (table) {
-		return TableNames.find(
-			(t) => t.toLowerCase() === table.toLowerCase() || TableMetadata[t].plural.toLowerCase() === table.toLowerCase()
-		);
+		const lower = table.toLowerCase();
+		return TableNames.find((t) => t.toLowerCase() === lower || TableMetadata[t].plural.toLowerCase() === lower);
 	}
 }
 
 export function getDataTableNameSafe(table?: string | null) {
 	if (table) {
-		return DataTableNames.find(
-			(t) => t.toLowerCase() === table.toLowerCase() || TableMetadata[t].plural.toLowerCase() === table.toLowerCase()
-		);
+		const lower = table.toLowerCase();
+		return DataTableNames.find((t) => t.toLowerCase() === lower || TableMetadata[t].plural.toLowerCase() === lower);
 	}
 }

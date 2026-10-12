@@ -410,7 +410,7 @@ function parseSearchQuery(table: Uncapitalize<ModelName>, search: string) {
 
 		if (type === "string") {
 			ors.push({
-				[field]: { contains: search.toString().replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" }
+				[field]: { contains: search.replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" }
 			});
 		}
 	}
@@ -422,7 +422,7 @@ function parseSearchQuery(table: Uncapitalize<ModelName>, search: string) {
 	}
 }
 
-export function parseApiQuery(
+export function parseApiToObject(
 	table: Uncapitalize<ModelName>,
 	searchParams: URLSearchParams,
 	options?: {
@@ -452,20 +452,28 @@ export function parseApiQuery(
 	//copy search params
 	const newParams = new URLSearchParams(searchParams);
 
-	const query = {} as {
-		orderBy?: Record<string, Prisma.SortOrder | { _count: Prisma.SortOrder }>;
-		select?: Record<string, any>;
-		include?: Record<string, any>;
-		where?: Record<string, any>;
-		take?: number;
-		skip?: number;
-		distinct?: any[];
-	};
+	const queryObject = {} as {
+		orderBy?: { field: string; type: "field" | "relationCount"; sort: Prisma.SortOrder };
+		fields?: string[];
+		distinct?: string[];
+		relCounts?: string[];
+		deepRels?: Uncapitalize<ModelName>[];
+	} & (
+		| { relTables?: Uncapitalize<ModelName>[]; relFields?: never }
+		| { relTables: Uncapitalize<ModelName>[]; relFields: true | Record<Uncapitalize<ModelName>, true | string[]> }
+	) &
+		({ limit?: number; page?: never } | { limit: number; page: number }) &
+		(
+			| { advanced?: ParamsArray; ids?: never; search?: never; filters?: never }
+			| { advanced?: never; ids?: number[]; search?: never; filters?: never }
+			| { advanced?: never; ids?: never; search?: string; filters?: never }
+			| { advanced?: never; ids?: never; search?: never; filters?: Record<string, string | number> }
+		);
 
-	const trusted = newParams.get("trusted")?.toLowerCase() === "true" ? true : false;
+	const trusted = newParams.get("trusted")?.trim().toLowerCase() === "true" ? true : false;
 	newParams.delete("trusted");
 
-	const ignoreExtraOptions = newParams.get("ignoreExtraOptions")?.toLowerCase() === "true" ? true : false;
+	const ignoreExtraOptions = newParams.get("ignoreExtraOptions")?.trim().toLowerCase() === "true" ? true : false;
 	newParams.delete("ignoreExtraOptions");
 
 	//blast query
@@ -486,7 +494,7 @@ export function parseApiQuery(
 		TableMetadata[table].enumSchema.options.includes("decimalLongitude");
 
 	//ordering results
-	const orderByStr = newParams.get("orderBy");
+	const orderByStr = newParams.get("orderBy")?.trim();
 	newParams.delete("orderBy");
 	if (orderByStr != null) {
 		if (options?.features && !options.features.orderBy) {
@@ -494,20 +502,31 @@ export function parseApiQuery(
 				throw new AppError("The orderBy option is not allowed on this route.");
 			}
 		} else {
-			const [field, order] = orderByStr.split(",");
-			if (field && (order === "asc" || order === "desc")) {
-				if (TableMetadata[table].enumSchema.options.includes(field)) {
-					query.orderBy = {
-						[field]: order
-					};
-				} else if (TableMetadata[table].relations.find((rel) => rel.field === field && rel.type.endsWith("many"))) {
-					query.orderBy = {
-						[field]: {
-							_count: order
-						}
+			const [strField, strSort] = orderByStr.split(",");
+			const lowerField = strField?.trim().toLowerCase();
+			const sort = strSort?.trim().toLowerCase();
+
+			if (strField && (sort === "asc" || sort === "desc")) {
+				const field = TableMetadata[table].enumSchema.options.find((f) => f.toLowerCase() === lowerField);
+
+				if (field) {
+					queryObject.orderBy = {
+						field,
+						type: "field",
+						sort
 					};
 				} else {
-					throw new AppError("The orderBy option must be a field or a -to-many relation.");
+					const rel = TableMetadata[table].relations.find((rel) => rel.field === strField && rel.type.endsWith("many"));
+
+					if (rel) {
+						queryObject.orderBy = {
+							field: rel.field,
+							type: "relationCount",
+							sort
+						};
+					} else {
+						throw new AppError("The first argument of the orderBy option must be a field or a -to-many relation.");
+					}
 				}
 			} else {
 				throw new AppError("The orderBy option must be a field and order separated by a comma.");
@@ -516,7 +535,7 @@ export function parseApiQuery(
 	}
 
 	//selecting fields
-	const fields = newParams.get("fields");
+	const fields = newParams.get("fields")?.trim();
 	newParams.delete("fields");
 	if (fields != null) {
 		if (options?.features && !options.features.fields) {
@@ -524,20 +543,19 @@ export function parseApiQuery(
 				throw new AppError("The fields option is not allowed on this route.");
 			}
 		} else {
-			const split = fields.split(",").reduce(
-				(acc, f) => {
-					getZodType(table, f);
-					acc[f] = true;
-					return acc;
-				},
-				{} as Record<string, true>
-			);
-			query.select = query.select ? { ...query.select, ...split } : split;
+			queryObject.fields = fields.split(",").map((f) => {
+				const lower = f.trim().toLowerCase();
+				const found = TableMetadata[table].enumSchema.options.find((sf) => sf.toLowerCase() === lower);
+				if (!found) {
+					throw new AppError(`The field "${f}" does not exist on table named "${table}".`);
+				}
+				return found;
+			});
 		}
 	}
 
 	//distinct
-	const distinct = newParams.get("distinct");
+	const distinct = newParams.get("distinct")?.trim();
 	newParams.delete("distinct");
 	if (distinct != null) {
 		if (options?.features && !options.features.distinct) {
@@ -545,14 +563,19 @@ export function parseApiQuery(
 				throw new AppError("The distinct option is not allowed on this route.");
 			}
 		} else {
-			const split = distinct.split(",");
-			split.forEach((f) => getZodType(table, f));
-			query.distinct = query.distinct ? [...query.distinct, ...split] : split;
+			queryObject.distinct = distinct.split(",").map((f) => {
+				const lower = f.trim().toLowerCase();
+				const found = TableMetadata[table].enumSchema.options.find((sf) => sf.toLowerCase() === lower);
+				if (!found) {
+					throw new AppError(`The field "${f}" does not exist on table named "${table}".`);
+				}
+				return found;
+			});
 		}
 	}
 
 	//relCounts
-	const relCounts = newParams.get("relCounts");
+	const relCounts = newParams.get("relCounts")?.trim();
 	newParams.delete("relCounts");
 	if (relCounts != null) {
 		if (options?.features && !options.features.relCounts) {
@@ -560,35 +583,29 @@ export function parseApiQuery(
 				throw new AppError("The relCounts option is not allowed on this route.");
 			}
 		} else {
-			const countQuery = {
-				_count: {
-					select: relCounts.split(",").reduce(
-						(acc: Record<string, boolean>, rel: string) => ({
-							...acc,
-							[TableMetadata[table].relations.find((mr) => mr.table === capitalizeTable(getDataTableName(rel)))!.field]:
-								true
-						}),
-						{}
-					)
+			queryObject.relCounts = relCounts.split(",").map((rel) => {
+				const relTable = capitalizeTable(
+					getDataTableName(rel.trim(), `The table named "${rel}" in the relCounts option does not exist.`)
+				);
+				const found = TableMetadata[table].relations.find((mr) => mr.table === relTable);
+				if (!found) {
+					throw new AppError(
+						`The table named "${rel}" in the relCounts option is not related to the table named "${table}".`
+					);
 				}
-			};
-
-			if (query.select) {
-				query.select = deepMerge(query.select, countQuery);
-			} else {
-				query.include = deepMerge(query.include ?? {}, countQuery);
-			}
+				return found.field;
+			});
 		}
 	}
 
 	//relations
-	const relations = newParams.get("relations");
+	const relations = newParams.get("relations")?.trim();
 	newParams.delete("relations");
 
-	const relationsFields = newParams.getAll("relationsFields");
+	const relationsFields = newParams.getAll("relationsFields").map((e) => e.trim());
 	newParams.delete("relationsFields");
 
-	const relationsAllFields = newParams.get("relationsAllFields");
+	const relationsAllFields = newParams.get("relationsAllFields")?.trim();
 	newParams.delete("relationsAllFields");
 
 	if (relations != null) {
@@ -599,15 +616,14 @@ export function parseApiQuery(
 		} else {
 			const relTables = new Set() as Set<Uncapitalize<ModelName>>;
 			for (const r of relations.split(",")) {
-				const relTableArr = getTableName(
-					r.trim().toLowerCase(),
-					`Relation with name "${r}" does not exist in database.`
-				);
-				relTables.add(relTableArr);
-			}
+				const rel = getTableName(r.trim(), `The table named "${r}" in the relations option does not exist.`);
+				if (!TableMetadata[table].relationPaths[rel]) {
+					throw new AppError(`No path exists from "${table}" to "${rel}" in the relations option.`);
+				}
 
-			//fields to select in relations
-			let relFields = undefined as undefined | true | Record<Uncapitalize<ModelName>, true | string[]>;
+				relTables.add(rel);
+			}
+			queryObject.relTables = Array.from(relTables);
 
 			if (relationsAllFields != null) {
 				if (relationsFields.length) {
@@ -617,37 +633,36 @@ export function parseApiQuery(
 				const relAllLower = relationsAllFields.toLowerCase();
 				if (relAllLower !== "false") {
 					if (relAllLower === "true") {
-						//check to see how easy it is to make this only work for fields provided in the relations option
-						relFields = true;
+						//TODO: check to see how easy it is to make this only work for fields provided in the relations option
+						queryObject.relFields = true;
 					} else {
-						relFields = {} as Record<Uncapitalize<ModelName>, true>;
+						queryObject.relFields = {} as Record<Uncapitalize<ModelName>, true>;
 
 						for (const r of relationsAllFields.split(",")) {
-							const trimmed = r.trim().toLowerCase();
-
-							const allFieldsArr = Object.entries(TableMetadata).find(
-								([t, metadata]) => trimmed === t.toLowerCase() || trimmed === metadata.plural.toLowerCase()
+							const lower = r.trim().toLowerCase();
+							const foundArr = Object.entries(TableMetadata).find(
+								([t, metadata]) => lower === t.toLowerCase() || lower === metadata.plural.toLowerCase()
 							);
 
-							if (!allFieldsArr) {
+							if (!foundArr) {
 								throw new AppError(
 									`Invalid relationsAllFields: "${relationsAllFields}". The relationsAllFields option must be "true", "false", or a relation provided in the "relations" field. Value was "${r}".`
 								);
 							}
 
-							const relTable = allFieldsArr[0] as Uncapitalize<ModelName>;
-							if (!relTables.has(relTable)) {
+							const rel = foundArr[0] as Uncapitalize<ModelName>;
+							if (!relTables.has(rel)) {
 								throw new AppError(
-									`The relation "${relTable}" in the relationsAllFields option must be included in the relations option.`
+									`The table named "${rel}" in the relationsAllFields option must be included in the relations option.`
 								);
 							}
 
-							relFields[relTable] = true;
+							queryObject.relFields[rel] = true;
 						}
 					}
 				}
 			} else if (relationsFields.length) {
-				relFields = {} as Record<Uncapitalize<ModelName>, string[]>;
+				queryObject.relFields = {} as Record<Uncapitalize<ModelName>, string[]>;
 
 				for (const rfs of relationsFields) {
 					const [relTable, ...fields] = rfs.split(",").map((e) => e.trim());
@@ -661,87 +676,13 @@ export function parseApiQuery(
 					const relModel = getTableName(relTable, `Invalid table name for relationsFields: "${relTable}".`);
 					if (!relTables.has(relModel)) {
 						throw new AppError(
-							`The relation "${relModel}" in the relationsFields option must be included in the relations option.`
+							`The table named "${relModel}" in the relationsFields option must be included in the relations option.`
 						);
 					}
 
 					fields.forEach((f) => getZodType(relModel, f));
-					((relFields[relModel] ??= []) as string[]).push(...fields);
+					((queryObject.relFields[relModel] ??= []) as string[]).push(...fields);
 				}
-			}
-
-			const relPaths = [] as RelationMetadata[][];
-			for (const rt of relTables) {
-				const path = TableMetadata[table].relationPaths[rt];
-				if (!path) {
-					throw new AppError(`No path exists from ${table} to ${rt}.`);
-				}
-
-				let add = true;
-				for (let i = 0; i < relPaths.length; i++) {
-					const currRelPath = relPaths[i]!;
-
-					//existing path is a prefix of the new path
-					const currIsPrefix =
-						currRelPath.length < path.length &&
-						currRelPath.every((step, index) => step.field === path[index]!.field && step.table === path[index]!.table);
-
-					//new path is a prefix of the existing path
-					const pathIsPrefix =
-						path.length < currRelPath.length &&
-						path.every(
-							(step, index) => step.field === currRelPath[index]!.field && step.table === currRelPath[index]!.table
-						);
-
-					if (currIsPrefix) {
-						//the new, longer path supersedes the existing one
-						relPaths.splice(i, 1);
-						i--;
-					} else if (pathIsPrefix) {
-						//the existing path already contains the new path
-						add = false;
-					}
-				}
-
-				if (add) {
-					relPaths.push([...path]);
-				}
-			}
-
-			function buildRelationPath(path: RelationMetadata[]): Record<string, any> {
-				const [rel, ...rest] = path;
-				const relTable = uncapitalizeTable(rel!.table);
-
-				const relationFields = relFields === true ? true : relFields?.[relTable];
-				if (relationFields === true && !rest.length) {
-					return {
-						[rel!.field]: true
-					};
-				}
-
-				const fields =
-					relationFields === true
-						? Object.fromEntries(TableMetadata[relTable].enumSchema.options.map((field) => [field, true]))
-						: Array.isArray(relationFields)
-							? Object.fromEntries(relationFields.map((field) => [field, true]))
-							: { id: true };
-
-				return {
-					[rel!.field]: {
-						select: {
-							...fields,
-							...(rest.length ? buildRelationPath(rest) : {})
-						}
-					}
-				};
-			}
-
-			const relObjs = relPaths.map((rp) => buildRelationPath(rp));
-
-			if (query.select) {
-				query.select = deepMerge(query.select, ...relObjs);
-			} else {
-				query.include = deepMerge(query.include ?? {}, ...relObjs);
 			}
 		}
 	} else {
@@ -755,13 +696,11 @@ export function parseApiQuery(
 	}
 
 	//limit
-	const tempLimit = newParams.get("limit");
+	const tempLimit = newParams.get("limit")?.trim();
 	newParams.delete("limit");
-	let parsedLimit: number | undefined;
 
-	const page = newParams.get("page");
+	const page = newParams.get("page")?.trim();
 	newParams.delete("page");
-	let parsedPage: number | undefined;
 
 	if (tempLimit != null) {
 		if (!options?.extras?.limit) {
@@ -769,14 +708,14 @@ export function parseApiQuery(
 				throw new AppError("The limit option is not allowed on this route.");
 			}
 		} else {
-			parsedLimit = Number(tempLimit);
-			if (!Number.isInteger(parsedLimit) || parsedLimit < 1) {
+			queryObject.limit = Number(tempLimit);
+			if (!Number.isInteger(queryObject.limit) || queryObject.limit < 1) {
 				throw new AppError(`Invalid limit: "${tempLimit}". The limit option must be a positive integer.`);
 			}
 
 			if (page != null) {
-				parsedPage = Number(page);
-				if (!Number.isInteger(parsedPage) || parsedPage < 1) {
+				queryObject.page = Number(page);
+				if (!Number.isInteger(queryObject.page) || queryObject.page < 1) {
 					throw new AppError(`Invalid page: "${page}". The page option must be a positive integer.`);
 				}
 			}
@@ -786,8 +725,7 @@ export function parseApiQuery(
 	}
 
 	//get deep relation data
-	let deepRelsArray = undefined as Uncapitalize<ModelName>[] | undefined;
-	const deepRelations = newParams.get("deepRelations");
+	const deepRelations = newParams.get("deepRelations")?.trim();
 	newParams.delete("deepRelations");
 	if (deepRelations != null) {
 		if (!options?.extras?.deepRelations) {
@@ -799,7 +737,7 @@ export function parseApiQuery(
 				//get relation tables
 				if (deepRelations.toLowerCase() === "true") {
 					//all relations
-					deepRelsArray = DataTableNames.filter(
+					queryObject.deepRels = DataTableNames.filter(
 						(name) =>
 							name !== table &&
 							TableMetadata[table].relations.every(
@@ -808,63 +746,32 @@ export function parseApiQuery(
 					);
 				} else {
 					//comma separated list of relations
-					deepRelsArray = deepRelations.split(",").map((rel) => {
-						const name = getDataTableName(rel, `Deep relation named "${rel}" does not exist.`);
+					queryObject.deepRels = deepRelations.split(",").map((rel) => {
+						const name = getDataTableName(
+							rel.trim(),
+							`The table named "${rel}" in the deepRelations option does not exist.`
+						);
+
+						if (!TableMetadata[table].relationPaths[name]) {
+							throw new AppError(`No path exists from "${table}" to "${name}" in the relations option.`);
+						}
 
 						return name;
 					});
-				}
-
-				const alreadyDone = [] as typeof deepRelsArray;
-				for (const dr of deepRelsArray) {
-					const path = TableMetadata[table].relationPaths[dr];
-
-					if (!path) {
-						throw new AppError(`No path exists from "${table}" to "${dr}".`);
-					}
-
-					if (!path.some((p) => p.type.endsWith("many"))) {
-						alreadyDone.push(dr);
-
-						let include =
-							typeof TableMetadata[dr].titleField === "string"
-								? { [TableMetadata[dr].titleField]: true }
-								: TableMetadata[dr].titleField.reduce((acc, f) => ({ ...acc, [f]: true }), {});
-
-						for (const rel of path.toReversed()) {
-							include = {
-								[rel.field]: {
-									select: include
-								}
-							};
-						}
-
-						if (query.select) {
-							query.select = deepMerge(query.select, include);
-						} else {
-							query.include = deepMerge(query.include ?? {}, include);
-						}
-					}
-				}
-
-				//remove deep relations that are already included in the query
-				for (const ad of alreadyDone) {
-					deepRelsArray.splice(deepRelsArray.indexOf(ad), 1);
 				}
 			}
 		}
 	}
 
-	const getSamples = newParams.get("getSamples")?.toLowerCase() === "true";
+	const getSamples = newParams.get("getSamples")?.trim().toLowerCase() === "true";
 	newParams.delete("getSamples");
 	if (getSamples && !options?.extras?.shapes && !ignoreExtraOptions) {
 		throw new AppError("The getSamples option is not allowed on this route.");
 	}
 
 	//searching
-	let sampleWhere;
-	const getSampleWhere = options?.extras?.shapes && (getSamples || (shapes && !hasLocationData));
-	const advanced = newParams.get("advanced");
+	// let sampleWhere;
+	const advanced = newParams.get("advanced")?.trim();
 	newParams.delete("advanced");
 	if (advanced != null) {
 		//advanced search
@@ -877,24 +784,12 @@ export function parseApiQuery(
 				throw new AppError("Advanced search may not include other filter parameters.");
 			}
 
-			const parsed = JSON.parse(advanced) as ParamsArray;
-			if (parsed.length) {
-				query.where = parseAdvancedQuery(table, parsed, options?.swapToTable ? table : undefined);
-			}
-
-			//assemble secondary query if table doesn't have location data
-			if (getSampleWhere) {
-				if (parsed.length) {
-					sampleWhere = parseAdvancedQuery(table, parsed, "sample");
-				} else {
-					sampleWhere = {};
-				}
-			}
+			queryObject.advanced = JSON.parse(advanced) as ParamsArray;
 		}
 	} else {
-		const ids = newParams.get("ids");
+		const ids = newParams.get("ids")?.trim();
 		newParams.delete("ids");
-		const search = newParams.get("search");
+		const search = newParams.get("search")?.trim();
 		newParams.delete("search");
 
 		if (ids != null) {
@@ -908,22 +803,13 @@ export function parseApiQuery(
 					throw new AppError("Filtering with a list of ids may not include other filter parameters.");
 				}
 
-				const parsedIds = [] as number[];
-				for (const id of ids.split(",")) {
-					if (id) {
-						const parsed = parseInt(id);
-						if (Number.isNaN(parsed)) {
-							throw new AppError(`Invalid ID: "${id}". ID must be an integer.`);
-						}
-						parsedIds.push(parsed);
+				queryObject.ids = ids.split(",").map((id) => {
+					const parsed = Number(id.trim());
+					if (!Number.isInteger(parsed)) {
+						throw new AppError(`Invalid ID: "${id}". ID must be an integer.`);
 					}
-				}
-
-				query.where = {
-					id: {
-						in: parsedIds
-					}
-				};
+					return parsed;
+				});
 			}
 		} else if (search != null) {
 			//string search
@@ -936,14 +822,14 @@ export function parseApiQuery(
 					throw new AppError("Search may not include other filter parameters.");
 				}
 
-				query.where = parseSearchQuery(table, search);
+				queryObject.search = search;
 			}
 		} else {
 			//filtering
 			let tempWhere = {} as Record<string, any>;
 
 			//where
-			const where = newParams.get("where");
+			const where = newParams.get("where")?.trim();
 			newParams.delete("where");
 			if (where != null) {
 				for (const [field, value] of Object.entries(parseNestedJson(where) as Record<string, string>)) {
@@ -971,15 +857,243 @@ export function parseApiQuery(
 						throw new AppError("Field filtering is not allowed on this route.");
 					}
 				} else {
-					query.where = tempWhere;
+					queryObject.filters = tempWhere;
 				}
 			} else if (options?.defaults?.filters) {
-				query.where = options.defaults.filters;
+				queryObject.filters = options.defaults.filters;
+			}
+		}
+	}
+
+	return {
+		queryObject,
+		getSamples,
+		getSampleWhere: options?.extras?.shapes && (getSamples || (shapes && !hasLocationData)),
+		hasLocationData,
+		trusted,
+		blast,
+		shapes
+	};
+}
+
+export function apiObjectToPrisma(
+	table: Uncapitalize<ModelName>,
+	queryObject: ReturnType<typeof parseApiToObject>["queryObject"],
+	options?: {
+		swapToTable?: boolean;
+		getSampleWhere?: boolean;
+	}
+) {
+	const query = {} as {
+		orderBy?: Record<string, Prisma.SortOrder | { _count: Prisma.SortOrder }>;
+		select?: Record<string, any>;
+		include?: Record<string, any>;
+		where?: Record<string, any>;
+		take?: number;
+		skip?: number;
+		distinct?: string[];
+	};
+
+	//orderBy
+	if (queryObject.orderBy) {
+		if (queryObject.orderBy.type === "field") {
+			query.orderBy = {
+				[queryObject.orderBy.field]: queryObject.orderBy.sort
+			};
+		} else if (queryObject.orderBy.type === "relationCount") {
+			query.orderBy = {
+				[queryObject.orderBy.field]: {
+					_count: queryObject.orderBy.sort
+				}
+			};
+		}
+	}
+
+	//select fields
+	if (queryObject.fields) {
+		query.select = queryObject.fields.reduce(
+			(acc, f) => {
+				acc[f] = true;
+				return acc;
+			},
+			{} as Record<string, true>
+		);
+	}
+
+	//distinct
+	if (queryObject.distinct) {
+		query.distinct = queryObject.distinct;
+	}
+
+	//relation counts
+	if (queryObject.relCounts) {
+		const countQuery = {
+			_count: {
+				select: queryObject.relCounts.reduce(
+					(acc, rel) => {
+						acc[rel] = true;
+						return acc;
+					},
+					{} as Record<string, boolean>
+				)
+			}
+		};
+
+		if (query.select) {
+			query.select = deepMerge(query.select, countQuery);
+		} else {
+			query.include = deepMerge(query.include ?? {}, countQuery);
+		}
+	}
+
+	//relations
+	if (queryObject.relTables) {
+		//assemble path data
+		const relPaths = [] as RelationMetadata[][];
+		for (const rt of queryObject.relTables) {
+			const path = TableMetadata[table].relationPaths[rt]!;
+
+			let add = true;
+			for (let i = 0; i < relPaths.length; i++) {
+				const currRelPath = relPaths[i]!;
+
+				if (
+					currRelPath.length < path.length &&
+					currRelPath.every((step, index) => step.field === path[index]!.field && step.table === path[index]!.table)
+				) {
+					//the new, longer path supersedes the existing one
+					relPaths.splice(i, 1);
+					i--;
+				} else if (
+					path.length < currRelPath.length &&
+					path.every(
+						(step, index) => step.field === currRelPath[index]!.field && step.table === currRelPath[index]!.table
+					)
+				) {
+					//the existing path already contains the new path
+					add = false;
+					break;
+				}
+			}
+
+			if (add) {
+				relPaths.push([...path]);
 			}
 		}
 
+		//create query from path data
+		function buildRelationPathQuery(path: RelationMetadata[]): Record<string, any> {
+			const [rel, ...rest] = path;
+			const relTable = uncapitalizeTable(rel!.table);
+
+			const relationFields = queryObject.relFields === true ? true : queryObject.relFields?.[relTable];
+			if (relationFields === true && !rest.length) {
+				return {
+					[rel!.field]: true
+				};
+			}
+
+			const fields =
+				relationFields === true
+					? Object.fromEntries(TableMetadata[relTable].enumSchema.options.map((field) => [field, true]))
+					: Array.isArray(relationFields)
+						? Object.fromEntries(relationFields.map((field) => [field, true]))
+						: { id: true };
+
+			return {
+				[rel!.field]: {
+					select: {
+						...fields,
+						...(rest.length ? buildRelationPathQuery(rest) : {})
+					}
+				}
+			};
+		}
+
+		const relObjs = relPaths.map((rp) => buildRelationPathQuery(rp));
+
+		if (query.select) {
+			query.select = deepMerge(query.select, ...relObjs);
+		} else {
+			query.include = deepMerge(query.include ?? {}, ...relObjs);
+		}
+	}
+
+	//limit
+	if (queryObject.limit) {
+		query.take = queryObject.limit;
+
+		if (queryObject.page) {
+			query.skip = (queryObject.page - 1) * queryObject.limit;
+		}
+	}
+
+	//deep relations
+	if (queryObject.deepRels) {
+		const alreadyDone = [] as Uncapitalize<ModelName>[];
+		for (const dr of queryObject.deepRels) {
+			const path = TableMetadata[table].relationPaths[dr]!;
+
+			if (!path.some((p) => p.type.endsWith("many"))) {
+				alreadyDone.push(dr);
+
+				let include =
+					typeof TableMetadata[dr].titleField === "string"
+						? { [TableMetadata[dr].titleField]: true }
+						: TableMetadata[dr].titleField.reduce((acc, f) => ({ ...acc, [f]: true }), {});
+
+				for (const rel of path.toReversed()) {
+					include = {
+						[rel.field]: {
+							select: include
+						}
+					};
+				}
+
+				if (query.select) {
+					query.select = deepMerge(query.select, include);
+				} else {
+					query.include = deepMerge(query.include ?? {}, include);
+				}
+			}
+		}
+
+		//remove deep relations that are already included in the query
+		for (const ad of alreadyDone) {
+			queryObject.deepRels.splice(queryObject.deepRels.indexOf(ad), 1);
+		}
+	}
+
+	//searching
+	let sampleWhere;
+	if (queryObject.advanced) {
+		if (queryObject.advanced.length) {
+			query.where = parseAdvancedQuery(table, queryObject.advanced, options?.swapToTable ? table : undefined);
+		}
+
 		//assemble secondary query if table doesn't have location data
-		if (getSampleWhere) {
+		if (options?.getSampleWhere) {
+			if (queryObject.advanced.length) {
+				sampleWhere = parseAdvancedQuery(table, queryObject.advanced, "sample");
+			} else {
+				sampleWhere = {};
+			}
+		}
+	} else {
+		if (queryObject.ids) {
+			query.where = {
+				id: {
+					in: queryObject.ids
+				}
+			};
+		} else if (queryObject.search) {
+			query.where = parseSearchQuery(table, queryObject.search);
+		} else if (queryObject.filters) {
+			query.where = queryObject.filters;
+		}
+
+		// assemble secondary query if table doesn't have location data
+		if (options?.getSampleWhere) {
 			if (query.where && Object.keys(query.where).length) {
 				sampleWhere = deepWhere("sample", table, query.where);
 			} else {
@@ -988,16 +1102,5 @@ export function parseApiQuery(
 		}
 	}
 
-	return {
-		trusted,
-		query,
-		blast,
-		shapes,
-		sampleWhere,
-		getSamples,
-		hasLocationData,
-		limit: parsedLimit,
-		page: parsedPage,
-		deepRelsArray
-	};
+	return { query, sampleWhere };
 }

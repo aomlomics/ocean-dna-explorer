@@ -1,5 +1,5 @@
-import { deepWhere } from "@/app/helpers/api";
-import { parseApiQuery } from "@/app/helpers/api";
+import { apiObjectToPrisma, deepWhere } from "@/app/helpers/api";
+import { parseApiToObject } from "@/app/helpers/api";
 import { getTableName } from "@/app/helpers/schema";
 import { deepMerge, getLocationsInsideShapes } from "@/app/helpers/utils";
 import type { NetworkPacket } from "@/types/globals";
@@ -23,7 +23,7 @@ export async function GET(
 
 		const { searchParams } = new URL(request.url);
 
-		const parsedQuery = parseApiQuery(model, searchParams, {
+		const parsedQuery = parseApiToObject(model, searchParams, {
 			features: {
 				filters: true,
 				advanced: true,
@@ -34,9 +34,12 @@ export async function GET(
 				shapes: true
 			}
 		});
-		const { trusted, query, blast, shapes } = parsedQuery;
-		let { sampleWhere } = parsedQuery;
-		const client = trusted ? trustedPrisma : prisma;
+		const { blast, shapes, getSampleWhere } = parsedQuery;
+		const client = parsedQuery.trusted ? trustedPrisma : prisma;
+
+		const prismaQueries = apiObjectToPrisma(model, parsedQuery.queryObject, { getSampleWhere });
+		const { query } = prismaQueries;
+		let { sampleWhere } = prismaQueries;
 
 		let featureidWhere;
 		let BlastQueryResults;

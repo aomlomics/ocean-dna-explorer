@@ -3,8 +3,8 @@ import { capitalizeTable, deepMerge, getLocationsInsideShapes, uncapitalizeTable
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import type { NetworkPacket } from "@/types/globals";
-import { deepWhere } from "@/app/helpers/api";
-import { parseApiQuery } from "@/app/helpers/api";
+import { apiObjectToPrisma, deepWhere } from "@/app/helpers/api";
+import { parseApiToObject } from "@/app/helpers/api";
 import TableMetadata from "@/types/tableMetadata";
 import type { MapLocation } from "@/types/globals";
 import { getDataTableName } from "@/app/helpers/schema";
@@ -27,7 +27,7 @@ export async function GET(
 
 		const { searchParams } = new URL(request.url);
 
-		const parsedQuery = parseApiQuery(model, searchParams, {
+		const parsedQuery = parseApiToObject(model, searchParams, {
 			features: {
 				orderBy: true,
 				relations: true,
@@ -43,11 +43,14 @@ export async function GET(
 				deepRelations: true
 			}
 		});
-		const { query, blast, shapes, getSamples, hasLocationData, limit, page, deepRelsArray } = parsedQuery;
-		let { sampleWhere } = parsedQuery;
+		const { queryObject, blast, shapes, getSamples, hasLocationData, getSampleWhere } = parsedQuery;
 		const client = parsedQuery.trusted ? trustedPrisma : prisma;
 
-		if (!limit) {
+		const prismaQueries = apiObjectToPrisma(model, queryObject, { getSampleWhere });
+		const { query } = prismaQueries;
+		let { sampleWhere } = prismaQueries;
+
+		if (!query.take) {
 			throw new Error("The limit option is required on this route.");
 		}
 
@@ -76,7 +79,9 @@ export async function GET(
 		let result: any[];
 		if (hasLocationData && sampleWhere) {
 			//skip extra database call on sample table
-			samples = await client.sample.findMany(query);
+			samples = await client.sample.findMany(
+				query as Omit<typeof query, "distinct"> & { distinct?: Prisma.SampleScalarFieldEnum[] }
+			);
 			result = [...samples];
 		} else {
 			if (sampleWhere) {
@@ -103,12 +108,9 @@ export async function GET(
 			}
 
 			//skip database pagination if doing later
-			if (!(shapes && hasLocationData)) {
-				if (page) {
-					//offset pagination
-					query.skip = (page - 1) * limit;
-				}
-				query.take = limit;
+			if (shapes && hasLocationData) {
+				delete query.take;
+				delete query.skip;
 			}
 
 			//@ts-expect-error dynamically accessing prisma client
@@ -121,20 +123,20 @@ export async function GET(
 		}
 
 		//manually paginate
-		if (result.length > limit) {
-			const start = page ? (page - 1) * limit : 0;
-			result = result.slice(start, start + limit);
+		if (result.length > query.take!) {
+			const start = query.skip ?? 0;
+			result = result.slice(start, start + query.take!);
 		}
 
 		//get deep relational counts
-		if (result.length && deepRelsArray?.length) {
+		if (result.length && queryObject.deepRels?.length) {
 			const titleFieldArr =
 				typeof TableMetadata[model].titleField === "string"
 					? [TableMetadata[model].titleField]
 					: TableMetadata[model].titleField;
 
 			const queries = await Promise.all(
-				deepRelsArray.map(async (targetModel) => {
+				queryObject.deepRels.map(async (targetModel) => {
 					const path = TableMetadata[model].relationPaths[targetModel]!;
 					const capsModel = capitalizeTable(model);
 
@@ -227,7 +229,7 @@ export async function GET(
 				//attach to results
 				for (const resRow of result) {
 					resRow._count ??= {};
-					resRow._count[TableMetadata[deepRelsArray[i]!].plural] =
+					resRow._count[TableMetadata[queryObject.deepRels[i]!].plural] =
 						counts.get(titleFieldArr.map((field) => String(resRow[field])).join(sep)) ?? 0;
 				}
 			}

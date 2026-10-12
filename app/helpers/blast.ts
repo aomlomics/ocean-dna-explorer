@@ -7,10 +7,11 @@ export function parseBlastRequest(
 	searchParams: URLSearchParams,
 	options?: { safe?: true; noPrefix?: true; noDelete?: true }
 ) {
-	const tempQueries = searchParams.getAll(options?.noPrefix ? "query" : "blastQuery");
+	const tempQueries = searchParams.getAll(options?.noPrefix ? "query" : "blastQuery").map((e) => e.trim());
 	let queries = tempQueries.reduce(
 		(acc, q) => {
-			const split = q.split(",");
+			const split = q.split(",").map((e) => e.trim());
+
 			//ignore queries with too many args
 			if (split.length > 2) {
 				if (!options?.safe)
@@ -29,9 +30,11 @@ export function parseBlastRequest(
 		},
 		[] as BlastRequest["queries"]
 	);
+
 	//uncompress if necessary
 	if (queries.length === 1 && typeof queries[0] === "string" && queries[0].startsWith(COMPRESSION_FORMAT)) {
 		queries = JSON.parse(decompressURIComponent(queries[0]));
+
 		if (
 			!Array.isArray(queries) ||
 			!queries.every((e) => typeof e === "string" || (Array.isArray(e) && e.every((ee) => typeof ee === "string")))
@@ -42,15 +45,15 @@ export function parseBlastRequest(
 		}
 	}
 
-	const database = searchParams.get(options?.noPrefix ? "database" : "blastDatabase");
-	const save = searchParams.get(options?.noPrefix ? "save" : "blastSave");
+	const database = searchParams.get(options?.noPrefix ? "database" : "blastDatabase")?.trim();
+	const save = searchParams.get(options?.noPrefix ? "save" : "blastSave")?.trim();
 
 	//options
-	const task = searchParams.get("task");
-	const max_target_seqs = searchParams.get("max_target_seqs");
-	const evalue = searchParams.get("evalue");
-	const perc_identity = searchParams.get("perc_identity");
-	const qcov_hsp_perc = searchParams.get("qcov_hsp_perc");
+	const task = searchParams.get("task")?.trim();
+	const max_target_seqs = searchParams.get("max_target_seqs")?.trim();
+	const evalue = searchParams.get("evalue")?.trim();
+	const perc_identity = searchParams.get("perc_identity")?.trim();
+	const qcov_hsp_perc = searchParams.get("qcov_hsp_perc")?.trim();
 
 	if (!options?.noDelete) {
 		searchParams.delete(options?.noPrefix ? "query" : "blastQuery");
