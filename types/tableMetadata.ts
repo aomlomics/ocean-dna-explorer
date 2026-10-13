@@ -4,6 +4,7 @@ import * as PrismaZodTypes from "@/prisma/generated/zod";
 import type { Prisma } from "@/app/generated/prisma/browser";
 import type { ZodEnum, ZodObject } from "zod";
 import { capitalizeTable } from "@/app/helpers/utils";
+import type { Writeable } from "./globals";
 
 export type ModelName = Prisma.ModelName;
 
@@ -111,26 +112,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Sample: [
-				{
-					field: "Samples",
-					table: "Sample",
-					type: "one-to-many"
-				}
-			],
 			assay: [
-				{
-					field: "AssayPreps",
-					table: "AssayPrep",
-					type: "one-to-many"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				}
-			],
-			Assay: [
 				{
 					field: "AssayPreps",
 					table: "AssayPrep",
@@ -149,21 +131,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			AssayPrep: [
-				{
-					field: "AssayPreps",
-					table: "AssayPrep",
-					type: "one-to-many"
-				}
-			],
 			library: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				}
-			],
-			Library: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -177,21 +145,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Analysis: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "one-to-many"
-				}
-			],
 			occurrence: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				}
-			],
-			Occurrence: [
 				{
 					field: "Occurrences",
 					table: "Occurrence",
@@ -210,26 +164,7 @@ const TableMetadata = {
 					type: "many-to-many"
 				}
 			],
-			Feature: [
-				{
-					field: "Samples",
-					table: "Sample",
-					type: "one-to-many"
-				},
-				{
-					field: "Features",
-					table: "Feature",
-					type: "many-to-many"
-				}
-			],
 			assignment: [
-				{
-					field: "Assignments",
-					table: "Assignment",
-					type: "one-to-many"
-				}
-			],
-			Assignment: [
 				{
 					field: "Assignments",
 					table: "Assignment",
@@ -248,26 +183,7 @@ const TableMetadata = {
 					type: "many-to-many"
 				}
 			],
-			Taxonomy: [
-				{
-					field: "Samples",
-					table: "Sample",
-					type: "one-to-many"
-				},
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				}
-			],
 			taxonomySpotlight: [
-				{
-					field: "TaxonomySpotlights",
-					table: "TaxonomySpotlight",
-					type: "one-to-many"
-				}
-			],
-			TaxonomySpotlight: [
 				{
 					field: "TaxonomySpotlights",
 					table: "TaxonomySpotlight",
@@ -286,18 +202,6 @@ const TableMetadata = {
 					type: "many-to-many"
 				}
 			],
-			Tag: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "one-to-many"
-				},
-				{
-					field: "Tags",
-					table: "Tag",
-					type: "many-to-many"
-				}
-			],
 			alphaDiversity: [
 				{
 					field: "AlphaDiversities",
@@ -305,21 +209,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			AlphaDiversity: [
-				{
-					field: "AlphaDiversities",
-					table: "AlphaDiversity",
-					type: "one-to-many"
-				}
-			],
 			alphaDiversityIndex: [
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				}
-			],
-			AlphaDiversityIndex: [
 				{
 					field: "AlphaDiversityIndexes",
 					table: "AlphaDiversityIndex",
@@ -343,46 +233,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			BlastQuery: [
-				{
-					field: "AssayPreps",
-					table: "AssayPrep",
-					type: "one-to-many"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				}
-			],
 			blastQueryResult: [
-				{
-					field: "AssayPreps",
-					table: "AssayPrep",
-					type: "one-to-many"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				},
-				{
-					field: "BlastQueryResults",
-					table: "BlastQueryResult",
-					type: "one-to-many"
-				}
-			],
-			BlastQueryResult: [
 				{
 					field: "AssayPreps",
 					table: "AssayPrep",
@@ -470,26 +321,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Project: [
-				{
-					field: "Project",
-					table: "Project",
-					type: "many-to-one"
-				}
-			],
 			assay: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				}
-			],
-			Assay: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -513,18 +345,6 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			AssayPrep: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "AssayPrep",
-					table: "AssayPrep",
-					type: "many-to-one"
-				}
-			],
 			library: [
 				{
 					field: "Libraries",
@@ -532,26 +352,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Library: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				}
-			],
 			analysis: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				}
-			],
-			Analysis: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -575,26 +376,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Occurrence: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				}
-			],
 			feature: [
-				{
-					field: "Features",
-					table: "Feature",
-					type: "many-to-many"
-				}
-			],
-			Feature: [
 				{
 					field: "Features",
 					table: "Feature",
@@ -618,31 +400,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assignment: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Assignment",
-					table: "Assignment",
-					type: "many-to-one"
-				}
-			],
 			taxonomy: [
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				}
-			],
-			Taxonomy: [
 				{
 					field: "Taxonomies",
 					table: "Taxonomy",
@@ -661,36 +419,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			TaxonomySpotlight: [
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				},
-				{
-					field: "TaxonomySpotlights",
-					table: "TaxonomySpotlight",
-					type: "one-to-many"
-				}
-			],
 			tag: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Tags",
-					table: "Tag",
-					type: "many-to-many"
-				}
-			],
-			Tag: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -724,36 +453,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			AlphaDiversity: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversity",
-					table: "AlphaDiversity",
-					type: "many-to-one"
-				}
-			],
 			alphaDiversityIndex: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				}
-			],
-			AlphaDiversityIndex: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -782,46 +482,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			BlastQuery: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				}
-			],
 			blastQueryResult: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				},
-				{
-					field: "BlastQueryResults",
-					table: "BlastQueryResult",
-					type: "one-to-many"
-				}
-			],
-			BlastQueryResult: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -894,31 +555,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Project: [
-				{
-					field: "AssayPreps",
-					table: "AssayPrep",
-					type: "one-to-many"
-				},
-				{
-					field: "Project",
-					table: "Project",
-					type: "many-to-one"
-				}
-			],
 			sample: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				}
-			],
-			Sample: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -937,21 +574,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			AssayPrep: [
-				{
-					field: "AssayPreps",
-					table: "AssayPrep",
-					type: "one-to-many"
-				}
-			],
 			library: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				}
-			],
-			Library: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -965,26 +588,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Analysis: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "one-to-many"
-				}
-			],
 			occurrence: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				}
-			],
-			Occurrence: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -1013,23 +617,6 @@ const TableMetadata = {
 					type: "many-to-many"
 				}
 			],
-			Feature: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				},
-				{
-					field: "Features",
-					table: "Feature",
-					type: "many-to-many"
-				}
-			],
 			assignment: [
 				{
 					field: "Analyses",
@@ -1042,31 +629,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Assignment: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "one-to-many"
-				},
-				{
-					field: "Assignments",
-					table: "Assignment",
-					type: "one-to-many"
-				}
-			],
 			taxonomy: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "one-to-many"
-				},
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				}
-			],
-			Taxonomy: [
 				{
 					field: "Analyses",
 					table: "Analysis",
@@ -1095,36 +658,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			TaxonomySpotlight: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "one-to-many"
-				},
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				},
-				{
-					field: "TaxonomySpotlights",
-					table: "TaxonomySpotlight",
-					type: "one-to-many"
-				}
-			],
 			tag: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "one-to-many"
-				},
-				{
-					field: "Tags",
-					table: "Tag",
-					type: "many-to-many"
-				}
-			],
-			Tag: [
 				{
 					field: "Analyses",
 					table: "Analysis",
@@ -1148,31 +682,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			AlphaDiversity: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversities",
-					table: "AlphaDiversity",
-					type: "one-to-many"
-				}
-			],
 			alphaDiversityIndex: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				}
-			],
-			AlphaDiversityIndex: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -1191,26 +701,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			BlastQuery: [
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				}
-			],
 			blastQueryResult: [
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				},
-				{
-					field: "BlastQueryResults",
-					table: "BlastQueryResult",
-					type: "one-to-many"
-				}
-			],
-			BlastQueryResult: [
 				{
 					field: "BlastQueries",
 					table: "BlastQuery",
@@ -1276,26 +767,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Project: [
-				{
-					field: "Project",
-					table: "Project",
-					type: "many-to-one"
-				}
-			],
 			sample: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				}
-			],
-			Sample: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -1314,13 +786,6 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assay: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				}
-			],
 			library: [
 				{
 					field: "Libraries",
@@ -1328,26 +793,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Library: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				}
-			],
 			analysis: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				}
-			],
-			Analysis: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -1371,36 +817,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Occurrence: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				}
-			],
 			feature: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				},
-				{
-					field: "Features",
-					table: "Feature",
-					type: "many-to-many"
-				}
-			],
-			Feature: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -1434,41 +851,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assignment: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Assignment",
-					table: "Assignment",
-					type: "many-to-one"
-				}
-			],
 			taxonomy: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				},
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				}
-			],
-			Taxonomy: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -1507,46 +890,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			TaxonomySpotlight: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				},
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				},
-				{
-					field: "TaxonomySpotlights",
-					table: "TaxonomySpotlight",
-					type: "one-to-many"
-				}
-			],
 			tag: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Tags",
-					table: "Tag",
-					type: "many-to-many"
-				}
-			],
-			Tag: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -1580,36 +924,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			AlphaDiversity: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversity",
-					table: "AlphaDiversity",
-					type: "many-to-one"
-				}
-			],
 			alphaDiversityIndex: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				}
-			],
-			AlphaDiversityIndex: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -1633,36 +948,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			BlastQuery: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				}
-			],
 			blastQueryResult: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				},
-				{
-					field: "BlastQueryResults",
-					table: "BlastQueryResult",
-					type: "one-to-many"
-				}
-			],
-			BlastQueryResult: [
 				{
 					field: "Assay",
 					table: "Assay",
@@ -1752,21 +1038,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Project: [
-				{
-					field: "Project",
-					table: "Project",
-					type: "many-to-one"
-				}
-			],
 			sample: [
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				}
-			],
-			Sample: [
 				{
 					field: "Sample",
 					table: "Sample",
@@ -1780,21 +1052,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assay: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				}
-			],
 			assayPrep: [
-				{
-					field: "AssayPrep",
-					table: "AssayPrep",
-					type: "many-to-one"
-				}
-			],
-			AssayPrep: [
 				{
 					field: "AssayPrep",
 					table: "AssayPrep",
@@ -1808,13 +1066,6 @@ const TableMetadata = {
 					type: "many-to-many"
 				}
 			],
-			Analysis: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				}
-			],
 			occurrence: [
 				{
 					field: "Occurrences",
@@ -1822,26 +1073,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Occurrence: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				}
-			],
 			feature: [
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				},
-				{
-					field: "Features",
-					table: "Feature",
-					type: "many-to-many"
-				}
-			],
-			Feature: [
 				{
 					field: "Sample",
 					table: "Sample",
@@ -1865,31 +1097,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assignment: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Assignment",
-					table: "Assignment",
-					type: "many-to-one"
-				}
-			],
 			taxonomy: [
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				},
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				}
-			],
-			Taxonomy: [
 				{
 					field: "Sample",
 					table: "Sample",
@@ -1918,36 +1126,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			TaxonomySpotlight: [
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				},
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				},
-				{
-					field: "TaxonomySpotlights",
-					table: "TaxonomySpotlight",
-					type: "one-to-many"
-				}
-			],
 			tag: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Tags",
-					table: "Tag",
-					type: "many-to-many"
-				}
-			],
-			Tag: [
 				{
 					field: "Analyses",
 					table: "Analysis",
@@ -1971,26 +1150,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			AlphaDiversity: [
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversity",
-					table: "AlphaDiversity",
-					type: "many-to-one"
-				}
-			],
 			alphaDiversityIndex: [
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				}
-			],
-			AlphaDiversityIndex: [
 				{
 					field: "AlphaDiversityIndexes",
 					table: "AlphaDiversityIndex",
@@ -2009,36 +1169,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			BlastQuery: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				}
-			],
 			blastQueryResult: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				},
-				{
-					field: "BlastQueryResults",
-					table: "BlastQueryResult",
-					type: "one-to-many"
-				}
-			],
-			BlastQueryResult: [
 				{
 					field: "Assay",
 					table: "Assay",
@@ -2122,26 +1253,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Project: [
-				{
-					field: "Project",
-					table: "Project",
-					type: "many-to-one"
-				}
-			],
 			sample: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "many-to-many"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				}
-			],
-			Sample: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -2160,26 +1272,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assay: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				}
-			],
 			assayPrep: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "many-to-many"
-				},
-				{
-					field: "AssayPrep",
-					table: "AssayPrep",
-					type: "many-to-one"
-				}
-			],
-			AssayPrep: [
 				{
 					field: "Libraries",
 					table: "Library",
@@ -2198,21 +1291,7 @@ const TableMetadata = {
 					type: "many-to-many"
 				}
 			],
-			Library: [
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "many-to-many"
-				}
-			],
 			occurrence: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				}
-			],
-			Occurrence: [
 				{
 					field: "Occurrences",
 					table: "Occurrence",
@@ -2231,18 +1310,6 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Feature: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Feature",
-					table: "Feature",
-					type: "many-to-one"
-				}
-			],
 			assignment: [
 				{
 					field: "Assignments",
@@ -2250,21 +1317,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Assignment: [
-				{
-					field: "Assignments",
-					table: "Assignment",
-					type: "one-to-many"
-				}
-			],
 			taxonomy: [
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				}
-			],
-			Taxonomy: [
 				{
 					field: "Taxonomies",
 					table: "Taxonomy",
@@ -2283,26 +1336,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			TaxonomySpotlight: [
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				},
-				{
-					field: "TaxonomySpotlights",
-					table: "TaxonomySpotlight",
-					type: "one-to-many"
-				}
-			],
 			tag: [
-				{
-					field: "Tags",
-					table: "Tag",
-					type: "many-to-many"
-				}
-			],
-			Tag: [
 				{
 					field: "Tags",
 					table: "Tag",
@@ -2316,26 +1350,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			AlphaDiversity: [
-				{
-					field: "AlphaDiversities",
-					table: "AlphaDiversity",
-					type: "one-to-many"
-				}
-			],
 			alphaDiversityIndex: [
-				{
-					field: "AlphaDiversities",
-					table: "AlphaDiversity",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				}
-			],
-			AlphaDiversityIndex: [
 				{
 					field: "AlphaDiversities",
 					table: "AlphaDiversity",
@@ -2359,36 +1374,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			BlastQuery: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				}
-			],
 			blastQueryResult: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				},
-				{
-					field: "BlastQueryResults",
-					table: "BlastQueryResult",
-					type: "one-to-many"
-				}
-			],
-			BlastQueryResult: [
 				{
 					field: "Assay",
 					table: "Assay",
@@ -2458,26 +1444,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Project: [
-				{
-					field: "Project",
-					table: "Project",
-					type: "many-to-one"
-				}
-			],
 			sample: [
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				}
-			],
-			Sample: [
 				{
 					field: "Library",
 					table: "Library",
@@ -2501,31 +1468,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assay: [
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				}
-			],
 			assayPrep: [
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "AssayPrep",
-					table: "AssayPrep",
-					type: "many-to-one"
-				}
-			],
-			AssayPrep: [
 				{
 					field: "Library",
 					table: "Library",
@@ -2544,21 +1487,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Library: [
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				}
-			],
 			analysis: [
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				}
-			],
-			Analysis: [
 				{
 					field: "Analysis",
 					table: "Analysis",
@@ -2572,13 +1501,6 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Feature: [
-				{
-					field: "Feature",
-					table: "Feature",
-					type: "many-to-one"
-				}
-			],
 			assignment: [
 				{
 					field: "Assignment",
@@ -2586,26 +1508,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assignment: [
-				{
-					field: "Assignment",
-					table: "Assignment",
-					type: "many-to-one"
-				}
-			],
 			taxonomy: [
-				{
-					field: "Assignment",
-					table: "Assignment",
-					type: "many-to-one"
-				},
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				}
-			],
-			Taxonomy: [
 				{
 					field: "Assignment",
 					table: "Assignment",
@@ -2634,36 +1537,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			TaxonomySpotlight: [
-				{
-					field: "Assignment",
-					table: "Assignment",
-					type: "many-to-one"
-				},
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				},
-				{
-					field: "TaxonomySpotlights",
-					table: "TaxonomySpotlight",
-					type: "one-to-many"
-				}
-			],
 			tag: [
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				},
-				{
-					field: "Tags",
-					table: "Tag",
-					type: "many-to-many"
-				}
-			],
-			Tag: [
 				{
 					field: "Analysis",
 					table: "Analysis",
@@ -2692,36 +1566,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			AlphaDiversity: [
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversity",
-					table: "AlphaDiversity",
-					type: "many-to-one"
-				}
-			],
 			alphaDiversityIndex: [
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				}
-			],
-			AlphaDiversityIndex: [
 				{
 					field: "Library",
 					table: "Library",
@@ -2750,46 +1595,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			BlastQuery: [
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				}
-			],
 			blastQueryResult: [
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				},
-				{
-					field: "BlastQueryResults",
-					table: "BlastQueryResult",
-					type: "one-to-many"
-				}
-			],
-			BlastQueryResult: [
 				{
 					field: "Analysis",
 					table: "Analysis",
@@ -2859,18 +1665,6 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Project: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Project",
-					table: "Project",
-					type: "many-to-one"
-				}
-			],
 			sample: [
 				{
 					field: "Samples",
@@ -2878,31 +1672,7 @@ const TableMetadata = {
 					type: "many-to-many"
 				}
 			],
-			Sample: [
-				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
-				}
-			],
 			assay: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				}
-			],
-			Assay: [
 				{
 					field: "Occurrences",
 					table: "Occurrence",
@@ -2936,36 +1706,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			AssayPrep: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "AssayPrep",
-					table: "AssayPrep",
-					type: "many-to-one"
-				}
-			],
 			library: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				}
-			],
-			Library: [
 				{
 					field: "Occurrences",
 					table: "Occurrence",
@@ -2989,26 +1730,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Analysis: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				}
-			],
 			occurrence: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				}
-			],
-			Occurrence: [
 				{
 					field: "Occurrences",
 					table: "Occurrence",
@@ -3022,26 +1744,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Assignment: [
-				{
-					field: "Assignments",
-					table: "Assignment",
-					type: "one-to-many"
-				}
-			],
 			taxonomy: [
-				{
-					field: "Assignments",
-					table: "Assignment",
-					type: "one-to-many"
-				},
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				}
-			],
-			Taxonomy: [
 				{
 					field: "Assignments",
 					table: "Assignment",
@@ -3070,41 +1773,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			TaxonomySpotlight: [
-				{
-					field: "Assignments",
-					table: "Assignment",
-					type: "one-to-many"
-				},
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				},
-				{
-					field: "TaxonomySpotlights",
-					table: "TaxonomySpotlight",
-					type: "one-to-many"
-				}
-			],
 			tag: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				},
-				{
-					field: "Tags",
-					table: "Tag",
-					type: "many-to-many"
-				}
-			],
-			Tag: [
 				{
 					field: "Occurrences",
 					table: "Occurrence",
@@ -3143,46 +1812,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			AlphaDiversity: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversity",
-					table: "AlphaDiversity",
-					type: "many-to-one"
-				}
-			],
 			alphaDiversityIndex: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				}
-			],
-			AlphaDiversityIndex: [
 				{
 					field: "Occurrences",
 					table: "Occurrence",
@@ -3211,26 +1841,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			BlastQuery: [
-				{
-					field: "BlastQueryResults",
-					table: "BlastQueryResult",
-					type: "one-to-many"
-				},
-				{
-					field: "BlastQuery",
-					table: "BlastQuery",
-					type: "many-to-one"
-				}
-			],
 			blastQueryResult: [
-				{
-					field: "BlastQueryResults",
-					table: "BlastQueryResult",
-					type: "one-to-many"
-				}
-			],
-			BlastQueryResult: [
 				{
 					field: "BlastQueryResults",
 					table: "BlastQueryResult",
@@ -3289,31 +1900,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Project: [
-				{
-					field: "Project",
-					table: "Project",
-					type: "many-to-one"
-				}
-			],
 			sample: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				}
-			],
-			Sample: [
 				{
 					field: "Occurrences",
 					table: "Occurrence",
@@ -3342,36 +1929,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assay: [
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				}
-			],
 			assayPrep: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "AssayPrep",
-					table: "AssayPrep",
-					type: "many-to-one"
-				}
-			],
-			AssayPrep: [
 				{
 					field: "Occurrences",
 					table: "Occurrence",
@@ -3400,26 +1958,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Library: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				}
-			],
 			analysis: [
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				}
-			],
-			Analysis: [
 				{
 					field: "Analysis",
 					table: "Analysis",
@@ -3433,21 +1972,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Occurrence: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				}
-			],
 			feature: [
-				{
-					field: "Feature",
-					table: "Feature",
-					type: "many-to-one"
-				}
-			],
-			Feature: [
 				{
 					field: "Feature",
 					table: "Feature",
@@ -3461,26 +1986,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Taxonomy: [
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				}
-			],
 			taxonomySpotlight: [
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				},
-				{
-					field: "TaxonomySpotlights",
-					table: "TaxonomySpotlight",
-					type: "one-to-many"
-				}
-			],
-			TaxonomySpotlight: [
 				{
 					field: "Taxonomy",
 					table: "Taxonomy",
@@ -3504,41 +2010,7 @@ const TableMetadata = {
 					type: "many-to-many"
 				}
 			],
-			Tag: [
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				},
-				{
-					field: "Tags",
-					table: "Tag",
-					type: "many-to-many"
-				}
-			],
 			alphaDiversity: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversity",
-					table: "AlphaDiversity",
-					type: "many-to-one"
-				}
-			],
-			AlphaDiversity: [
 				{
 					field: "Occurrences",
 					table: "Occurrence",
@@ -3577,23 +2049,6 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			AlphaDiversityIndex: [
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				}
-			],
 			blastQuery: [
 				{
 					field: "Analysis",
@@ -3611,46 +2066,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			BlastQuery: [
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				}
-			],
 			blastQueryResult: [
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				},
-				{
-					field: "BlastQueryResults",
-					table: "BlastQueryResult",
-					type: "one-to-many"
-				}
-			],
-			BlastQueryResult: [
 				{
 					field: "Analysis",
 					table: "Analysis",
@@ -3753,18 +2169,6 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Project: [
-				{
-					field: "Assignments",
-					table: "Assignment",
-					type: "one-to-many"
-				},
-				{
-					field: "Project",
-					table: "Project",
-					type: "many-to-one"
-				}
-			],
 			sample: [
 				{
 					field: "Samples",
@@ -3772,26 +2176,7 @@ const TableMetadata = {
 					type: "many-to-many"
 				}
 			],
-			Sample: [
-				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
-				}
-			],
 			assay: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				}
-			],
-			Assay: [
 				{
 					field: "Analyses",
 					table: "Analysis",
@@ -3820,36 +2205,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			AssayPrep: [
-				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "AssayPrep",
-					table: "AssayPrep",
-					type: "many-to-one"
-				}
-			],
 			library: [
-				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				}
-			],
-			Library: [
 				{
 					field: "Samples",
 					table: "Sample",
@@ -3868,26 +2224,7 @@ const TableMetadata = {
 					type: "many-to-many"
 				}
 			],
-			Analysis: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				}
-			],
 			occurrence: [
-				{
-					field: "Assignments",
-					table: "Assignment",
-					type: "one-to-many"
-				},
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				}
-			],
-			Occurrence: [
 				{
 					field: "Assignments",
 					table: "Assignment",
@@ -3911,18 +2248,6 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Feature: [
-				{
-					field: "Assignments",
-					table: "Assignment",
-					type: "one-to-many"
-				},
-				{
-					field: "Feature",
-					table: "Feature",
-					type: "many-to-one"
-				}
-			],
 			assignment: [
 				{
 					field: "Assignments",
@@ -3930,21 +2255,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Assignment: [
-				{
-					field: "Assignments",
-					table: "Assignment",
-					type: "one-to-many"
-				}
-			],
 			taxonomySpotlight: [
-				{
-					field: "TaxonomySpotlights",
-					table: "TaxonomySpotlight",
-					type: "one-to-many"
-				}
-			],
-			TaxonomySpotlight: [
 				{
 					field: "TaxonomySpotlights",
 					table: "TaxonomySpotlight",
@@ -3963,41 +2274,7 @@ const TableMetadata = {
 					type: "many-to-many"
 				}
 			],
-			Tag: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Tags",
-					table: "Tag",
-					type: "many-to-many"
-				}
-			],
 			alphaDiversity: [
-				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversity",
-					table: "AlphaDiversity",
-					type: "many-to-one"
-				}
-			],
-			AlphaDiversity: [
 				{
 					field: "Samples",
 					table: "Sample",
@@ -4036,23 +2313,6 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			AlphaDiversityIndex: [
-				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				}
-			],
 			blastQuery: [
 				{
 					field: "Analyses",
@@ -4070,46 +2330,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			BlastQuery: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				}
-			],
 			blastQueryResult: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				},
-				{
-					field: "BlastQueryResults",
-					table: "BlastQueryResult",
-					type: "one-to-many"
-				}
-			],
-			BlastQueryResult: [
 				{
 					field: "Analyses",
 					table: "Analysis",
@@ -4162,13 +2383,6 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Project: [
-				{
-					field: "Project",
-					table: "Project",
-					type: "many-to-one"
-				}
-			],
 			sample: [
 				{
 					field: "Taxonomy",
@@ -4181,36 +2395,7 @@ const TableMetadata = {
 					type: "many-to-many"
 				}
 			],
-			Sample: [
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				},
-				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
-				}
-			],
 			assay: [
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				},
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				}
-			],
-			Assay: [
 				{
 					field: "Taxonomy",
 					table: "Taxonomy",
@@ -4249,46 +2434,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			AssayPrep: [
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				},
-				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "AssayPrep",
-					table: "AssayPrep",
-					type: "many-to-one"
-				}
-			],
 			library: [
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				},
-				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				}
-			],
-			Library: [
 				{
 					field: "Taxonomy",
 					table: "Taxonomy",
@@ -4317,36 +2463,7 @@ const TableMetadata = {
 					type: "many-to-many"
 				}
 			],
-			Analysis: [
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				},
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				}
-			],
 			occurrence: [
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				},
-				{
-					field: "Assignments",
-					table: "Assignment",
-					type: "one-to-many"
-				},
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				}
-			],
-			Occurrence: [
 				{
 					field: "Taxonomy",
 					table: "Taxonomy",
@@ -4380,23 +2497,6 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Feature: [
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				},
-				{
-					field: "Assignments",
-					table: "Assignment",
-					type: "one-to-many"
-				},
-				{
-					field: "Feature",
-					table: "Feature",
-					type: "many-to-one"
-				}
-			],
 			assignment: [
 				{
 					field: "Taxonomy",
@@ -4409,26 +2509,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Assignment: [
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				},
-				{
-					field: "Assignments",
-					table: "Assignment",
-					type: "one-to-many"
-				}
-			],
 			taxonomy: [
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				}
-			],
-			Taxonomy: [
 				{
 					field: "Taxonomy",
 					table: "Taxonomy",
@@ -4452,51 +2533,7 @@ const TableMetadata = {
 					type: "many-to-many"
 				}
 			],
-			Tag: [
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				},
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Tags",
-					table: "Tag",
-					type: "many-to-many"
-				}
-			],
 			alphaDiversity: [
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				},
-				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversity",
-					table: "AlphaDiversity",
-					type: "many-to-one"
-				}
-			],
-			AlphaDiversity: [
 				{
 					field: "Taxonomy",
 					table: "Taxonomy",
@@ -4545,28 +2582,6 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			AlphaDiversityIndex: [
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				},
-				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				}
-			],
 			blastQuery: [
 				{
 					field: "Taxonomy",
@@ -4589,56 +2604,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			BlastQuery: [
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				},
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				}
-			],
 			blastQueryResult: [
-				{
-					field: "Taxonomy",
-					table: "Taxonomy",
-					type: "many-to-one"
-				},
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				},
-				{
-					field: "BlastQueryResults",
-					table: "BlastQueryResult",
-					type: "one-to-many"
-				}
-			],
-			BlastQueryResult: [
 				{
 					field: "Taxonomy",
 					table: "Taxonomy",
@@ -4693,36 +2659,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Project: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Project",
-					table: "Project",
-					type: "many-to-one"
-				}
-			],
 			sample: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "many-to-many"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				}
-			],
-			Sample: [
 				{
 					field: "Analyses",
 					table: "Analysis",
@@ -4751,36 +2688,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assay: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				}
-			],
 			assayPrep: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "many-to-many"
-				},
-				{
-					field: "AssayPrep",
-					table: "AssayPrep",
-					type: "many-to-one"
-				}
-			],
-			AssayPrep: [
 				{
 					field: "Analyses",
 					table: "Analysis",
@@ -4809,18 +2717,6 @@ const TableMetadata = {
 					type: "many-to-many"
 				}
 			],
-			Library: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "many-to-many"
-				}
-			],
 			analysis: [
 				{
 					field: "Analyses",
@@ -4828,26 +2724,7 @@ const TableMetadata = {
 					type: "many-to-many"
 				}
 			],
-			Analysis: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				}
-			],
 			occurrence: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				}
-			],
-			Occurrence: [
 				{
 					field: "Analyses",
 					table: "Analysis",
@@ -4876,23 +2753,6 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Feature: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Feature",
-					table: "Feature",
-					type: "many-to-one"
-				}
-			],
 			assignment: [
 				{
 					field: "Analyses",
@@ -4905,31 +2765,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Assignment: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Assignments",
-					table: "Assignment",
-					type: "one-to-many"
-				}
-			],
 			taxonomy: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				}
-			],
-			Taxonomy: [
 				{
 					field: "Analyses",
 					table: "Analysis",
@@ -4958,23 +2794,6 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			TaxonomySpotlight: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				},
-				{
-					field: "TaxonomySpotlights",
-					table: "TaxonomySpotlight",
-					type: "one-to-many"
-				}
-			],
 			alphaDiversity: [
 				{
 					field: "Analyses",
@@ -4987,36 +2806,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			AlphaDiversity: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "AlphaDiversities",
-					table: "AlphaDiversity",
-					type: "one-to-many"
-				}
-			],
 			alphaDiversityIndex: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "AlphaDiversities",
-					table: "AlphaDiversity",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				}
-			],
-			AlphaDiversityIndex: [
 				{
 					field: "Analyses",
 					table: "Analysis",
@@ -5050,46 +2840,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			BlastQuery: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				}
-			],
 			blastQueryResult: [
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "many-to-many"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				},
-				{
-					field: "BlastQueryResults",
-					table: "BlastQueryResult",
-					type: "one-to-many"
-				}
-			],
-			BlastQueryResult: [
 				{
 					field: "Analyses",
 					table: "Analysis",
@@ -5144,31 +2895,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Project: [
-				{
-					field: "Project",
-					table: "Project",
-					type: "many-to-one"
-				}
-			],
 			sample: [
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				}
-			],
-			Sample: [
 				{
 					field: "AlphaDiversityIndexes",
 					table: "AlphaDiversityIndex",
@@ -5197,36 +2924,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assay: [
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				}
-			],
 			assayPrep: [
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "AssayPrep",
-					table: "AssayPrep",
-					type: "many-to-one"
-				}
-			],
-			AssayPrep: [
 				{
 					field: "AlphaDiversityIndexes",
 					table: "AlphaDiversityIndex",
@@ -5255,26 +2953,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Library: [
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				}
-			],
 			analysis: [
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				}
-			],
-			Analysis: [
 				{
 					field: "Analysis",
 					table: "Analysis",
@@ -5298,46 +2977,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Occurrence: [
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				}
-			],
 			feature: [
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				},
-				{
-					field: "Features",
-					table: "Feature",
-					type: "many-to-many"
-				}
-			],
-			Feature: [
 				{
 					field: "AlphaDiversityIndexes",
 					table: "AlphaDiversityIndex",
@@ -5381,51 +3021,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assignment: [
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Assignment",
-					table: "Assignment",
-					type: "many-to-one"
-				}
-			],
 			taxonomy: [
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				},
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				}
-			],
-			Taxonomy: [
 				{
 					field: "AlphaDiversityIndexes",
 					table: "AlphaDiversityIndex",
@@ -5474,33 +3070,6 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			TaxonomySpotlight: [
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				},
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				},
-				{
-					field: "TaxonomySpotlights",
-					table: "TaxonomySpotlight",
-					type: "one-to-many"
-				}
-			],
 			tag: [
 				{
 					field: "Analysis",
@@ -5513,26 +3082,7 @@ const TableMetadata = {
 					type: "many-to-many"
 				}
 			],
-			Tag: [
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				},
-				{
-					field: "Tags",
-					table: "Tag",
-					type: "many-to-many"
-				}
-			],
 			alphaDiversityIndex: [
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				}
-			],
-			AlphaDiversityIndex: [
 				{
 					field: "AlphaDiversityIndexes",
 					table: "AlphaDiversityIndex",
@@ -5556,46 +3106,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			BlastQuery: [
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				}
-			],
 			blastQueryResult: [
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				},
-				{
-					field: "BlastQueryResults",
-					table: "BlastQueryResult",
-					type: "one-to-many"
-				}
-			],
-			BlastQueryResult: [
 				{
 					field: "Analysis",
 					table: "Analysis",
@@ -5650,26 +3161,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Project: [
-				{
-					field: "Project",
-					table: "Project",
-					type: "many-to-one"
-				}
-			],
 			sample: [
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				}
-			],
-			Sample: [
 				{
 					field: "Library",
 					table: "Library",
@@ -5693,31 +3185,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assay: [
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				}
-			],
 			assayPrep: [
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "AssayPrep",
-					table: "AssayPrep",
-					type: "many-to-one"
-				}
-			],
-			AssayPrep: [
 				{
 					field: "Library",
 					table: "Library",
@@ -5736,26 +3204,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Library: [
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				}
-			],
 			analysis: [
-				{
-					field: "AlphaDiversity",
-					table: "AlphaDiversity",
-					type: "many-to-one"
-				},
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				}
-			],
-			Analysis: [
 				{
 					field: "AlphaDiversity",
 					table: "AlphaDiversity",
@@ -5779,36 +3228,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Occurrence: [
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				}
-			],
 			feature: [
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				},
-				{
-					field: "Features",
-					table: "Feature",
-					type: "many-to-many"
-				}
-			],
-			Feature: [
 				{
 					field: "Library",
 					table: "Library",
@@ -5842,41 +3262,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assignment: [
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Assignment",
-					table: "Assignment",
-					type: "many-to-one"
-				}
-			],
 			taxonomy: [
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				},
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				}
-			],
-			Taxonomy: [
 				{
 					field: "Library",
 					table: "Library",
@@ -5915,46 +3301,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			TaxonomySpotlight: [
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				},
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				},
-				{
-					field: "TaxonomySpotlights",
-					table: "TaxonomySpotlight",
-					type: "one-to-many"
-				}
-			],
 			tag: [
-				{
-					field: "AlphaDiversity",
-					table: "AlphaDiversity",
-					type: "many-to-one"
-				},
-				{
-					field: "Analysis",
-					table: "Analysis",
-					type: "many-to-one"
-				},
-				{
-					field: "Tags",
-					table: "Tag",
-					type: "many-to-many"
-				}
-			],
-			Tag: [
 				{
 					field: "AlphaDiversity",
 					table: "AlphaDiversity",
@@ -5978,13 +3325,6 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			AlphaDiversity: [
-				{
-					field: "AlphaDiversity",
-					table: "AlphaDiversity",
-					type: "many-to-one"
-				}
-			],
 			blastQuery: [
 				{
 					field: "Library",
@@ -6002,46 +3342,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			BlastQuery: [
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				}
-			],
 			blastQueryResult: [
-				{
-					field: "Library",
-					table: "Library",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "BlastQueries",
-					table: "BlastQuery",
-					type: "one-to-many"
-				},
-				{
-					field: "BlastQueryResults",
-					table: "BlastQueryResult",
-					type: "one-to-many"
-				}
-			],
-			BlastQueryResult: [
 				{
 					field: "Library",
 					table: "Library",
@@ -6101,41 +3402,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Project: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "AssayPreps",
-					table: "AssayPrep",
-					type: "one-to-many"
-				},
-				{
-					field: "Project",
-					table: "Project",
-					type: "many-to-one"
-				}
-			],
 			sample: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				}
-			],
-			Sample: [
 				{
 					field: "Assay",
 					table: "Assay",
@@ -6159,26 +3426,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assay: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				}
-			],
 			assayPrep: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "AssayPreps",
-					table: "AssayPrep",
-					type: "one-to-many"
-				}
-			],
-			AssayPrep: [
 				{
 					field: "Assay",
 					table: "Assay",
@@ -6202,31 +3450,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Library: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				}
-			],
 			analysis: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "one-to-many"
-				}
-			],
-			Analysis: [
 				{
 					field: "Assay",
 					table: "Assay",
@@ -6255,36 +3479,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Occurrence: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				}
-			],
 			feature: [
-				{
-					field: "BlastQueryResults",
-					table: "BlastQueryResult",
-					type: "one-to-many"
-				},
-				{
-					field: "Feature",
-					table: "Feature",
-					type: "many-to-one"
-				}
-			],
-			Feature: [
 				{
 					field: "BlastQueryResults",
 					table: "BlastQueryResult",
@@ -6318,51 +3513,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assignment: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Assignment",
-					table: "Assignment",
-					type: "many-to-one"
-				}
-			],
 			taxonomy: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				},
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				}
-			],
-			Taxonomy: [
 				{
 					field: "Assay",
 					table: "Assay",
@@ -6411,51 +3562,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			TaxonomySpotlight: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				},
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				},
-				{
-					field: "TaxonomySpotlights",
-					table: "TaxonomySpotlight",
-					type: "one-to-many"
-				}
-			],
 			tag: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "one-to-many"
-				},
-				{
-					field: "Tags",
-					table: "Tag",
-					type: "many-to-many"
-				}
-			],
-			Tag: [
 				{
 					field: "Assay",
 					table: "Assay",
@@ -6494,28 +3601,6 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			AlphaDiversity: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversity",
-					table: "AlphaDiversity",
-					type: "many-to-one"
-				}
-			],
 			alphaDiversityIndex: [
 				{
 					field: "Assay",
@@ -6533,31 +3618,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			AlphaDiversityIndex: [
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				}
-			],
 			blastQueryResult: [
-				{
-					field: "BlastQueryResults",
-					table: "BlastQueryResult",
-					type: "one-to-many"
-				}
-			],
-			BlastQueryResult: [
 				{
 					field: "BlastQueryResults",
 					table: "BlastQueryResult",
@@ -6617,51 +3678,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Project: [
-				{
-					field: "BlastQuery",
-					table: "BlastQuery",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "AssayPreps",
-					table: "AssayPrep",
-					type: "one-to-many"
-				},
-				{
-					field: "Project",
-					table: "Project",
-					type: "many-to-one"
-				}
-			],
 			sample: [
-				{
-					field: "BlastQuery",
-					table: "BlastQuery",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				}
-			],
-			Sample: [
 				{
 					field: "BlastQuery",
 					table: "BlastQuery",
@@ -6695,36 +3712,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assay: [
-				{
-					field: "BlastQuery",
-					table: "BlastQuery",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				}
-			],
 			assayPrep: [
-				{
-					field: "BlastQuery",
-					table: "BlastQuery",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "AssayPreps",
-					table: "AssayPrep",
-					type: "one-to-many"
-				}
-			],
-			AssayPrep: [
 				{
 					field: "BlastQuery",
 					table: "BlastQuery",
@@ -6758,41 +3746,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Library: [
-				{
-					field: "BlastQuery",
-					table: "BlastQuery",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				}
-			],
 			analysis: [
-				{
-					field: "BlastQuery",
-					table: "BlastQuery",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "one-to-many"
-				}
-			],
-			Analysis: [
 				{
 					field: "BlastQuery",
 					table: "BlastQuery",
@@ -6831,36 +3785,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			Occurrence: [
-				{
-					field: "BlastQuery",
-					table: "BlastQuery",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				}
-			],
 			feature: [
-				{
-					field: "Feature",
-					table: "Feature",
-					type: "many-to-one"
-				}
-			],
-			Feature: [
 				{
 					field: "Feature",
 					table: "Feature",
@@ -6894,61 +3819,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			Assignment: [
-				{
-					field: "BlastQuery",
-					table: "BlastQuery",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Assignment",
-					table: "Assignment",
-					type: "many-to-one"
-				}
-			],
 			taxonomy: [
-				{
-					field: "BlastQuery",
-					table: "BlastQuery",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				},
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				}
-			],
-			Taxonomy: [
 				{
 					field: "BlastQuery",
 					table: "BlastQuery",
@@ -7007,61 +3878,7 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
-			TaxonomySpotlight: [
-				{
-					field: "BlastQuery",
-					table: "BlastQuery",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "Sample",
-					table: "Sample",
-					type: "many-to-one"
-				},
-				{
-					field: "Taxonomies",
-					table: "Taxonomy",
-					type: "many-to-many"
-				},
-				{
-					field: "TaxonomySpotlights",
-					table: "TaxonomySpotlight",
-					type: "one-to-many"
-				}
-			],
 			tag: [
-				{
-					field: "BlastQuery",
-					table: "BlastQuery",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Analyses",
-					table: "Analysis",
-					type: "one-to-many"
-				},
-				{
-					field: "Tags",
-					table: "Tag",
-					type: "many-to-many"
-				}
-			],
-			Tag: [
 				{
 					field: "BlastQuery",
 					table: "BlastQuery",
@@ -7110,56 +3927,7 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
-			AlphaDiversity: [
-				{
-					field: "BlastQuery",
-					table: "BlastQuery",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversity",
-					table: "AlphaDiversity",
-					type: "many-to-one"
-				}
-			],
 			alphaDiversityIndex: [
-				{
-					field: "BlastQuery",
-					table: "BlastQuery",
-					type: "many-to-one"
-				},
-				{
-					field: "Assay",
-					table: "Assay",
-					type: "many-to-one"
-				},
-				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
-				},
-				{
-					field: "AlphaDiversityIndexes",
-					table: "AlphaDiversityIndex",
-					type: "one-to-many"
-				}
-			],
-			AlphaDiversityIndex: [
 				{
 					field: "BlastQuery",
 					table: "BlastQuery",
@@ -7187,13 +3955,6 @@ const TableMetadata = {
 					table: "BlastQuery",
 					type: "many-to-one"
 				}
-			],
-			BlastQuery: [
-				{
-					field: "BlastQuery",
-					table: "BlastQuery",
-					type: "many-to-one"
-				}
 			]
 		}
 	}
@@ -7209,6 +3970,14 @@ export const DataTableNames = TableNames.filter((t) => !NonDataTableNames.includ
 //duplicate keys with capitalized model names, mapping them to the same value as uncapitalized keys
 //Ex: both project and Project map to the same value
 for (const table of TableNames) {
+	//duplicate path objects
+	for (const [target, path] of Object.entries(TableMetadata[table].relationPaths)) {
+		(TableMetadata[table].relationPaths as Writeable<RelationPaths>)[
+			capitalizeTable(target as Uncapitalize<ModelName>)
+		] = path;
+	}
+
+	//duplicate table entries
 	(TableMetadata as Record<Uncapitalize<ModelName> | ModelName, (typeof TableMetadata)[keyof typeof TableMetadata]>)[
 		capitalizeTable(table)
 	] = TableMetadata[table];
