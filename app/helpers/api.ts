@@ -886,13 +886,10 @@ export function apiObjectToPrisma(
 ) {
 	const query = {} as {
 		orderBy?: Record<string, Prisma.SortOrder | { _count: Prisma.SortOrder }>;
-		select?: Record<string, any>;
-		include?: Record<string, any>;
 		where?: Record<string, any>;
-		take?: number;
-		skip?: number;
 		distinct?: string[];
-	};
+	} & ({ select?: Record<string, any>; include?: never } | { select?: never; include?: Record<string, any> }) &
+		({ take?: number; skip?: never } | { take: number; skip: number });
 
 	//orderBy
 	if (queryObject.orderBy) {
