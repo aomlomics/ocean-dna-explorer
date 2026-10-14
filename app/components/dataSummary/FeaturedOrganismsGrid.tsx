@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { PhotoIcon } from "@/app/components/icons";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import ImagePreviewModal from "../ImagePreviewModal";
@@ -390,7 +391,7 @@ function InlineAttributionBadge({ attribution }: { attribution: string }) {
 		>
 			<div className="relative">
 				<div className="w-9 h-9 rounded-full bg-base-100/70 border border-base-200 backdrop-blur flex items-center justify-center shadow-sm">
-					<span className="block w-5 h-5 bg-primary mask-[url('/images/icons/photo_icon.svg')] mask-contain mask-no-repeat mask-center [-webkit-mask-image:url('/images/icons/photo_icon.svg')] [-webkit-mask-size:contain] [-webkit-mask-repeat:no-repeat] [-webkit-mask-position:center]" />
+					<PhotoIcon />
 				</div>
 				{hover ? (
 					<div className="absolute top-full right-0 mt-2 p-3 rounded-lg shadow-lg bg-base-100/90 backdrop-blur text-base-content max-w-[85vw] sm:max-w-sm w-72 border border-base-200">

@@ -1,8 +1,9 @@
 import CodeBlock from "@/app/components/docs/CodeBlock";
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
+import OdeErdDiagram from "@/app/components/docs/OdeErdDiagram";
 import SchemaDisplay from "@/app/components/docs/SchemaDisplay";
+import { ErdKeyMandatory, ErdKeyOptional } from "@/app/components/icons";
 import Link from "next/link";
-import Image from "next/image";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -38,14 +39,32 @@ export default function ApiSchemaPage() {
 					title: "Entity Relationship Diagram",
 					content: (
 						<>
-							<div className="p-4 rounded-md mb-4 bg-base-200">
-								<div className="relative w-full h-200">
-									<Image fill src="/images/ERD.svg" alt="Database entity relationship diagram" />
+							<div className="mt-8 mb-2 -mx-4 text-primary md:-mx-6 lg:-mx-8">
+								<OdeErdDiagram />
+							</div>
+
+							<div className="not-prose mb-8 flex flex-col gap-4 text-sm leading-relaxed text-base-content">
+								<div className="flex items-center gap-4">
+									<span className="text-primary">
+										<ErdKeyMandatory />
+									</span>
+									<p>
+										<span className="font-medium">Exactly one.</span> The record on this end is required.
+									</p>
+								</div>
+								<div className="flex items-center gap-4">
+									<span className="text-primary">
+										<ErdKeyOptional />
+									</span>
+									<p>
+										<span className="font-medium">Zero or many.</span> Related records can be missing.
+									</p>
 								</div>
 							</div>
 
 							<p className="mb-4">
-								Use this diagram as a reference when constructing queries with the{" "}
+								This Entity Relationship Diagram shows the data tables of the database, the tables you will usually want to query. Internal,
+								non-data tables are listed separately below. Use this diagram as a reference when constructing queries with the{" "}
 								<Link href="/docs/api/queryParameters#relations" className="text-primary">
 									relations
 								</Link>{" "}

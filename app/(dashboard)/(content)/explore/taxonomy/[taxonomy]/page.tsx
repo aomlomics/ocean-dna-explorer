@@ -12,6 +12,7 @@ import CopyButton from "@/app/components/CopyButton";
 import { VIEW_AS_SEARCH_TOOLTIP_CLASS } from "@/app/components/viewAsSearchTooltip";
 import TableInfo from "@/app/components/TableInfo";
 import { decodeRouteParams } from "@/app/helpers/utils";
+import { resolveGbifCommonName } from "@/app/helpers/resolveGbifCommonName";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { TaxonomicRank } from "@/types/globals";
@@ -61,42 +62,24 @@ function finestDisplayedRank(db: TaxonomyModel): {
 	return null;
 }
 
-function isEnglishVernacularLang(raw: string | undefined): boolean {
-	const lang = (raw ?? "").trim().toLowerCase();
-	if (!lang) return false;
-	if (lang === "en" || lang === "eng") return true;
-	return lang.startsWith("en-") || lang.startsWith("en_");
-}
-
-/** GBIF + PhyloPic URL for this page — GBIF backbone match is identical to PhyloPicClient (`matchGbifForPhylopic` only). */
+/** PhyloPic URL for this page — GBIF backbone match is identical to PhyloPicClient (`matchGbifForPhylopic` only). Common name uses the explore-card resolver. */
 async function resolveTaxonomyPageGbif(taxonomyObj: TaxonomyModel): Promise<{
-	taxonKey: number;
-	mediaTaxonKey: number;
+	taxonKey: number | null;
+	mediaTaxonKey: number | null;
 	commonName: string | null;
-	phyloPic: { imageUrl: string | null; rank: string; title: string };
+	phyloPic: { imageUrl: string | null; rank: string; title: string } | null;
 } | null> {
-	const matched = await matchGbifForPhylopic(taxonomyObj);
-	if (!matched) return null;
+	const [matched, commonName] = await Promise.all([matchGbifForPhylopic(taxonomyObj), resolveGbifCommonName(taxonomyObj)]);
+	if (!matched) {
+		if (!commonName) return null;
+		return { taxonKey: null, mediaTaxonKey: null, commonName, phyloPic: null };
+	}
 
 	const { taxonKey, objectIDs, rankMatched, mediaTaxonKey } = matched;
 
-	const [vnRes, phyloPicRes] = await Promise.all([
-		fetch(`https://api.gbif.org/v1/species/${taxonKey}/vernacularNames?limit=80`),
-		fetch(`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${objectIDs}`)
-	]);
-
-	let commonName: string | null = null;
-	try {
-		const vnJson = await vnRes.json();
-		const results: { vernacularName?: string; language?: string }[] = Array.isArray(vnJson?.results)
-			? vnJson.results
-			: [];
-		const eng = results.find((r) => isEnglishVernacularLang(r.language) && r.vernacularName?.trim());
-		const name = eng?.vernacularName;
-		if (typeof name === "string" && name.trim()) commonName = name.trim();
-	} catch {
-		// optional
-	}
+	const phyloPicRes = await fetch(
+		`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${objectIDs}`
+	);
 
 	const phyloPicJson = await phyloPicRes.json();
 	let imageUrl: string | null = null;

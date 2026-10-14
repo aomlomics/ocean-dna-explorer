@@ -1,6 +1,7 @@
 "use client";
 
 import type { ImageModel } from "@/app/generated/prismaImages/models/Image";
+import { PhotoIcon } from "@/app/components/icons";
 import { useState } from "react";
 
 export default function AttributionBadge({
@@ -29,7 +30,7 @@ export default function AttributionBadge({
 			<div className="relative">
 				{/* Circular chip with masked SVG colored by bg-primary */}
 				<div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-base-100/70 border border-base-200 backdrop-blur flex items-center justify-center shadow-sm">
-					<span className="block w-5 h-5 bg-primary [mask-image:url('/images/icons/photo_icon.svg')] mask-contain mask-no-repeat mask-center [-webkit-mask-image:url('/images/icons/photo_icon.svg')] [-webkit-mask-size:contain] [-webkit-mask-repeat:no-repeat] [-webkit-mask-position:center]"></span>
+					<PhotoIcon />
 				</div>
 
 				{hover && (
