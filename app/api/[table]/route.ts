@@ -25,7 +25,6 @@ export async function GET(
 
 		const parsedQuery = parseApiToObject(model, searchParams, {
 			extras: {
-				limit: true,
 				blast: true,
 				shapes: true
 			}

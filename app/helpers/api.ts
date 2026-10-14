@@ -436,12 +436,12 @@ export function parseApiToObject(
 			filters?: true;
 			advanced?: true;
 			search?: true;
+			limit?: true;
 		};
 		defaults?: {
 			filters?: Record<string, string | number>;
 		};
 		extras?: {
-			limit?: true;
 			deepRelations?: true; //internal
 			blast?: true;
 			shapes?: true;
@@ -703,7 +703,7 @@ export function parseApiToObject(
 	newParams.delete("page");
 
 	if (tempLimit != null) {
-		if (!options?.extras?.limit) {
+		if (options?.features && !options.features.limit) {
 			if (!ignoreExtraOptions) {
 				throw new AppError("The limit option is not allowed on this route.");
 			}
