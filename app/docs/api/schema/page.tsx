@@ -2,7 +2,7 @@ import CodeBlock from "@/app/components/docs/CodeBlock";
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import OdeErdDiagram from "@/app/components/docs/OdeErdDiagram";
 import SchemaDisplay from "@/app/components/docs/SchemaDisplay";
-import { ErdKeyMandatory, ErdKeyMany, ErdKeyOptional } from "@/app/components/icons";
+import { ErdKeyMandatory, ErdKeyOptional } from "@/app/components/icons";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -54,14 +54,6 @@ export default function ApiSchemaPage() {
 								</div>
 								<div className="flex items-center gap-4">
 									<span className="text-primary">
-										<ErdKeyMany />
-									</span>
-									<p>
-										<span className="font-medium">One or many.</span> At least one related record.
-									</p>
-								</div>
-								<div className="flex items-center gap-4">
-									<span className="text-primary">
 										<ErdKeyOptional />
 									</span>
 									<p>
@@ -71,7 +63,8 @@ export default function ApiSchemaPage() {
 							</div>
 
 							<p className="mb-4">
-								Use this diagram as a reference when constructing queries with the{" "}
+								This Entity Relationship Diagram shows the data tables of the database, the tables you will usually want to query. Internal,
+								non-data tables are listed separately below. Use this diagram as a reference when constructing queries with the{" "}
 								<Link href="/docs/api/queryParameters#relations" className="text-primary">
 									relations
 								</Link>{" "}
