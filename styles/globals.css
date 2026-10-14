@@ -315,6 +315,36 @@
 	border-right-width: 0;
 }
 
+/*
+  Taxonomy cards: DaisyUI fades the tooltip bubble in from visible when the
+  pseudo-element is created. A page of cards does that all at once, and the
+  wide bubbles resize the mobile viewport. Keep the hidden state instant.
+  Touch screens have no hover, so do not build the bubbles there at all.
+*/
+.taxonomy-grid-tooltip[data-tip]::before,
+.taxonomy-grid-tooltip[data-tip]::after {
+	transition: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.taxonomy-grid-tooltip[data-tip]:is(:hover, :focus-visible, :has(:focus-visible))::before,
+	.taxonomy-grid-tooltip[data-tip]:is(:hover, :focus-visible, :has(:focus-visible))::after {
+		transition:
+			opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+			transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+			translate 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+			scale 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+}
+
+@media (hover: none) {
+	.taxonomy-grid-tooltip[data-tip]::before,
+	.taxonomy-grid-tooltip[data-tip]::after {
+		content: none;
+		display: none;
+	}
+}
+
 @keyframes fadeIn {
 	from {
 		opacity: 0;
