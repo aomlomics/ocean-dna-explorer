@@ -85,7 +85,7 @@ export default function DiscoveriesPage() {
 							<div className="flex flex-col gap-4 lg:order-1">
 								<div className="w-full rounded-2xl ring-1 ring-base-300/80 [html[data-theme='dark']_&]:ring-base-content/15 overflow-hidden">
 									<Image
-										src="/images/discover_search_example_light.webp"
+										src="/images/learn/discoveries/discover_search_example_light.webp"
 										alt="Search page with filters"
 										width={1920}
 										height={1080}
@@ -93,7 +93,7 @@ export default function DiscoveriesPage() {
 										sizes="(max-width: 1024px) 100vw, 42vw"
 									/>
 									<Image
-										src="/images/discover_search_example_dark.webp"
+										src="/images/learn/discoveries/discover_search_example_dark.webp"
 										alt="Search page with filters"
 										width={1920}
 										height={1080}
@@ -103,7 +103,7 @@ export default function DiscoveriesPage() {
 								</div>
 								<div className="w-full">
 									<Image
-										src="/images/discover_search_example_2_light.webp"
+										src="/images/learn/discoveries/discover_search_example_2_light.webp"
 										alt="Search page with copy as API query"
 										width={1920}
 										height={1080}
@@ -111,7 +111,7 @@ export default function DiscoveriesPage() {
 										sizes="(max-width: 1024px) 100vw, 42vw"
 									/>
 									<Image
-										src="/images/discover_search_Example_2_dark.webp"
+										src="/images/learn/discoveries/discover_search_Example_2_dark.webp"
 										alt="Search page with copy as API query"
 										width={1920}
 										height={1080}
@@ -190,7 +190,7 @@ export default function DiscoveriesPage() {
 							<div className="flex flex-col gap-4 pb-6 sm:pb-8">
 								<div className="w-full">
 									<Image
-										src="/images/discover_map_draw_shape.webp"
+										src="/images/learn/discoveries/discover_map_draw_shape.webp"
 										alt="Map with drawn shape"
 										width={1920}
 										height={1080}
@@ -200,14 +200,14 @@ export default function DiscoveriesPage() {
 								</div>
 								<div className="relative w-full aspect-video overflow-hidden rounded-2xl ring-1 ring-base-300/80 [html[data-theme='dark']_&]:ring-base-content/15">
 									<Image
-										src="/images/discover_map_ex_2_light.webp"
+										src="/images/learn/discoveries/discover_map_ex_2_light.webp"
 										alt="Map example"
 										fill
 										className="object-fill [html[data-theme='dark']_&]:hidden"
 										sizes="(max-width: 1024px) 100vw, 42vw"
 									/>
 									<Image
-										src="/images/discover_map_ex_2_dark.webp"
+										src="/images/learn/discoveries/discover_map_ex_2_dark.webp"
 										alt="Map example"
 										fill
 										className="hidden object-fill [html[data-theme='dark']_&]:block"

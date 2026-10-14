@@ -8,7 +8,7 @@ export default function LearnLayout({ children }: { children: React.ReactNode })
 			<section className="relative w-screen left-1/2 right-1/2 ml-[-50vw] mr-[-50vw] mb-6 sm:mb-8 bg-base-100">
 				<div className="relative min-h-0">
 					<Image
-						src="/images/learn_page_banner.jpg"
+						src="/images/learn/learn_page_banner.jpg"
 						alt="Learn page banner"
 						fill
 						sizes="100vw"

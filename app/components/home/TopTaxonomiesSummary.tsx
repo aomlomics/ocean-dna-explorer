@@ -65,7 +65,7 @@ export default async function TopTaxonomiesSummary() {
 			title: "Eukaryota",
 			description:
 				"Complex, nucleated cells spanning microscopic algae and corals to fish and whales. Represents the ocean's visible biodiversity.",
-			image: "/images/bait_ball.jpeg",
+			image: "/images/top_taxonomies/bait_ball.jpeg",
 			phyla: eukaryotaPhyla
 		},
 		{
@@ -73,7 +73,7 @@ export default async function TopTaxonomiesSummary() {
 			title: "Bacteria",
 			description:
 				"The ocean's most abundant single-celled life. Primary drivers of global nutrient cycles and the marine food web from the bottom up.",
-			image: "/images/bacteria_image.jpeg",
+			image: "/images/top_taxonomies/bacteria_image.jpeg",
 			phyla: bacteriaPhyla
 		},
 		{
@@ -81,7 +81,7 @@ export default async function TopTaxonomiesSummary() {
 			title: "Archaea",
 			description:
 				"Evolutionarily distinct microbes that thrive in harsh environments; critical for regulating ocean methane and early biological history.",
-			image: "/images/hydrothermal_vent.jpg",
+			image: "/images/top_taxonomies/hydrothermal_vent.jpg",
 			phyla: archaeaPhyla
 		}
 	];
@@ -131,8 +131,8 @@ function KingdomCard({ section }: { section: KingdomSection }) {
 			<div className="relative h-44 w-full overflow-hidden">
 				{section.kingdom === "Bacteria" ? (
 					<ThemeAwareSvg
-						lightSrc="/images/bacteria_image.jpeg"
-						darkSrc="/images/bacteria_image_dark.png"
+						lightSrc="/images/top_taxonomies/bacteria_image_light.jpeg"
+						darkSrc="/images/top_taxonomies/bacteria_image_dark.png"
 						alt={section.kingdom}
 						className="object-cover"
 						sizes="(max-width: 768px) 100vw, 33vw"
