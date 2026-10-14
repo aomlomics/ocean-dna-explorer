@@ -35,6 +35,14 @@ export default function OdeErdDiagram() {
 		      .cls-6 {
 		        fill: none;
 		      }
+
+		      /* Connectors only. 2 viewBox units shrink below one screen pixel, so fractional coordinates anti-alias into lighter lines. */
+		      #Layer_1 > :is(line, polyline, circle).cls-6,
+		      #Layer_1 > g > :is(line, polyline).cls-6,
+		      #Layer_1 > g > g > line.cls-6 {
+		        stroke-width: 1px;
+		        vector-effect: non-scaling-stroke;
+		      }
 		
 		      .cls-12 {
 		        letter-spacing: -.02em;
