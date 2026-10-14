@@ -2,7 +2,7 @@ node_modules
 .next
 public
 *.md
-docs
+/docs
 
 # Prisma
 app/generated

@@ -1,9 +1,21 @@
 {
 	"entryPoints": ["app", "types"],
 	"entryPointStrategy": "expand",
-	"exclude": ["app/generated/**"],
+	"exclude": [
+		"**/route.ts",
+		"**/page.tsx",
+		"**/layout.tsx",
+		"**/loading.tsx",
+		"**/error.tsx",
+		"**/not-found.tsx",
+		"**/sitemap.ts",
+		"app/generated/**",
+		"app/global-error.tsx",
+		"app/manifest.ts",
+		"app/robots.ts"
+	],
 	"out": "docs",
-	"highlightLanguages": ["typescript", "javascript", "sql", "bash"],
+	"highlightLanguages": ["typescript", "sql", "bash"],
 	"validation": {
 		"notExported": false
 	},

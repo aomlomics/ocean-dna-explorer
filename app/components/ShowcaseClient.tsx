@@ -9,7 +9,7 @@ import { matchGbifForPhylopic } from "@/app/components/images/matchGbifForPhylop
 import DynamicMap from "@/app/components/map/DynamicMap";
 import { RanksBySpecificity } from "@/types/objects";
 import { AnimatePresence, motion, type Transition } from "framer-motion";
-import type { ProjectBundle } from "./data";
+import type { ProjectBundle } from "./showcaseData";
 import { TrustedLabel } from "@/app/components/header/TrustedToggle";
 import { usePrefersReducedMotion } from "@/app/hooks/usePrefersReducedMotion";
 

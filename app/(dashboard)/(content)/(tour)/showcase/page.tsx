@@ -1,5 +1,5 @@
-import ShowcaseClient from "./ShowcaseClient";
-import { getTourShowcaseProjects } from "./data";
+import ShowcaseClient from "@/app/components/ShowcaseClient";
+import { getTourShowcaseProjects } from "@/app/components/showcaseData";
 import { cookies } from "next/headers";
 
 // Tour pages are meant to display fresh data each load but don't need
