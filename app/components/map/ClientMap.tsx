@@ -3,12 +3,11 @@
 import type { NetworkPacket, NullLocation } from "@/types/globals";
 import { useEffect, useState } from "react";
 import DynamicMap from "./DynamicMap";
-import { type ModelName, type TableMetadataValue } from "@/types/tableMetadata";
+import { type ModelName } from "@/types/tableMetadata";
 
 export default function ClientMap({
 	url,
 	where,
-	id,
 	table,
 	titleTable,
 	defaultLegendField,
@@ -23,7 +22,6 @@ export default function ClientMap({
 }: {
 	url: string;
 	where?: Record<string, string>;
-	id?: TableMetadataValue["titleField"];
 	table?: Uncapitalize<ModelName>;
 	cluster?: boolean;
 	clusterRadius?: number;
@@ -78,7 +76,6 @@ export default function ClientMap({
 				<DynamicMap
 					locations={locations}
 					where={where}
-					id={id}
 					table={table}
 					titleTable={titleTable}
 					defaultLegendField={defaultLegendField}

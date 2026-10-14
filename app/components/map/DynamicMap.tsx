@@ -1,7 +1,7 @@
 "use client";
 
 import type { NullLocation } from "@/types/globals";
-import type { ModelName, TableMetadataValue } from "@/types/tableMetadata";
+import type { ModelName } from "@/types/tableMetadata";
 import dynamic from "next/dynamic";
 const ActualMap = dynamic(() => import("@/app/components/map/ActualMap"), {
 	ssr: false
@@ -10,7 +10,6 @@ const ActualMap = dynamic(() => import("@/app/components/map/ActualMap"), {
 export default function DynamicMap({
 	locations,
 	where,
-	id,
 	table,
 	titleTable,
 	defaultLegendField,
@@ -24,7 +23,6 @@ export default function DynamicMap({
 }: {
 	locations: NullLocation[];
 	where?: Record<string, string>;
-	id?: TableMetadataValue["titleField"];
 	table?: Uncapitalize<ModelName>;
 	titleTable?: Uncapitalize<ModelName>;
 	defaultLegendField?: string;
@@ -40,7 +38,6 @@ export default function DynamicMap({
 		<ActualMap
 			locations={locations}
 			where={where}
-			id={id}
 			table={table}
 			titleTable={titleTable}
 			defaultLegendField={defaultLegendField}

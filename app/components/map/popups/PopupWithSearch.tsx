@@ -1,7 +1,7 @@
 import type { MapLocationWithValues } from "@/types/globals";
 import { getWhereAdvancedHref, type LegendInfo } from "../utils/mapUtils";
 import { Popup } from "react-leaflet";
-import TableMetadata, { type ModelName, type TableMetadataValue } from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import PopupWithSearchBody from "./PopupWithSearchBody";
 
 export default function PopupWithSearch({
@@ -9,7 +9,6 @@ export default function PopupWithSearch({
 	titleTable,
 	where,
 	loc,
-	id,
 	legendInfo,
 	userDefinedOptions,
 	disableSearch
@@ -18,7 +17,6 @@ export default function PopupWithSearch({
 	titleTable?: Uncapitalize<ModelName>;
 	where?: Record<string, string>;
 	loc: MapLocationWithValues;
-	id: TableMetadataValue["titleField"];
 	legendInfo: LegendInfo;
 	userDefinedOptions: Set<string>;
 	disableSearch?: true;
@@ -30,7 +28,6 @@ export default function PopupWithSearch({
 					table={table}
 					titleTable={titleTable}
 					loc={loc}
-					id={id}
 					legendInfo={legendInfo}
 					userDefinedOptions={userDefinedOptions}
 					disableSearch={disableSearch}

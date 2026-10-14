@@ -11,7 +11,7 @@ import {
 } from "./mapUtils";
 import { divIcon } from "leaflet";
 import type { MapShape, MapLocation } from "@/types/globals";
-import { type TableMetadataValue } from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 
 function getConicGradient(colors: chroma.Color[]) {
 	return `conic-gradient(from ${360 / colors.length}deg,${colors
@@ -44,9 +44,9 @@ function getMarkerHtml(count: number, valuesCount: number, combined: number, sty
 }
 
 export default function ClusterGroup({
+	table,
 	shapes,
 	pointsInside,
-	id,
 	legendInfo,
 	userDefinedOptions,
 	pointSize,
@@ -54,9 +54,9 @@ export default function ClusterGroup({
 	radius,
 	children
 }: {
+	table: Uncapitalize<ModelName>;
 	shapes: Record<string, MapShape>;
 	pointsInside: MapLocation[];
-	id: TableMetadataValue["titleField"];
 	legendInfo: LegendInfo;
 	userDefinedOptions: Set<string>;
 	pointSize: number | undefined;
@@ -65,6 +65,8 @@ export default function ClusterGroup({
 	children: ReactNode;
 }) {
 	const [version, setVersion] = useState(0);
+
+	const id = TableMetadata[table].titleField;
 
 	useEffect(() => {
 		// eslint-disable-next-line react-hooks/set-state-in-effect

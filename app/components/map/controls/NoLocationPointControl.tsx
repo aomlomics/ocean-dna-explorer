@@ -6,7 +6,7 @@ import { type RefObject, useState } from "react";
 import type { Map } from "leaflet";
 import LeafletControl from "./LeafletControl";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
-import TableMetadata, { type ModelName, type TableMetadataValue } from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import ResizableMapContainer from "../containers/ResizableMapContainer";
 import PopupWithSearchBody from "../popups/PopupWithSearchBody";
 
@@ -14,7 +14,6 @@ export default function NoLocationPointsControl({
 	noLocationPoints,
 	table,
 	where,
-	id,
 	legendInfo,
 	userDefinedOptions,
 	mapRef,
@@ -23,7 +22,6 @@ export default function NoLocationPointsControl({
 	noLocationPoints: NullLocation[];
 	table: Uncapitalize<ModelName>;
 	where?: Record<string, string>;
-	id: TableMetadataValue["titleField"];
 	legendInfo: LegendInfo;
 	userDefinedOptions: Set<string>;
 	mapRef: RefObject<Map | null>;
@@ -50,7 +48,6 @@ export default function NoLocationPointsControl({
 						<div className="text-primary text-lg">No Location Data</div>
 						<PopupWithSearchBody
 							table={table}
-							id={id}
 							legendInfo={legendInfo}
 							userDefinedOptions={userDefinedOptions}
 							disableSearch={disableSearch}

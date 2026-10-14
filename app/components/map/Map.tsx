@@ -1,13 +1,52 @@
 import { Suspense } from "react";
 import DynamicMap from "./DynamicMap";
 import type { NullLocation } from "@/types/globals";
-import type { ModelName, TableMetadataValue } from "@/types/tableMetadata";
+import type { ModelName } from "@/types/tableMetadata";
 
+/**
+ * Must provide either a query or a locations array, but never both.
+ */
+type MapLocationSource =
+	| {
+			/** Fetch locations asynchronously. */
+			query: () => Promise<NullLocation[]>;
+			locations?: never;
+	  }
+	| {
+			/** Provide locations directly. */
+			query?: never;
+			locations: NullLocation[];
+	  };
+
+/**
+ * Can provide either a titleTable or a defaultLegendField, but never both.
+ */
+type MapLegendSource =
+	| {
+			/** Table used to resolve location titles. */
+			titleTable?: Uncapitalize<ModelName>;
+			defaultLegendField?: never;
+	  }
+	| {
+			/** Field used as the default legend field. */
+			titleTable?: never;
+			defaultLegendField?: string;
+	  };
+
+/**
+ * A simply named wrapper for {@link app/components/map/ActualMap.default | ActualMap}. See that component for documentation on shared props.
+ *
+ * **Param types:**
+ * - {@link MapLocationSource}
+ * - {@link MapLegendSource}
+ *
+ * **Components:**
+ * - {@link SuspenseMap}
+ */
 export default function Map({
 	query,
 	locations,
 	where,
-	id,
 	table,
 	titleTable,
 	defaultLegendField,
@@ -20,24 +59,19 @@ export default function Map({
 	disableSearch,
 	className = ""
 }: {
-	where?: Record<string, string>;
-	id?: TableMetadataValue["titleField"];
-	table?: Uncapitalize<ModelName>;
+	/** Styling for the div that wraps the nested {@link SuspenseMap}. */
+	className?: string;
 	cluster?: boolean;
 	clusterRadius?: number;
-	legend?: boolean;
+	disableSearch?: true;
 	draw?: boolean;
+	legend?: boolean;
 	legendOmit?: string[];
 	shapesToUrl?: true;
-	disableSearch?: true;
-	className?: string;
-} & (
-	{ query: () => Promise<NullLocation[]>; locations?: undefined } | { query?: undefined; locations: NullLocation[] }
-) &
-	(
-		| { titleTable?: Uncapitalize<ModelName>; defaultLegendField?: undefined }
-		| { titleTable?: undefined; defaultLegendField?: string }
-	)) {
+	table?: Uncapitalize<ModelName>;
+	where?: Record<string, string>;
+} & MapLocationSource &
+	MapLegendSource) {
 	return (
 		<div
 			className={`overflow-hidden [:where(&)]:bg-base-200 [:where(&)]:aspect-square [:where(&)]:lg:aspect-video [:where(&)]:rounded-lg ${className ?? ""}`}
@@ -55,7 +89,6 @@ export default function Map({
 					query={query}
 					locations={locations}
 					where={where}
-					id={id}
 					table={table}
 					titleTable={titleTable}
 					defaultLegendField={defaultLegendField}
@@ -72,11 +105,16 @@ export default function Map({
 	);
 }
 
+/**
+ * A component that is wrapped in a React Suspense by {@link Map} so that, if a query is provided, it can show a loading state while the query is awaited.
+ *
+ * **Components:**
+ * - {@link app/components/map/DynamicMap.default | DynamicMap}
+ */
 async function SuspenseMap({
 	query,
 	locations,
 	where,
-	id,
 	table,
 	titleTable,
 	defaultLegendField,
@@ -91,7 +129,6 @@ async function SuspenseMap({
 	query?: () => Promise<NullLocation[]>;
 	locations?: NullLocation[];
 	where?: Record<string, string>;
-	id?: TableMetadataValue["titleField"];
 	table?: Uncapitalize<ModelName>;
 	titleTable?: Uncapitalize<ModelName>;
 	defaultLegendField?: string;
@@ -108,7 +145,6 @@ async function SuspenseMap({
 			<DynamicMap
 				locations={locations}
 				where={where}
-				id={id}
 				table={table}
 				titleTable={titleTable}
 				defaultLegendField={defaultLegendField}
@@ -126,7 +162,6 @@ async function SuspenseMap({
 			<DynamicMap
 				locations={await query()}
 				where={where}
-				id={id}
 				table={table}
 				titleTable={titleTable}
 				defaultLegendField={defaultLegendField}

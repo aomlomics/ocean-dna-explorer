@@ -1,0 +1,15 @@
+{
+	"entryPoints": ["app", "types"],
+	"entryPointStrategy": "expand",
+	"exclude": ["app/generated/**"],
+	"out": "docs",
+	"highlightLanguages": ["typescript", "javascript", "sql", "bash"],
+	"validation": {
+		"notExported": false
+	},
+	"excludeExternals": true,
+	"useTsLinkResolution": true,
+	"includeDocCommentReferences": true,
+	"placeInternalsInOwningModule": true,
+	"plugin": ["typedoc-plugin-missing-exports"]
+}

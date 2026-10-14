@@ -23,7 +23,6 @@ interface ProgressPacket {
 export type NetworkPacket = ErrorPacket | SuccessPacket;
 export type NetworkProgressPacket = ErrorPacket | SuccessPacket | ProgressPacket | undefined;
 
-export type FormAction = (formData: FormData) => Promise<NetworkPacket>;
 export type TargetAction = (...args: any[]) => Promise<NetworkPacket>;
 export type ProgressAction = (...args: any[]) => Promise<ReadableStream<any>>;
 export type ProgressActionMany = (...args: any[]) => Promise<ReadableStream<any>[]>;

@@ -9,7 +9,7 @@ import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility
 import "leaflet-draw/dist/leaflet.draw.css";
 import "react-leaflet-fullscreen/styles.css";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import TableMetadata, { type ModelName, type TableMetadataValue } from "@/types/tableMetadata";
+import { type ModelName, type TableMetadataValue } from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
 import { circleToString, getLocationsInsideShapes, getShapesFromUrl, polygonToString } from "@/app/helpers/utils";
 import type { NullLocation, MapShape } from "@/types/globals";
@@ -47,10 +47,12 @@ function getShape(shape: any) {
 }
 
 //TODO: taxonomy heatmap toggle
+/**
+ * A map that displays clusterable points.
+ */
 export default function ActualMap({
 	locations,
 	where,
-	id = TableMetadata.sample.titleField,
 	table = "sample",
 	titleTable,
 	defaultLegendField,
@@ -63,8 +65,9 @@ export default function ActualMap({
 	disableSearch
 }: {
 	locations: NullLocation[];
+	/** Prisma-style filter for the buttons that link to the search page. */
 	where?: Record<string, string>;
-	id?: TableMetadataValue["titleField"];
+	/** The database table that the map is displaying.  */
 	table?: Uncapitalize<ModelName>;
 	titleTable?: Uncapitalize<ModelName>;
 	defaultLegendField?: string;
@@ -225,7 +228,6 @@ export default function ActualMap({
 					<NoLocationPointsControl
 						noLocationPoints={noLocationPoints}
 						table={table}
-						id={id}
 						legendInfo={legendInfo}
 						userDefinedOptions={userDefinedOptions}
 						mapRef={mapRef}
@@ -239,7 +241,6 @@ export default function ActualMap({
 							pointsInside={pointsInside}
 							table={table}
 							where={where}
-							id={id}
 							legendInfo={legendInfo}
 							userDefinedOptions={userDefinedOptions}
 							mapRef={mapRef}
@@ -335,9 +336,9 @@ export default function ActualMap({
 				{Array.isArray(pointsOrGroups) ? (
 					//points
 					<ClusterGroup
+						table={table}
 						shapes={shapes}
 						pointsInside={pointsInside}
-						id={id}
 						legendInfo={legendInfo}
 						userDefinedOptions={userDefinedOptions}
 						pointSize={pointSize}
@@ -357,7 +358,6 @@ export default function ActualMap({
 											titleTable={titleTable}
 											where={where}
 											loc={loc}
-											id={id}
 											legendInfo={legendInfo}
 											userDefinedOptions={userDefinedOptions}
 											disableSearch={disableSearch}
@@ -396,9 +396,9 @@ export default function ActualMap({
 						{Object.values(pointsOrGroups).map((locArray, i) => (
 							<ClusterGroup
 								key={i}
+								table={table}
 								shapes={shapes}
 								pointsInside={pointsInside}
-								id={id}
 								legendInfo={legendInfo}
 								userDefinedOptions={userDefinedOptions}
 								pointSize={pointSize}
@@ -418,7 +418,6 @@ export default function ActualMap({
 													titleTable={titleTable}
 													where={where}
 													loc={loc}
-													id={id}
 													legendInfo={legendInfo}
 													userDefinedOptions={userDefinedOptions}
 												/>

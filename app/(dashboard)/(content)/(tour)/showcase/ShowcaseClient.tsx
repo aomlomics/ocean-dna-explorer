@@ -549,9 +549,7 @@ export default function ShowcaseClient({
 												: { x: "-14vw", rotate: -16, scale: 0.9, opacity: 0 }
 									}
 									animate={{ x: 0, rotate: 0, scale: 1, opacity: 1 }}
-									transition={
-										prefersReducedMotion ? { duration: 0 } : { duration: circleDuration, ease: PREMIUM_EASE }
-									}
+									transition={prefersReducedMotion ? { duration: 0 } : { duration: circleDuration, ease: PREMIUM_EASE }}
 								>
 									<div className="relative aspect-square h-44 overflow-hidden rounded-full border-[6px] border-primary bg-base-300 sm:h-56 xl:h-64">
 										{project.imageFileUrl_ODE ? (
@@ -798,7 +796,7 @@ const ProjectSamplesMap = memo(
 				</div>
 			);
 		}
-		return <DynamicMap locations={locations} cluster clusterRadius={42} table="sample" id="samp_name" disableSearch />;
+		return <DynamicMap locations={locations} cluster clusterRadius={42} disableSearch />;
 	},
 	(prev, next) => prev.projectId === next.projectId
 );

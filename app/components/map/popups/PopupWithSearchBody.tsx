@@ -4,7 +4,7 @@ import type { MapLocation, MapLocationWithValues } from "@/types/globals";
 import { DEFAULT_COLOR, getLegendColor, getLegendValue, type LegendInfo, legendValueSort } from "../utils/mapUtils";
 import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
-import TableMetadata, { type ModelName, type TableMetadataValue } from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import { capitalizeTable, compressURIComponent, MAX_UNCOMPRESSED_LENGTH } from "@/app/helpers/utils";
 import { getZodType } from "@/app/helpers/schema";
 
@@ -20,7 +20,6 @@ export default function PopupWithSearchBody({
 	table,
 	titleTable,
 	loc,
-	id,
 	legendInfo,
 	userDefinedOptions,
 	href,
@@ -29,7 +28,6 @@ export default function PopupWithSearchBody({
 	table: Uncapitalize<ModelName>;
 	titleTable?: Uncapitalize<ModelName>;
 	loc: MapLocationWithValues;
-	id: TableMetadataValue["titleField"];
 	legendInfo: LegendInfo;
 	userDefinedOptions: Set<string>;
 	href?: string;
@@ -37,6 +35,8 @@ export default function PopupWithSearchBody({
 }) {
 	const [filter, setFilter] = useState("");
 	const [filteredValues, setFilteredValues] = useState(loc.values ? loc.values : undefined);
+
+	const id = TableMetadata[table].titleField;
 
 	useEffect(() => {
 		if (loc.values) {
