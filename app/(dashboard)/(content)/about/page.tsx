@@ -16,19 +16,19 @@ const teamMembers = [
 		name: "Carter Rollins",
 		role: "Lead Developer & Database Engineer",
 		affiliation: "Research Engineer II, MSU/NGI",
-		image: "/images/carter_about_page_photo.jpg"
+		image: "/images/about/carter_about_page_photo.jpg"
 	},
 	{
 		name: "Bayden Willms",
 		role: "Developer & UI/UX Design",
 		affiliation: "Research Engineer I, MSU/NGI",
-		image: "/images/bayden_about_page_photo.jpg"
+		image: "/images/about/bayden_about_page_photo.jpg"
 	},
 	{
 		name: "Luke Thompson",
 		role: "Principal Investigator",
 		affiliation: "Research Professor, MSU/NGI",
-		image: "/images/luke_about_page_photo.jpg"
+		image: "/images/about/luke_about_page_photo.jpg"
 	}
 ];
 
@@ -39,7 +39,7 @@ export default function AboutPage() {
 			<section id="mission" className="relative w-screen left-1/2 right-1/2 ml-[-50vw] mr-[-50vw] mb-28 bg-base-100">
 				<div className="relative h-100">
 					<Image
-						src="/images/about_banner.jpg"
+						src="/images/about/about_banner.jpg"
 						alt="About page banner"
 						fill
 						sizes="100vw"

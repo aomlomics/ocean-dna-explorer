@@ -492,7 +492,7 @@ export function ExploreMegaMenu() {
 					media={
 						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
 							<Image
-								src="/images/taxonomy_explore_mega_menu_light.webp"
+								src="/images/mega_menus/taxonomy_explore_mega_menu_light.webp"
 								alt="Taxonomy explore preview (light mode)"
 								fill
 								sizes="240px"
@@ -501,7 +501,7 @@ export function ExploreMegaMenu() {
 								quality={75}
 							/>
 							<Image
-								src="/images/taxonomy_explore_mega_menu_dark.webp"
+								src="/images/mega_menus/taxonomy_explore_mega_menu_dark.webp"
 								alt="Taxonomy explore preview (dark mode)"
 								fill
 								sizes="240px"
@@ -561,7 +561,7 @@ export function DocsMegaMenu() {
 					media={
 						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
 							<Image
-								src="/images/docs_mega_menu_light.webp"
+								src="/images/mega_menus/docs_mega_menu_light.webp"
 								alt="Docs mega menu preview (light mode)"
 								fill
 								sizes="240px"
@@ -570,7 +570,7 @@ export function DocsMegaMenu() {
 								quality={75}
 							/>
 							<Image
-								src="/images/docs_mega_menu_dark.webp"
+								src="/images/mega_menus/docs_mega_menu_dark.webp"
 								alt="Docs mega menu preview (dark mode)"
 								fill
 								sizes="240px"
@@ -611,7 +611,7 @@ export function LearnMegaMenu() {
 					media={
 						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
 							<Image
-								src="/images/learn_page_mega_menu_light.webp"
+								src="/images/mega_menus/learn_page_mega_menu_light.webp"
 								alt="Learn mega menu preview (light mode)"
 								fill
 								sizes="240px"
@@ -620,7 +620,7 @@ export function LearnMegaMenu() {
 								quality={75}
 							/>
 							<Image
-								src="/images/learn_page_mega_menu_dark.webp"
+								src="/images/mega_menus/learn_page_mega_menu_dark.webp"
 								alt="Learn mega menu preview (dark mode)"
 								fill
 								sizes="240px"
@@ -697,7 +697,7 @@ export function SubmitMegaMenu() {
 					media={
 						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
 							<Image
-								src="/images/submit_mega_menu_light.webp"
+								src="/images/mega_menus/submit_mega_menu_light.webp"
 								alt="Submit mega menu preview (light mode)"
 								fill
 								sizes="240px"
@@ -706,7 +706,7 @@ export function SubmitMegaMenu() {
 								quality={75}
 							/>
 							<Image
-								src="/images/submit_mega_menu_dark.webp"
+								src="/images/mega_menus/submit_mega_menu_dark.webp"
 								alt="Submit mega menu preview (dark mode)"
 								fill
 								sizes="240px"
@@ -746,7 +746,7 @@ export function VisualizeMegaMenu() {
 					media={
 						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
 							<Image
-								src="/images/visualize_mega_menu_light.webp"
+								src="/images/mega_menus/visualize_mega_menu_light.webp"
 								alt="Visualize mega menu preview (light mode)"
 								fill
 								sizes="240px"
@@ -754,7 +754,7 @@ export function VisualizeMegaMenu() {
 								priority={false}
 							/>
 							<Image
-								src="/images/visualize_mega_menu_dark.webp"
+								src="/images/mega_menus/visualize_mega_menu_dark.webp"
 								alt="Visualize mega menu preview (dark mode)"
 								fill
 								sizes="240px"
