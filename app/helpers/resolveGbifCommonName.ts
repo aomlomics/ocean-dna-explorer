@@ -1,4 +1,5 @@
 import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
+import { limitGbif } from "@/app/helpers/limitedFetch";
 import { RanksBySpecificity } from "@/types/objects";
 
 export function getBestRank(
@@ -44,8 +45,20 @@ function scoreEnglishVernacular(row: {
 	return score;
 }
 
+const commonNameCache = new Map<string, Promise<string | null>>();
+
 /** Same English common name the explore taxonomy cards show. */
-export async function resolveGbifCommonName(item: TaxonomyModel): Promise<string | null> {
+export function resolveGbifCommonName(item: TaxonomyModel): Promise<string | null> {
+	const key = item.taxonomy;
+	const cached = commonNameCache.get(key);
+	if (cached) return cached;
+
+	const pending = resolveGbifCommonNameUncached(item);
+	commonNameCache.set(key, pending);
+	return pending;
+}
+
+async function resolveGbifCommonNameUncached(item: TaxonomyModel): Promise<string | null> {
 	const best = getBestRank(item);
 	const name = asGbifName(item);
 	if (!name) return null;
@@ -62,7 +75,7 @@ export async function resolveGbifCommonName(item: TaxonomyModel): Promise<string
 		if (item.family) matchUrl.searchParams.set("family", item.family);
 		if (item.genus) matchUrl.searchParams.set("genus", item.genus);
 
-		const matchRes = await fetch(matchUrl.toString());
+		const matchRes = await limitGbif(() => fetch(matchUrl.toString()));
 		if (!matchRes.ok) return null;
 		const matchJson = (await matchRes.json()) as {
 			usageKey?: number;
@@ -73,7 +86,7 @@ export async function resolveGbifCommonName(item: TaxonomyModel): Promise<string
 		const key = matchJson.usageKey ?? matchJson.speciesKey ?? matchJson.acceptedUsageKey;
 		if (!key) return null;
 
-		const vnRes = await fetch(`https://api.gbif.org/v1/species/${key}/vernacularNames?limit=80`);
+		const vnRes = await limitGbif(() => fetch(`https://api.gbif.org/v1/species/${key}/vernacularNames?limit=80`));
 		if (!vnRes.ok) return null;
 		const vnJson = (await vnRes.json()) as {
 			results?: {

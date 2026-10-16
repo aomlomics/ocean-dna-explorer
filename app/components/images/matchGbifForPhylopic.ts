@@ -1,4 +1,5 @@
 import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
+import { limitGbif } from "@/app/helpers/limitedFetch";
 import { RanksBySpecificity } from "@/types/objects";
 
 /**
@@ -80,7 +81,19 @@ function pickAcceptedForRank(
 	return null;
 }
 
-export async function matchGbifForPhylopic(taxonomy: TaxonomyModel): Promise<GbifPhylopicMatch | null> {
+const matchCache = new Map<string, Promise<GbifPhylopicMatch | null>>();
+
+export function matchGbifForPhylopic(taxonomy: TaxonomyModel): Promise<GbifPhylopicMatch | null> {
+	const key = taxonomy.taxonomy;
+	const cached = matchCache.get(key);
+	if (cached) return cached;
+
+	const pending = matchGbifForPhylopicUncached(taxonomy);
+	matchCache.set(key, pending);
+	return pending;
+}
+
+async function matchGbifForPhylopicUncached(taxonomy: TaxonomyModel): Promise<GbifPhylopicMatch | null> {
 	let gbifTaxonomy: Record<string, any> | undefined;
 	let rankMatched = "";
 
@@ -90,7 +103,9 @@ export async function matchGbifForPhylopic(taxonomy: TaxonomyModel): Promise<Gbi
 			if (!rawRank || !isPlausibleRankValue(rawRank)) continue;
 
 			const suggestQuery = rawRank.replace(/_/g, " ").replace(/\s+/g, " ").trim();
-			const gbifTaxaRes = await fetch(`https://api.gbif.org/v1/species/suggest?q=${suggestQuery}`);
+			const gbifTaxaRes = await limitGbif(() =>
+				fetch(`https://api.gbif.org/v1/species/suggest?q=${encodeURIComponent(suggestQuery)}`)
+			);
 			const gbifTaxa = await gbifTaxaRes.json();
 			if (!Array.isArray(gbifTaxa)) continue;
 
