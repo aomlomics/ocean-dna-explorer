@@ -33,7 +33,10 @@ export default function VisualizeTabs() {
 	newParams.delete("chart");
 	const stringParams = newParams.toString();
 
-	const current = TABS.find((tab) => pathname.startsWith(tab.href))!;
+	const current = TABS.find((tab) => pathname.startsWith(tab.href));
+	if (!current) {
+		return <></>;
+	}
 
 	return (
 		<>
