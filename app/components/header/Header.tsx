@@ -32,9 +32,9 @@ export default function Header() {
 							/>
 						</div>
 					</Link>
-					<div className="bg-orange-500 text-white font-semibold rounded-md ml-2 md:ml-3 xl:ml-8 text-[10px] md:text-[11px] xl:text-xs px-2.5 md:px-3 xl:px-4 py-1 md:py-1.5 leading-tight shrink-0">
+					{/* <div className="bg-orange-500 text-white font-semibold rounded-md ml-2 md:ml-3 xl:ml-8 text-[10px] md:text-[11px] xl:text-xs px-2.5 md:px-3 xl:px-4 py-1 md:py-1.5 leading-tight shrink-0">
 						BETA
-					</div>
+					</div> */}
 				</div>
 			</div>
 
