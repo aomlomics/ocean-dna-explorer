@@ -56,7 +56,7 @@ export default function HelpOverviewPage() {
 								</li>
 								<li>
 									{" "}
-									<Link className="link link-primary font-semibold" href="/visualize">
+									<Link className="link link-primary font-semibold" href="/visualize/metadata">
 										Visualize
 									</Link>{" "}
 									data by making charts directly in your browser
