@@ -21,8 +21,8 @@ function IucnLogoMark({ compact = false }: { compact?: boolean }) {
 const FETCH_MS = 7000;
 
 /**
- * Category strip left → right follows IUCN Red List ordering. Colors are conventional
- * approximations (Tailwind) to the usual Red List palette, not exact brand hex values.
+ * Category strip left → right follows IUCN Red List ordering. Colors are conventional approximations (Tailwind) to the
+ * usual Red List palette, not exact brand hex values.
  */
 // Colors approximate the conventional IUCN Red List palette.
 const SCALE = [

@@ -5,6 +5,8 @@ import type { ModelName } from "@/types/tableMetadata";
 
 /**
  * Must provide either a query or a locations array, but never both.
+ *
+ * @category Types
  */
 type MapLocationSource =
 	| {
@@ -20,6 +22,8 @@ type MapLocationSource =
 
 /**
  * Can provide either a titleTable or a defaultLegendField, but never both.
+ *
+ * @category Types
  */
 type MapLegendSource =
 	| {
@@ -34,14 +38,19 @@ type MapLegendSource =
 	  };
 
 /**
- * A simply named wrapper for {@link app/components/map/ActualMap.default | ActualMap}. See that component for documentation on shared props.
+ * A simply named wrapper for {@link app/components/map/ActualMap.default | ActualMap}. See that component for a
+ * description and documentation on shared props.
  *
  * **Param types:**
+ *
  * - {@link MapLocationSource}
  * - {@link MapLegendSource}
  *
  * **Components:**
+ *
  * - {@link SuspenseMap}
+ *
+ * @category Components
  */
 export default function Map({
 	query,
@@ -106,10 +115,16 @@ export default function Map({
 }
 
 /**
- * A component that is wrapped in a React Suspense by {@link Map} so that, if a query is provided, it can show a loading state while the query is awaited.
+ * A component that is wrapped in a React Suspense by {@link Map} so that, if a query is provided, it can show a loading
+ * state while the query is awaited.
+ *
+ * This component should not be used directly. Instead, use {@link Map}.
  *
  * **Components:**
+ *
  * - {@link app/components/map/DynamicMap.default | DynamicMap}
+ *
+ * @category Components
  */
 async function SuspenseMap({
 	query,

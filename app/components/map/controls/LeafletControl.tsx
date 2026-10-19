@@ -3,6 +3,7 @@
 import { DomEvent } from "leaflet";
 import { type ReactNode, useEffect, useRef } from "react";
 
+/** Base utility component for custom controls built for {@link app/components/map/ActualMap.default | ActualMap}. */
 export default function LeafletControl({
 	click,
 	scroll,

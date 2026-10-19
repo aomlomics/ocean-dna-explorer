@@ -13,7 +13,10 @@ type GbifImageProps = {
 	taxonomy: TaxonomyModel;
 	altText: string;
 	className?: string;
-	/** When false, no PhyloPic duplicate if GBIF has no photo (parent already shows PhyloPic). Default true (e.g. explore grid). */
+	/**
+	 * When false, no PhyloPic duplicate if GBIF has no photo (parent already shows PhyloPic). Default true (e.g. explore
+	 * grid).
+	 */
 	showPhylopicFallback?: boolean;
 	/** `contain` avoids cropping portrait photos; `cover` fills the box. */
 	objectFit?: "cover" | "contain";

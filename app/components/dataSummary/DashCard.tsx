@@ -8,10 +8,9 @@ export type DashCardMenuItem = {
 };
 
 /**
- * Rich popover content for the card's triple-dot button. This is rendered
- * as a small info panel (card-in-a-card) instead of a plain dropdown list —
- * it gets a short description paragraph explaining what the card shows,
- * then an optional list of related links at the bottom.
+ * Rich popover content for the card's triple-dot button. This is rendered as a small info panel (card-in-a-card)
+ * instead of a plain dropdown list — it gets a short description paragraph explaining what the card shows, then an
+ * optional list of related links at the bottom.
  */
 export type DashCardInfo = {
 	title?: ReactNode;
@@ -50,12 +49,11 @@ const padMap: Record<NonNullable<Props["padding"]>, { body: string; header: stri
  * Shared card shell for the dashboard / data-summary area.
  *
  * Design rules every card shares:
- *  - Solid bg-base-200 (no diagonal gradient). base-200 is tuned (in
- *    globals.css) to sit just off the page background so cards feel lifted
- *    without any wash.
- *  - Borderless. A gentle drop shadow does the separation work, plus a
- *    hair of inset top highlight for a clean edge.
- *  - Minimal hover state (just a whisper of extra shadow).
+ *
+ * - Solid bg-base-200 (no diagonal gradient). base-200 is tuned (in globals.css) to sit just off the page background so
+ *   cards feel lifted without any wash.
+ * - Borderless. A gentle drop shadow does the separation work, plus a hair of inset top highlight for a clean edge.
+ * - Minimal hover state (just a whisper of extra shadow).
  */
 export default function DashCard({
 	eyebrow,
@@ -128,10 +126,9 @@ export default function DashCard({
 }
 
 /**
- * Triple-dot button that opens a small info popover — a card-in-a-card with
- * a short description paragraph and an optional list of related links.
- * Uses daisyUI's CSS-only focus dropdown so this stays compatible with
- * server components.
+ * Triple-dot button that opens a small info popover — a card-in-a-card with a short description paragraph and an
+ * optional list of related links. Uses daisyUI's CSS-only focus dropdown so this stays compatible with server
+ * components.
  */
 export function DashCardInfoButton({ info }: { info: DashCardInfo }) {
 	return (

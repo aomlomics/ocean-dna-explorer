@@ -470,9 +470,7 @@ export default function AmbientPage() {
 								initial={prefersReducedMotion ? false : { opacity: 0, x: -260, y: 42 }}
 								animate={{ opacity: 1, x: 0, y: 0 }}
 								transition={
-									prefersReducedMotion
-										? { duration: 0 }
-										: { duration: 10.8, ease: [0.22, 1, 0.36, 1], delay: 0.12 }
+									prefersReducedMotion ? { duration: 0 } : { duration: 10.8, ease: [0.22, 1, 0.36, 1], delay: 0.12 }
 								}
 							>
 								<Image
@@ -489,9 +487,7 @@ export default function AmbientPage() {
 								initial={prefersReducedMotion ? false : { opacity: 0, x: 250, y: -26 }}
 								animate={{ opacity: 1, x: 0, y: 0 }}
 								transition={
-									prefersReducedMotion
-										? { duration: 0 }
-										: { duration: 12.2, ease: [0.22, 1, 0.36, 1], delay: 0.35 }
+									prefersReducedMotion ? { duration: 0 } : { duration: 12.2, ease: [0.22, 1, 0.36, 1], delay: 0.35 }
 								}
 							>
 								Ocean DNA Explorer
@@ -508,9 +504,7 @@ export default function AmbientPage() {
 								initial={prefersReducedMotion ? false : { opacity: 0, x: -200, y: 56 }}
 								animate={{ opacity: 1, x: 0, y: 0 }}
 								transition={
-									prefersReducedMotion
-										? { duration: 0 }
-										: { duration: 11.6, ease: [0.22, 1, 0.36, 1], delay: 0.72 }
+									prefersReducedMotion ? { duration: 0 } : { duration: 11.6, ease: [0.22, 1, 0.36, 1], delay: 0.72 }
 								}
 							>
 								Unlock the potential of your eDNA data.
@@ -520,9 +514,7 @@ export default function AmbientPage() {
 								initial={prefersReducedMotion ? false : { opacity: 0, x: 290, y: 38 }}
 								animate={{ opacity: 1, x: 0, y: 0 }}
 								transition={
-									prefersReducedMotion
-										? { duration: 0 }
-										: { duration: 13.0, ease: [0.22, 1, 0.36, 1], delay: 1.05 }
+									prefersReducedMotion ? { duration: 0 } : { duration: 13.0, ease: [0.22, 1, 0.36, 1], delay: 1.05 }
 								}
 							>
 								Explore ocean biodiversity through projects, samples, taxonomies, metadata, and interactive

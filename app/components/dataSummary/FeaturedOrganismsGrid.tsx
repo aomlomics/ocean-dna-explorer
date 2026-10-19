@@ -13,9 +13,7 @@ import {
 import { exploreUrl } from "@/app/helpers/utils";
 
 type Props = {
-	/**
-	 * Optional override (useful for testing). Defaults to `FEATURED_ORGANISMS`.
-	 */
+	/** Optional override (useful for testing). Defaults to `FEATURED_ORGANISMS`. */
 	organisms?: FeaturedOrganism[];
 };
 

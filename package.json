@@ -13,7 +13,10 @@
 		"jsxSingleQuote": false,
 		"bracketSpacing": true,
 		"arrowParens": "always",
-		"endOfLine": "lf"
+		"endOfLine": "lf",
+		"plugins": [
+			"prettier-plugin-jsdoc"
+		]
 	},
 	"engines": {
 		"node": "24.x"
@@ -94,11 +97,13 @@
 		"@types/leaflet": "^1.9.22",
 		"daisyui": "^5.7.47",
 		"prettier": "^3.9.9",
+		"prettier-plugin-jsdoc": "^1.8.1",
 		"prisma": "^7.10.0",
 		"prisma-json-types-generator": "^5.1.1",
 		"tailwind-scrollbar": "^4.0.2",
 		"tsx": "^4.23.15",
 		"typedoc": "^0.28.20",
+		"typedoc-plugin-mdn-links": "^5.1.1",
 		"typedoc-plugin-missing-exports": "^4.1.4"
 	},
 	"allowScripts": {

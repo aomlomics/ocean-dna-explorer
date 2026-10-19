@@ -6,23 +6,18 @@ import { EARLIEST_VALID_SAMPLE_DATE } from "../dataSummary/TemporalCoverageCard"
 import { Prisma } from "@/app/generated/prisma/client";
 
 /**
- * ---------------------------------------------------------------------------
- * Individual, real-data dashboard widgets for the Data Summary.
- * ---------------------------------------------------------------------------
- * Each widget is its own async server component so the page can arrange them
- * newspaper-style — alongside the map, under Target Genes, in their own
- * rows, etc. — without one giant "widget row" dictating the layout.
+ * ## Individual, real-data dashboard widgets for the Data Summary.
+ *
+ * Each widget is its own async server component so the page can arrange them newspaper-style — alongside the map, under
+ * Target Genes, in their own rows, etc. — without one giant "widget row" dictating the layout.
  *
  * A few cross-cutting notes:
- *   - Some fields use -9999 as a "not applicable" sentinel. For dates this
- *     can surface as a very-early DateTime (e.g. year <1900) or — more
- *     subtly — as a Unix-epoch ghost (≈1969-12-31). For depths it surfaces
- *     as a large negative number. Every widget that aggregates these
- *     fields filters sentinels out BEFORE the min/max/avg is taken so the
- *     dashboard never shows "9999 BCE" or "-9999 m".
- *   - Each card uses the shared DashCard shell so they all read as part of
- *     the same dashboard family.
- * ---------------------------------------------------------------------------
+ *
+ * - Some fields use -9999 as a "not applicable" sentinel. For dates this can surface as a very-early DateTime (e.g. year
+ *   <1900) or — more subtly — as a Unix-epoch ghost (≈1969-12-31). For depths it surfaces as a large negative number.
+ *   Every widget that aggregates these fields filters sentinels out BEFORE the min/max/avg is taken so the dashboard
+ *   never shows "9999 BCE" or "-9999 m".
+ * - Each card uses the shared DashCard shell so they all read as part of the same dashboard family.
  */
 
 // Backward-compat alias: older compiled chunks referenced EARLIEST_VALID_DATE.
@@ -62,10 +57,9 @@ function getOptionalScalarFieldNames(modelName: RichnessEntityConfig["modelName"
 
 // ============================ Data Contributors ============================
 /**
- * Renamed from "Top institutions". Same data (group projects by
- * the institution field), but presented as the data contributors of the
- * platform. Long institution names are allowed to wrap across multiple
- * lines instead of truncating, since these are a small, high-value list.
+ * Renamed from "Top institutions". Same data (group projects by the institution field), but presented as the data
+ * contributors of the platform. Long institution names are allowed to wrap across multiple lines instead of truncating,
+ * since these are a small, high-value list.
  */
 export async function TopInstitutionsCard() {
 	const rows = await trustedPrisma.project.groupBy({
@@ -116,11 +110,9 @@ export async function TopInstitutionsCard() {
 
 // ========================= Sampling Environments ===========================
 /**
- * Donut chart of env_local_scale values across all samples. Reuses
- * the shared DoughnutChart so the visual language matches Target Genes
- * and the previous Sample Categories donut. We pull the top N values and
- * stuff the long tail into a single "Other" slice so the legend doesn't
- * blow out at hundreds of ENVO terms.
+ * Donut chart of env_local_scale values across all samples. Reuses the shared DoughnutChart so the visual language
+ * matches Target Genes and the previous Sample Categories donut. We pull the top N values and stuff the long tail into
+ * a single "Other" slice so the legend doesn't blow out at hundreds of ENVO terms.
  */
 const ENV_SCALE_TOP_N = 8;
 export async function SamplingEnvironmentsCard() {
@@ -169,17 +161,13 @@ export { TemporalCoverageCard, TemporalCoverageCardSkeleton } from "../dataSumma
 /**
  * Line chart of sample collection volume over time (bucketed by year).
  *
- * Why eventDate and not dateSubmitted?
- *   eventDate is the date the sample was actually collected in the field.
- *   It reaches back decades, produces a richer curve, and matches the
- *   ODE record's scientific framing. Sample doesn't have dateSubmitted of
- *   its own anyway — that's on Project.
+ * Why eventDate and not dateSubmitted? eventDate is the date the sample was actually collected in the field. It reaches
+ * back decades, produces a richer curve, and matches the ODE record's scientific framing. Sample doesn't have
+ * dateSubmitted of its own anyway — that's on Project.
  *
- * Why raw SQL?
- *   Prisma doesn't natively support "group by date_trunc". The alternatives
- *   are (a) findMany all eventDates and bucket in JS, which doesn't scale,
- *   or (b) 100 parallel count() queries per-year, which is wasteful. A single
- *   GROUP BY date_trunc('year', ...) is both cheapest and simplest.
+ * Why raw SQL? Prisma doesn't natively support "group by date_trunc". The alternatives are (a) findMany all eventDates
+ * and bucket in JS, which doesn't scale, or (b) 100 parallel count() queries per-year, which is wasteful. A single
+ * GROUP BY date_trunc('year', ...) is both cheapest and simplest.
  */
 export async function SamplesOverTimeCard({ trusted }: { trusted: boolean }) {
 	type Row = { bucket: Date; count: bigint };
@@ -236,14 +224,12 @@ export async function SamplesOverTimeCard({ trusted }: { trusted: boolean }) {
 }
 
 /**
- * Simple server-rendered SVG line chart with a labeled Y axis and a faded
- * area beneath the line. Intentionally lightweight — no Chart.js client
- * boundary, no interactivity — the point is a "glanceable" graph that
- * matches the calm-dashboard aesthetic.
+ * Simple server-rendered SVG line chart with a labeled Y axis and a faded area beneath the line. Intentionally
+ * lightweight — no Chart.js client boundary, no interactivity — the point is a "glanceable" graph that matches the
+ * calm-dashboard aesthetic.
  *
- * Why no "Year" X-axis title: the tick values are 4-digit years, which
- * are self-explanatory. Adding the word "Year" only made it crowd the
- * tick labels at the bottom of the SVG.
+ * Why no "Year" X-axis title: the tick values are 4-digit years, which are self-explanatory. Adding the word "Year"
+ * only made it crowd the tick labels at the bottom of the SVG.
  */
 function SamplesOverTimeChart({ points }: { points: { year: number; count: number }[] }) {
 	if (points.length === 0) {
@@ -414,17 +400,14 @@ function SamplesOverTimeChart({ points }: { points: { year: number; count: numbe
 
 // =========================== Table Counts ==================================
 /**
- * "Explore the data — by the numbers." Inspired by the OOI in-Numbers
- * infographic style: punchy abbreviated numbers (1.2K, 3.4M, etc.), each
- * one a tile that links into its explore page. Tiles are stacked in a
- * 2-column grid so the card stays narrow on the dashboard.
+ * "Explore the data — by the numbers." Inspired by the OOI in-Numbers infographic style: punchy abbreviated numbers
+ * (1.2K, 3.4M, etc.), each one a tile that links into its explore page. Tiles are stacked in a 2-column grid so the
+ * card stays narrow on the dashboard.
  *
- * Why an abbreviated number format and not raw .toLocaleString():
- *   The purpose of this card is "scale at a glance". Raw ints like 601,865
- *   read fine on a wide column, but at the narrower size the user wants
- *   they wrap awkwardly and stop being scannable. K/M/B abbreviations
- *   keep each tile to a single visually-loud token, with the exact count
- *   available in the tile's tooltip.
+ * Why an abbreviated number format and not raw .toLocaleString(): The purpose of this card is "scale at a glance". Raw
+ * ints like 601,865 read fine on a wide column, but at the narrower size the user wants they wrap awkwardly and stop
+ * being scannable. K/M/B abbreviations keep each tile to a single visually-loud token, with the exact count available
+ * in the tile's tooltip.
  */
 export async function TableCountsCard() {
 	const [projects, samples, assays, assayPreps, libraries, analyses, occurrences, features, taxa, assignments] =
@@ -477,8 +460,8 @@ export async function TableCountsCard() {
 }
 
 /**
- * Single "by the numbers" tile. The BIG abbreviated number is the hero;
- * the label sits underneath in small caps. Whole tile is the link.
+ * Single "by the numbers" tile. The BIG abbreviated number is the hero; the label sits underneath in small caps. Whole
+ * tile is the link.
  */
 function BigCountTile({ label, count, href }: { label: string; count: number; href: string }) {
 	const exact = count.toLocaleString();
@@ -499,8 +482,8 @@ function BigCountTile({ label, count, href }: { label: string; count: number; hr
 }
 
 /**
- * 1.2K / 3.4M / 1.7B style abbreviation. We keep one decimal of precision
- * for readability without going past 4 visible characters.
+ * 1.2K / 3.4M / 1.7B style abbreviation. We keep one decimal of precision for readability without going past 4 visible
+ * characters.
  */
 function formatPunchy(n: number): string {
 	if (n < 1000) return n.toString();
@@ -513,17 +496,12 @@ function formatPunchy(n: number): string {
 
 // ======================== Metadata Completeness ============================
 /**
- * "Beyond the minimum" — shows, for each entity, what percentage of that
- * entity's OPTIONAL metadata fields are populated on average across all
- * records. Required fields are always 100% by definition, so they're
- * excluded — the point is to highlight how much *extra* information
- * submitters choose to include.
+ * "Beyond the minimum" — shows, for each entity, what percentage of that entity's OPTIONAL metadata fields are
+ * populated on average across all records. Required fields are always 100% by definition, so they're excluded — the
+ * point is to highlight how much _extra_ information submitters choose to include.
  *
- * Math:
- *   For each entity:
- *     - Discover all optional scalar fields from the Prisma schema.
- *     - For each field, count how many records have a non-null value.
- *     - The entity's score = mean(fieldFillRate) across those fields.
+ * Math: For each entity: - Discover all optional scalar fields from the Prisma schema. - For each field, count how many
+ * records have a non-null value. - The entity's score = mean(fieldFillRate) across those fields.
  *
  * Layout: tall card with one radial gauge per entity stacked vertically.
  */
@@ -607,10 +585,9 @@ export async function MetadataCompletenessCard() {
 
 // ============================ Shared primitives ============================
 /**
- * Donut-style radial gauge. The stroke is drawn as a fraction of the
- * circumference via `strokeDasharray`, which is the standard trick for
- * SVG progress circles. The `-rotate-90` on the SVG means the stroke
- * starts at the 12-o'clock position (otherwise SVG starts at 3-o'clock).
+ * Donut-style radial gauge. The stroke is drawn as a fraction of the circumference via `strokeDasharray`, which is the
+ * standard trick for SVG progress circles. The `-rotate-90` on the SVG means the stroke starts at the 12-o'clock
+ * position (otherwise SVG starts at 3-o'clock).
  */
 function RadialGauge({ value, size = "md" }: { value: number; size?: "sm" | "md" | "lg" }) {
 	const dim = size === "lg" ? 112 : size === "sm" ? 60 : 92;

@@ -34,8 +34,8 @@ function LatestStamp({ label, date }: { label: string; date: Date }) {
 }
 
 /**
- * Compact assay chip — shrinks to the assay name so it doesn't stretch
- * across the whole card. Used in both project + analysis cards.
+ * Compact assay chip — shrinks to the assay name so it doesn't stretch across the whole card. Used in both project +
+ * analysis cards.
  */
 function CompactAssayChip({ assay_name, target_gene }: { assay_name: string; target_gene: string }) {
 	return (
@@ -58,9 +58,8 @@ function CompactAssayChip({ assay_name, target_gene }: { assay_name: string; tar
 }
 
 /**
- * Header glyphs — same icons used on the /submit page so the visual
- * language is consistent. Both table icons are square 24×24 drawings,
- * sized here to sit beside the submission stamp.
+ * Header glyphs — same icons used on the /submit page so the visual language is consistent. Both table icons are square
+ * 24×24 drawings, sized here to sit beside the submission stamp.
  */
 function ProjectGlyph({ className = "" }: { className?: string }) {
 	return <ProjectIcon className={["shrink-0", className].join(" ")} />;
@@ -131,8 +130,8 @@ export default async function DataSummaryHighlights() {
 }
 
 /**
- * Separate export for Featured Organisms — rendered independently on the
- * page so its position is fully controlled by the page layout.
+ * Separate export for Featured Organisms — rendered independently on the page so its position is fully controlled by
+ * the page layout.
  */
 export function FeaturedOrganismsSection() {
 	return (
@@ -160,8 +159,8 @@ type ProjectProps = {
 };
 
 /**
- * Latest Project Card — optional full-width image band at the top with the same
- * gradient into base-200 as Life Across ODE; body follows below in padded layout.
+ * Latest Project Card — optional full-width image band at the top with the same gradient into base-200 as Life Across
+ * ODE; body follows below in padded layout.
  */
 function LatestProjectCard({ project }: ProjectProps) {
 	const hasImage = Boolean(project.imageFileUrl_ODE);
@@ -307,9 +306,8 @@ type AnalysisProps = {
 };
 
 /**
- * Latest Analysis Card — intentionally shorter than the project card since
- * it has less information. No left-side stripe. Big submission date on top.
- * The assay chip is inline (shrinks to content) instead of full width.
+ * Latest Analysis Card — intentionally shorter than the project card since it has less information. No left-side
+ * stripe. Big submission date on top. The assay chip is inline (shrinks to content) instead of full width.
  */
 function LatestAnalysisCard({ analysis }: AnalysisProps) {
 	return (

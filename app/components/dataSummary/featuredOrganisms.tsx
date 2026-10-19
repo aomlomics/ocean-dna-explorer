@@ -26,14 +26,15 @@ export type FeaturedOrganism = {
 
 	/**
 	 * GBIF taxonKey (backbone / species key). When present, we can fetch:
-	 * - common name (GBIF vernacularNames)
+	 *
+	 * - Common name (GBIF vernacularNames)
 	 * - IUCN-ish category (from GBIF threatStatus distributions)
 	 */
 	gbifTaxonKey?: number;
 
 	/**
-	 * Optional future hook: a canonical taxonomy string that matches your DB taxonomy row.
-	 * Must be a single taxonomy path (never a list of taxonomy strings).
+	 * Optional future hook: a canonical taxonomy string that matches your DB taxonomy row. Must be a single taxonomy path
+	 * (never a list of taxonomy strings).
 	 */
 	taxonomyString?: string;
 	commonName?: string;
@@ -641,10 +642,7 @@ export const FEATURED_ORGANISM_GROUPS: { id: FeaturedOrganismGroup; label: strin
 	{ id: "Other", label: "Other" }
 ];
 
-/**
- * Bones-only data registry.
- * Next step: fill each group with up to 6 organisms (≈30 total).
- */
+/** Bones-only data registry. Next step: fill each group with up to 6 organisms (≈30 total). */
 export const FEATURED_ORGANISMS: FeaturedOrganism[] = applyFeaturedOrganismMetadata([
 	{
 		id: "chauliodus-macouni",
@@ -1322,15 +1320,14 @@ async function fetchGbifCommonName(taxonKey: number): Promise<string | null> {
 }
 
 /**
- * react-photo-album photo shape, extended with the full organism so a click
- * handler can recover the original data object from the clicked photo.
+ * React-photo-album photo shape, extended with the full organism so a click handler can recover the original data
+ * object from the clicked photo.
  */
 type OrganismPhoto = Photo & { organism: FeaturedOrganism };
 
 /**
- * Map organism data into the photo format the library accepts. The dummy dataset
- * has no intrinsic image dimensions, so we assign a safe dummy 800x800 to every
- * photo on the fly. The masonry layout only needs an aspect ratio to lay out
+ * Map organism data into the photo format the library accepts. The dummy dataset has no intrinsic image dimensions, so
+ * we assign a safe dummy 800x800 to every photo on the fly. The masonry layout only needs an aspect ratio to lay out
  * columns; 800x800 makes every tile square until real dimensions exist.
  */
 function toOrganismPhotos(organisms: FeaturedOrganism[]): OrganismPhoto[] {

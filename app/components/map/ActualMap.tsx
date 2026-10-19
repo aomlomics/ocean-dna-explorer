@@ -9,7 +9,7 @@ import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility
 import "leaflet-draw/dist/leaflet.draw.css";
 import "react-leaflet-fullscreen/styles.css";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { type ModelName, type TableMetadataValue } from "@/types/tableMetadata";
+import { type ModelName } from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
 import { circleToString, getLocationsInsideShapes, getShapesFromUrl, polygonToString } from "@/app/helpers/utils";
 import type { NullLocation, MapShape } from "@/types/globals";
@@ -18,12 +18,12 @@ import { usePathname, useSearchParams } from "next/navigation";
 import LegendControl from "./controls/LegendControl";
 import PointSizeControl from "./controls/PointSizeControl";
 import ClusterControl from "./controls/ClusterControl";
-import DrawSelectedControl from "./controls/DrawSelectControl";
+import DrawSelectControl from "./controls/DrawSelectControl";
 import PopupWithSearch from "./popups/PopupWithSearch";
 import { DEFAULT_CLUSTER_RADIUS, DEFAULT_POINT_SIZE, DEFAULT_POINT_SIZE_STEP } from "./utils/mapUtils";
 import LoadingControl from "./controls/LoadingControl";
 import RecenterControl from "./controls/RecenterControl";
-import NoLocationPointsControl from "./controls/NoLocationPointControl";
+import NoLocationPointControl from "./controls/NoLocationPointControl";
 import ClusterGroup from "./utils/ClusterGroup";
 import useMapLocations from "./utils/useMapLocations";
 
@@ -48,7 +48,26 @@ function getShape(shape: any) {
 
 //TODO: taxonomy heatmap toggle
 /**
- * A map that displays clusterable points.
+ * An interactive [Leaflet](https://leafletjs.com/) map for visualizing geographic data with clustered markers, a
+ * customizable legend, and tools for selecting locations within drawable areas.
+ *
+ * This component should not be used directly. Instead, use {@link app/components/map/Map.default | Map}.
+ *
+ * **Components:**
+ *
+ * - {@link ClusterControl}
+ * - {@link DrawSelectControl}
+ * - {@link LegendControl}
+ * - {@link LoadingControl}
+ * - {@link NoLocationPointControl}
+ * - {@link PointSizeControl}
+ * - {@link RecenterControl}
+ * - {@link ClusterGroup}
+ * - {@link PopupWithSearch}
+ *
+ * **Hooks:**
+ *
+ * - {@link useMapLocations}
  */
 export default function ActualMap({
 	locations,
@@ -64,19 +83,41 @@ export default function ActualMap({
 	shapesToUrl,
 	disableSearch
 }: {
+	/**
+	 * A list of location points where the decimalLatitude and decimalLongitude could be null. Any null values will be
+	 * filtered out and displayed in the {@link NoLocationPointControl}.
+	 */
 	locations: NullLocation[];
-	/** Prisma-style filter for the buttons that link to the search page. */
+	/**
+	 * Prisma-style filter for the buttons that link to the search page in {@link DrawSelectControl},
+	 * {@link NoLocationPointControl}, and {@link PopupWithSearch}.
+	 */
 	where?: Record<string, string>;
-	/** The database table that the map is displaying.  */
+	/** The database table that the map is displaying. */
 	table?: Uncapitalize<ModelName>;
+	/**
+	 * The database table that the points will always be grouped by in {@link ClusterGroup}s. When omitted, points will
+	 * cluster to any other nearby points.
+	 */
 	titleTable?: Uncapitalize<ModelName>;
+	/** The default field that the {@link LegendControl} will display. */
 	defaultLegendField?: string;
+	/** Enable or disable clustering. If disabled, {@link ClusterControl} will be hidden. */
 	cluster?: boolean;
+	/** The default radius that points will cluster within. */
 	clusterRadius?: number;
+	/** Enable or disable the legend. If disabled, {@link LegendControl} will be hidden. */
 	legend?: boolean;
+	/** Enable or disable drawing shapes. If disabled, {@link DrawSelectControl} will be hidden. */
 	draw?: boolean;
+	/** Fields to omit from the dropdown in {@link LegendControl}. */
 	legendOmit?: string[];
+	/** Enable or disable writing drawn shapes from {@link DrawSelectControl} to the URL as search params. */
 	shapesToUrl?: true;
+	/**
+	 * Enable or disable the button that links to the Search page in {@link DrawSelectControl},
+	 * {@link NoLocationPointControl}, and {@link PopupWithSearch}.
+	 */
 	disableSearch?: true;
 }) {
 	const searchParams = useSearchParams();
@@ -225,7 +266,7 @@ export default function ActualMap({
 								: mapRef.current?.fitBounds(defaultMapProps.bounds)
 						}
 					/>
-					<NoLocationPointsControl
+					<NoLocationPointControl
 						noLocationPoints={noLocationPoints}
 						table={table}
 						legendInfo={legendInfo}
@@ -237,7 +278,7 @@ export default function ActualMap({
 				</div>
 				<div className="leaflet-top leaflet-right pt-37">
 					{pointsInside.length ? (
-						<DrawSelectedControl
+						<DrawSelectControl
 							pointsInside={pointsInside}
 							table={table}
 							where={where}

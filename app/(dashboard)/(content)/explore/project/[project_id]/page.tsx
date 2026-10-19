@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: { params: Promise<{ project_i
 	}
 }
 
-/** Char budget per row (incl. ` | ` between segments). */
+/** Char budget per row (incl. `|` between segments). */
 const INSTITUTION_MAX_CH = 98;
 const INSTITUTION_PIPE_GAP_CH = 3;
 
@@ -583,9 +583,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			)}
 
 			{/* No cover: map + depth/assays + metadata below. With cover, metadata sits under map inside mapDepthGrid. */}
-			<section className="mt-2 space-y-8">
-				{!project.imageFileUrl_ODE ? mapDepthGrid : null}
-			</section>
+			<section className="mt-2 space-y-8">{!project.imageFileUrl_ODE ? mapDepthGrid : null}</section>
 		</div>
 	);
 }

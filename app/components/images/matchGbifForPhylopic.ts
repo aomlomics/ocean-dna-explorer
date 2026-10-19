@@ -2,8 +2,8 @@ import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { RanksBySpecificity } from "@/types/objects";
 
 /**
- * GBIF backbone match used by PhyloPicClient + taxonomy page (species suggest + rank filter).
- * Rank values from Opal often use underscores or spaces; we normalize for GBIF suggest like the pre-PhyloPic server path.
+ * GBIF backbone match used by PhyloPicClient + taxonomy page (species suggest + rank filter). Rank values from Opal
+ * often use underscores or spaces; we normalize for GBIF suggest like the pre-PhyloPic server path.
  */
 export type GbifPhylopicMatch = {
 	record: Record<string, unknown>;
@@ -29,16 +29,12 @@ function normName(s: string): string {
 	return s.toLowerCase().replace(/_/g, " ").replace(/\s+/g, " ").trim();
 }
 
-/**
- * Opal rank field is usable for GBIF suggest (letters, digits, underscore, space, period, hyphen).
- */
+/** Opal rank field is usable for GBIF suggest (letters, digits, underscore, space, period, hyphen). */
 function isPlausibleRankValue(raw: string): boolean {
 	return /^[a-zA-Z0-9][a-zA-Z0-9_\s.'-]*$/i.test(raw);
 }
 
-/**
- * Among several ACCEPTED hits at the same rank, pick the one whose canonical / scientific name matches the query.
- */
+/** Among several ACCEPTED hits at the same rank, pick the one whose canonical / scientific name matches the query. */
 function pickAcceptedForRank(
 	candidates: Record<string, any>[],
 	rank: string,

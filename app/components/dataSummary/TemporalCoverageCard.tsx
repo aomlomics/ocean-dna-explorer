@@ -6,9 +6,8 @@ import { exploreUrl } from "@/app/helpers/utils";
 /**
  * Floor for what counts as a "real" sample collection date.
  *
- * Anything earlier is treated as either a sentinel (-9999 → e.g. year-9999),
- * a Unix-epoch parse failure (1969-12-31 / 1970-01-01), or otherwise
- * unusable for "when were samples collected" math.
+ * Anything earlier is treated as either a sentinel (-9999 → e.g. year-9999), a Unix-epoch parse failure (1969-12-31 /
+ * 1970-01-01), or otherwise unusable for "when were samples collected" math.
  */
 export const EARLIEST_VALID_SAMPLE_DATE = new Date(Date.UTC(1990, 0, 1));
 

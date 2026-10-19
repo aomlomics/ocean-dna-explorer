@@ -13,9 +13,8 @@ interface DoughnutChartProps {
 	labels: string[];
 	data: number[];
 	/**
-	 * Compact mode: always stack chart + legend vertically and hide the
-	 * informational footer paragraph. Use when the chart is embedded inside
-	 * a narrow dashboard card.
+	 * Compact mode: always stack chart + legend vertically and hide the informational footer paragraph. Use when the
+	 * chart is embedded inside a narrow dashboard card.
 	 */
 	compact?: boolean;
 }

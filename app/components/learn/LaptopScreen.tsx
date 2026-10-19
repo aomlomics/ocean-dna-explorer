@@ -31,9 +31,8 @@ export interface LaptopScreenProps {
 }
 
 /**
- * Laptop frame with a screen area. Measures the screen overlay in pixels (ResizeObserver),
- * then renders children inside a fixed-size content area scaled to fit. Content looks
- * the same at every laptop size—no overflow, no scrollbar.
+ * Laptop frame with a screen area. Measures the screen overlay in pixels (ResizeObserver), then renders children inside
+ * a fixed-size content area scaled to fit. Content looks the same at every laptop size—no overflow, no scrollbar.
  */
 export default function LaptopScreen({
 	children,

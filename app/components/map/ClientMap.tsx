@@ -5,6 +5,14 @@ import { useEffect, useState } from "react";
 import DynamicMap from "./DynamicMap";
 import { type ModelName } from "@/types/tableMetadata";
 
+/**
+ * A client component version of {@link app/components/map/Map.default | Map} that will fetch locations from a URL in a
+ * useEffect. Use this component inside other client components that do not yet have locations.
+ *
+ * **Components:**
+ *
+ * - {@link DynamicMap}
+ */
 export default function ClientMap({
 	url,
 	where,
@@ -20,6 +28,7 @@ export default function ClientMap({
 	disableSearch,
 	className = ""
 }: {
+	/** The URL to fetch location data from. */
 	url: string;
 	where?: Record<string, string>;
 	table?: Uncapitalize<ModelName>;

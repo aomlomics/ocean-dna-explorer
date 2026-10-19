@@ -12,7 +12,8 @@ const eslintConfig = defineConfig([
 		"app/generated/**",
 		"prisma/generated/**",
 		"prismaImages/generated/**",
-		"types/tableMetadata.ts"
+		"types/tableMetadata.ts",
+		"docs/**"
 	]),
 	...nextCoreWebVitals,
 	...nextTypescript,

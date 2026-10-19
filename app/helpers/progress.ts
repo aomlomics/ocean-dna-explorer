@@ -15,8 +15,9 @@ export function createProgressStream() {
 
 	/**
 	 * Send updates to client
-	 * @param message - string message to display in toast
-	 * @param value - number progress to display in button progress
+	 *
+	 * @param message - String message to display in toast
+	 * @param value - Number progress to display in button progress
 	 */
 	async function message(message: string, value: number) {
 		const data = JSON.stringify({ statusMessage: "progress", progress: { message, value } });
@@ -25,7 +26,8 @@ export function createProgressStream() {
 
 	/**
 	 * Send error to client
-	 * @param message - string message to display in toast
+	 *
+	 * @param message - String message to display in toast
 	 */
 	async function error(message: string) {
 		const data = JSON.stringify({ statusMessage: "error", error: message });
@@ -34,16 +36,15 @@ export function createProgressStream() {
 
 	/**
 	 * Send success to client
-	 * @param message - string message to display in toast
+	 *
+	 * @param message - String message to display in toast
 	 */
 	async function success(message: string) {
 		const data = JSON.stringify({ statusMessage: "success", progress: { message, value: 100 } });
 		await writer.write(encoder.encode(`${data}\n`));
 	}
 
-	/**
-	 * Close the stream and terminate server process
-	 */
+	/** Close the stream and terminate server process */
 	async function close() {
 		await writer.close();
 	}

@@ -7,9 +7,8 @@ const SITE_URL = "https://www.oceandnaexplorer.org";
 /**
  * 🗺️ Generates the main sitemap index file.
  *
- * This function creates a sitemap index file by discovering and aggregating
- * sitemap files generated across the project. It is temporary until Next.js
- * offers native support for sitemap indexing.
+ * This function creates a sitemap index file by discovering and aggregating sitemap files generated across the project.
+ * It is temporary until Next.js offers native support for sitemap indexing.
  */
 
 const ROOT_DIR = process.cwd();
@@ -45,17 +44,17 @@ async function main() {
 /**
  * 🔎 Recursively finds "sitemap.ts" files and extracts sitemap URLs.
  *
- * Traverses directories from the specified start point, looking for "sitemap.ts" files.
- * If a file contains a `generateSitemaps` function, the function is invoked
- * to retrieve sitemap URLs. If absent, a default sitemap URL is constructed.
+ * Traverses directories from the specified start point, looking for "sitemap.ts" files. If a file contains a
+ * `generateSitemaps` function, the function is invoked to retrieve sitemap URLs. If absent, a default sitemap URL is
+ * constructed.
  *
  * Known Limitations:
- * - While this does consider Next.js conventions for folders like route groups, do not place
- *   "sitemap.ts" under folders like route groups untill the following seperate issue is resolved:
- *    https://github.com/vercel/next.js/issues/68403
  *
- * @param {string} dir - The base directory to begin searching for sitemap files.
- * @returns {Promise<string[]>} A promise that resolves to an array of sitemap URLs.
+ * - While this does consider Next.js conventions for folders like route groups, do not place "sitemap.ts" under folders
+ *   like route groups until the following separate issue is resolved: https://github.com/vercel/next.js/issues/68403
+ *
+ * @param dir - The base directory to begin searching for sitemap files.
+ * @returns A promise that resolves to an array of sitemap URLs.
  */
 async function findSitemapFiles(dir: string): Promise<string[]> {
 	let sitemaps: string[] = [];

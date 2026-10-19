@@ -11,9 +11,7 @@ function subscribeNever() {
 /** Portaled to <body> to avoid clipping; sits at the popover layer (see z-index scale in globals.css). */
 const PREVIEW_Z_INDEX = "var(--z-popover)";
 
-/**
- * Project-header photo button; hover/focus opens a full-image preview portaled to document.body.
- */
+/** Project-header photo button; hover/focus opens a full-image preview portaled to document.body. */
 export default function ProjectCoverPhotoPreview({ src, title }: { src: string; title: string }) {
 	const anchorRef = useRef<HTMLButtonElement>(null);
 	const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

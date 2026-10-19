@@ -15,9 +15,9 @@ function getSnapshot() {
 }
 
 /**
- * OS reduced-motion preference.
- * The server snapshot is false so the first render matches the hydrated HTML (keeps consistent with our other audit related changes).
- * `useMediaQuery` is not used here because it calls setState inside an effect.
+ * OS reduced-motion preference. The server snapshot is false so the first render matches the hydrated HTML (keeps
+ * consistent with our other audit related changes). `useMediaQuery` is not used here because it calls setState inside
+ * an effect.
  */
 export function usePrefersReducedMotion() {
 	return useSyncExternalStore(subscribe, getSnapshot, () => false);

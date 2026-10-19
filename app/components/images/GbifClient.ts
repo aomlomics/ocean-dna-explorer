@@ -85,9 +85,7 @@ function scoreSpeciesMediaItem(item: SpeciesMediaItem): number {
 	return s;
 }
 
-/**
- * Prefer occurrence still images (e.g. iNaturalist) over checklist /species/media (often range maps).
- */
+/** Prefer occurrence still images (e.g. iNaturalist) over checklist /species/media (often range maps). */
 export async function getGbifStillImagePayload(taxonKey: number | string): Promise<GbifImagePayload | null> {
 	const controller = new AbortController();
 	const timeoutId = setTimeout(() => controller.abort(), GBIF_FETCH_TIMEOUT_MS);
