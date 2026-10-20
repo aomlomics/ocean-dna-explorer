@@ -459,7 +459,6 @@ for (const start of TableNames) {
 
 			if (path) {
 				paths[target] = path;
-				paths[capitalizeTable(target)] = paths[target];
 			}
 		}
 	}
@@ -513,6 +512,7 @@ import * as PrismaZodTypes from "@/prisma/generated/zod";
 import type { Prisma } from "@/app/generated/prisma/browser";
 import type { ZodEnum, ZodObject } from "zod";
 import { capitalizeTable } from "@/app/helpers/utils";
+import type { Writeable } from "./globals";
 
 export type ModelName = Prisma.ModelName;
 
@@ -552,6 +552,14 @@ export const DataTableNames = TableNames.filter((t) => !NonDataTableNames.includ
 //duplicate keys with capitalized model names, mapping them to the same value as uncapitalized keys
 //Ex: both project and Project map to the same value
 for (const table of TableNames) {
+	//duplicate path objects
+	for (const [target, path] of Object.entries(TableMetadata[table].relationPaths)) {
+		(TableMetadata[table].relationPaths as Writeable<RelationPaths>)[
+			capitalizeTable(target as Uncapitalize<ModelName>)
+		] = path;
+	}
+
+	//duplicate table entries
 	(TableMetadata as Record<Uncapitalize<ModelName> | ModelName, (typeof TableMetadata)[keyof typeof TableMetadata]>)[
 		capitalizeTable(table)
 	] = TableMetadata[table];
