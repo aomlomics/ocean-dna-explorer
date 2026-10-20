@@ -98,15 +98,17 @@ async function SuspenseStatCard({
 	let innerClassName;
 	if (layout === "horizontal" && queryVal !== undefined) {
 		const hug = horizontalCardWidth === "hug";
-		innerClassName = hug ? " items-center gap-4" : " w-full items-center gap-4";
+		innerClassName = hug
+			? " aspect-square flex-col items-center justify-center gap-2 text-center sm:aspect-auto sm:flex-row sm:gap-4 sm:text-left"
+			: " aspect-square w-full flex-col items-center justify-center gap-2 text-center sm:aspect-auto sm:flex-row sm:gap-4 sm:text-left";
 		content = (
 			<>
-				<div className="w-16 h-16 shrink-0 flex items-center justify-center text-primary">{icon}</div>
+				<div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center text-primary">{icon}</div>
 				<div
 					className={
 						hug
-							? "flex min-w-min flex-col gap-0.5 overflow-visible"
-							: "flex min-w-min flex-1 flex-col gap-0.5 overflow-visible"
+							? "flex min-w-min flex-col items-center gap-0.5 overflow-visible sm:items-start"
+							: "flex min-w-min flex-col items-center gap-0.5 overflow-visible sm:flex-1 sm:items-start"
 					}
 				>
 					<div
@@ -122,7 +124,7 @@ async function SuspenseStatCard({
 		);
 	} else {
 		// Vertical centered layout for other cards
-		innerClassName = " flex-col items-center text-center";
+		innerClassName = " aspect-square flex-col items-center justify-center text-center sm:aspect-auto";
 		content = (
 			<>
 				{icon && icon !== "eye" && (
@@ -155,7 +157,10 @@ async function SuspenseStatCard({
 	if (link) {
 		const hug = layout === "horizontal" && horizontalCardWidth === "hug";
 		return (
-			<Link href={link} className={[className, hug ? "block w-max max-w-full" : undefined].filter(Boolean).join(" ")}>
+			<Link
+				href={link}
+				className={[className, hug ? "block w-full sm:w-max sm:max-w-full" : undefined].filter(Boolean).join(" ")}
+			>
 				<div
 					className={`bg-base-200 p-4 ${hug ? "" : "h-full"} rounded-lg flex hover:bg-base-300 transition-all duration-300 hover:scale-105 ${innerClassName} ${tooltipClassName}`}
 					data-tip={resolvedTooltip}

@@ -244,7 +244,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					<div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full lg:w-2/3">
 						<Link href={`/search?table=analysis&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
 							<div
-								className="tooltip tooltip-top w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 before:text-base-content before:bg-base-200 before:border before:border-base-content/20"
+								className="tooltip tooltip-top flex aspect-square w-full flex-col justify-center bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 sm:aspect-auto before:text-base-content before:bg-base-200 before:border before:border-base-content/20"
 								data-tip="View Analyses as Search"
 							>
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
@@ -259,7 +259,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 
 						<Link href={`/search?table=project&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
 							<div
-								className="tooltip tooltip-top w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 before:text-base-content before:bg-base-200 before:border before:border-base-content/20"
+								className="tooltip tooltip-top flex aspect-square w-full flex-col justify-center bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 sm:aspect-auto before:text-base-content before:bg-base-200 before:border before:border-base-content/20"
 								data-tip="View Projects as Search"
 							>
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
@@ -274,7 +274,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 
 						<Link href={`/search?table=sample&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
 							<div
-								className="tooltip tooltip-top w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 before:text-base-content before:bg-base-200 before:border before:border-base-content/20"
+								className="tooltip tooltip-top flex aspect-square w-full flex-col justify-center bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 sm:aspect-auto before:text-base-content before:bg-base-200 before:border before:border-base-content/20"
 								data-tip="View Samples as Search"
 							>
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
@@ -297,7 +297,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 							}}
 						>
 							<div
-								className="tooltip tooltip-top w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 before:text-base-content before:bg-base-200 before:border before:border-base-content/20"
+								className="tooltip tooltip-top flex aspect-square w-full flex-col justify-center bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 sm:aspect-auto before:text-base-content before:bg-base-200 before:border before:border-base-content/20"
 								data-tip="Find other Features with this Taxonomy"
 							>
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">

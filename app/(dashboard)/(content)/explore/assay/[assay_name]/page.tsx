@@ -344,7 +344,7 @@ export default async function Assay_name({
 					<div className="flex flex-col h-full space-y-8">
 						<div>
 							<h2 className="text-2xl font-semibold text-base-content/90">Assay at a Glance</h2>
-							<div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+							<div className="mt-4 grid grid-cols-2 gap-4">
 								<StatCard
 									title="Samples"
 									icon={<SampleIcon />}

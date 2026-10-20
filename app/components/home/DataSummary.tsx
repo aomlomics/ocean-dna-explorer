@@ -49,8 +49,8 @@ export function MainStatsSkeleton() {
 		<div className="w-full max-w-4xl mx-auto" aria-busy="true" aria-label="Loading summary statistics">
 			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 				{[0, 1, 2, 3].map((index) => (
-					<div key={index} className={`${index >= 2 ? "hidden lg:block" : ""}`}>
-						<div className="flex flex-col items-center text-center p-1.5">
+					<div key={index} className="aspect-square lg:aspect-auto">
+						<div className="flex h-full flex-col items-center justify-center rounded-lg bg-base-200 p-3 text-center lg:bg-transparent lg:p-1.5">
 							<div className="skeleton h-14 w-14 shrink-0 rounded-full mb-1.5" />
 							<div className="skeleton h-8 w-24 max-w-[90%] mb-1.5" />
 							<div className="skeleton h-4 w-20" />
@@ -107,8 +107,8 @@ export async function MainStats() {
 	return (
 		<div className="w-full max-w-4xl mx-auto">
 			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-				{summaryItems.map((item, index) => (
-					<div key={item.title} className={`${index >= 2 ? "hidden lg:block" : ""}`}>
+				{summaryItems.map((item) => (
+					<div key={item.title}>
 						<DataSummaryItem {...item} />
 					</div>
 				))}
@@ -121,7 +121,7 @@ function DataSummaryItem({ title, value, href, icon }: SummaryItemData) {
 	return (
 		<Link
 			href={href}
-			className="group flex flex-col items-center text-center p-1.5 rounded-lg hover:bg-base-200 transition-all duration-300 hover:scale-105"
+			className="group flex aspect-square flex-col items-center justify-center rounded-lg bg-base-200 p-3 text-center transition-all duration-300 hover:scale-105 hover:bg-base-300 lg:aspect-auto lg:bg-transparent lg:p-1.5 lg:hover:bg-base-200"
 		>
 			{icon && <div className="w-14 h-14 mb-1.5 flex shrink-0 items-center justify-center text-primary">{icon}</div>}
 			<div className="text-2xl sm:text-3xl font-bold text-primary mb-0.5 group-hover:text-primary-focus transition-colors leading-tight">

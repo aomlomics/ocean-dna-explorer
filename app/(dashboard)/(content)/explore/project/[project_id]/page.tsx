@@ -470,7 +470,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	const glanceBlock = (
 		<div className="flex flex-col h-full">
 			{/* z-raised: sit above header so View as Search tooltips aren't covered */}
-			<div className="relative z-raised flex flex-wrap gap-3">
+			<div className="relative z-raised grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
 				<StatCard
 					title="Samples"
 					value={Samples.length}

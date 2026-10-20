@@ -131,13 +131,13 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 					</div>
 
 					{/* Context cards */}
-					<div className="space-y-4 flex flex-col">
+					<div className="grid grid-cols-2 gap-4 sm:flex sm:flex-col">
 						<StatCard
 							title="Sample"
 							icon={<SampleIcon />}
 							link={exploreUrl({ table: "sample", project_id, samp_name: sample.samp_name })}
 							value={sample.samp_name}
-							className="w-2/3"
+							className="w-full sm:w-2/3"
 						/>
 
 						<StatCard

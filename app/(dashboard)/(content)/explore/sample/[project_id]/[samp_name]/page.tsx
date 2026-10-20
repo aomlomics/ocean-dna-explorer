@@ -170,7 +170,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 				{/* Right column - Stats and Information */}
 				<div className="lg:col-span-2 space-y-8">
 					{/* Stats Grid */}
-					<div className="grid grid-cols-3 gap-4">
+					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
 						<StatCard
 							title="Occurrences"
 							value={Libraries.reduce((count, lib) => count + lib._count.Occurrences, 0)}
