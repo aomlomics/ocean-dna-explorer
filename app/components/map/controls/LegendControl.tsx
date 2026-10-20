@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Dispatch, ReactNode, RefObject, SetStateAction, MouseEvent } from "react";
 import type { Map } from "leaflet";
-import LeafletControl from "./LeafletControl";
+import LeafletControlContainer from "../containers/LeafletControlContainer";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
 import ResizableMapContainer from "../containers/ResizableMapContainer";
 import {
@@ -57,7 +57,7 @@ export default function LegendControl({
 	}
 
 	return (
-		<LeafletControl click scroll className="leaflet-bar border-none! mb-6! flex flex-col gap-2">
+		<LeafletControlContainer click scroll className="leaflet-bar border-none! mb-6! flex flex-col gap-2">
 			<CollapsibleMapContainer hiddenText="Show legend" defaultCollapse={!shown} onCollapse={(c) => setShown(!c)}>
 				<ResizableMapContainer
 					growDirection={"up"}
@@ -195,7 +195,7 @@ export default function LegendControl({
 					</div>
 				</ResizableMapContainer>
 			</CollapsibleMapContainer>
-		</LeafletControl>
+		</LeafletControlContainer>
 	);
 }
 

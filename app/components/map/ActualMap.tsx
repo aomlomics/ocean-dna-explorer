@@ -21,7 +21,6 @@ import ClusterControl from "./controls/ClusterControl";
 import DrawSelectControl from "./controls/DrawSelectControl";
 import PopupWithSearch from "./popups/PopupWithSearch";
 import { DEFAULT_CLUSTER_RADIUS, DEFAULT_POINT_SIZE, DEFAULT_POINT_SIZE_STEP } from "./utils/mapUtils";
-import LoadingControl from "./controls/LoadingControl";
 import RecenterControl from "./controls/RecenterControl";
 import NoLocationPointControl from "./controls/NoLocationPointControl";
 import ClusterGroup from "./utils/ClusterGroup";
@@ -48,17 +47,19 @@ function getShape(shape: any) {
 
 //TODO: taxonomy heatmap toggle
 /**
- * An interactive [Leaflet](https://leafletjs.com/) map for visualizing geographic data with clustered markers, a
- * customizable legend, and tools for selecting locations within drawable areas.
+ * An interactive [React Leaflet](https://react-leaflet.js.org/) map for visualizing geographic data with clustered
+ * markers, a customizable legend, and tools for selecting locations within drawable areas.
  *
  * This component should not be used directly. Instead, use {@link app/components/map/Map.default | Map}.
+ *
+ * This component must be imported using NextJS's dynamic with SSR disabled due to Leaflet. This is done when using
+ * {@link app/components/map/Map.default | Map} by {@link app/components/map/DynamicMap.default | DynamicMap}.
  *
  * **Components:**
  *
  * - {@link ClusterControl}
  * - {@link DrawSelectControl}
  * - {@link LegendControl}
- * - {@link LoadingControl}
  * - {@link NoLocationPointControl}
  * - {@link PointSizeControl}
  * - {@link RecenterControl}
@@ -322,7 +323,15 @@ export default function ActualMap({
 					/>
 				</div>
 
-				<LoadingControl loading={loading} />
+				{loading ? (
+					<div className="leaflet-top leaflet-left w-full h-full">
+						<div className="leaflet-control leaflet-bar border-none! w-full h-full m-0!">
+							<div className="bg-base-100 w-full h-full opacity-10" />
+						</div>
+					</div>
+				) : (
+					<></>
+				)}
 
 				<TileLayer
 					attribution='Powered by <a href="https://www.esri.com/en-us/home" target="_blank">Esri</a>'

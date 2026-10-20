@@ -1,21 +1,29 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
-import LeafletControl from "./LeafletControl";
+import LeafletControlContainer from "../containers/LeafletControlContainer";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
 import ResetButtonMap from "../utils/ResetButtonMap";
 import { DEFAULT_CLUSTER_RADIUS } from "../utils/mapUtils";
 import InfoButton from "@/app/components/InfoButton";
 
+/**
+ * The {@link app/components/map/ActualMap.default | ActualMap} control that manages the radius that points will cluster
+ * at. The state for the cluster radius is not managed by this component and must be passed into it.
+ */
 export default function ClusterControl({
 	cluster,
 	value,
 	onChange,
 	clusterRadius
 }: {
+	/** Show or hide the control. */
 	cluster: boolean;
+	/** The state value for the cluster radius. */
 	value: number | undefined;
+	/** The setState function for the cluster radius. */
 	onChange: Dispatch<SetStateAction<number | undefined>>;
+	/** The default value for the cluster radius. */
 	clusterRadius?: number;
 }) {
 	if (!cluster) {
@@ -23,7 +31,7 @@ export default function ClusterControl({
 	}
 
 	return (
-		<LeafletControl click className="leaflet-bar border-none! hidden lg:block">
+		<LeafletControlContainer click className="leaflet-bar border-none! hidden lg:block">
 			<CollapsibleMapContainer dir="left" defaultCollapse hiddenText="Show cluster control">
 				<div className="w-35 pl-2 pr-1 pt-1 pb-2 flex flex-col gap-1">
 					<div className="flex justify-between">
@@ -59,6 +67,6 @@ export default function ClusterControl({
 					</div>
 				</div>
 			</CollapsibleMapContainer>
-		</LeafletControl>
+		</LeafletControlContainer>
 	);
 }

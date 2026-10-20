@@ -4,7 +4,7 @@ import { getWhereAdvancedHref, type LegendInfo } from "../utils/mapUtils";
 import type { Map } from "leaflet";
 import { type RefObject, useEffect, useState } from "react";
 import type { MapShape, MapLocation } from "@/types/globals";
-import LeafletControl from "./LeafletControl";
+import LeafletControlContainer from "../containers/LeafletControlContainer";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
 import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import ResizableMapContainer from "../containers/ResizableMapContainer";
@@ -38,7 +38,7 @@ export default function DrawSelectedControl({
 	useEffect(() => setDelayedPointsInside(pointsInside), [pointsInside]);
 
 	return (
-		<LeafletControl click scroll>
+		<LeafletControlContainer click scroll>
 			<CollapsibleMapContainer
 				hiddenText={`Show ${TableMetadata[table].plural} selected with shapes`}
 				onCollapse={(c) => setShown(!c)}
@@ -77,6 +77,6 @@ export default function DrawSelectedControl({
 					</div>
 				</ResizableMapContainer>
 			</CollapsibleMapContainer>
-		</LeafletControl>
+		</LeafletControlContainer>
 	);
 }

@@ -4,7 +4,7 @@ import type { MapLocation, NullLocation } from "@/types/globals";
 import { getWhereAdvancedHref, type LegendInfo } from "../utils/mapUtils";
 import { type RefObject, useState } from "react";
 import type { Map } from "leaflet";
-import LeafletControl from "./LeafletControl";
+import LeafletControlContainer from "../containers/LeafletControlContainer";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
 import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import ResizableMapContainer from "../containers/ResizableMapContainer";
@@ -30,7 +30,7 @@ export default function NoLocationPointsControl({
 	const [shown, setShown] = useState(false);
 
 	return (
-		<LeafletControl click scroll className="hidden lg:block">
+		<LeafletControlContainer click scroll className="hidden lg:block">
 			<CollapsibleMapContainer
 				dir="left"
 				defaultCollapse
@@ -63,6 +63,6 @@ export default function NoLocationPointsControl({
 					</div>
 				</ResizableMapContainer>
 			</CollapsibleMapContainer>
-		</LeafletControl>
+		</LeafletControlContainer>
 	);
 }

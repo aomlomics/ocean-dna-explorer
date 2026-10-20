@@ -28,33 +28,15 @@ import LoadingCompositionSunburst from "../loading/taxonomy/composition/LoadingC
 import LoadingDarkTaxaPlot from "../loading/taxonomy/LoadingDarkTaxaPlot";
 
 import dynamic from "next/dynamic";
-const TaxaBarChart = dynamic(() => import("../taxonomy/TaxaBarChart"), {
-	ssr: false
-});
-const SampleTaxaAbundance = dynamic(() => import("../taxonomy/SampleTaxaAbundance"), {
-	ssr: false
-});
-const TaxonomyTreemap = dynamic(() => import("../taxonomy/TaxonomyTreemap"), {
-	ssr: false
-});
-const TaxaPrevalenceHistogram = dynamic(() => import("../taxonomy/TaxaPrevalenceHistogram"), {
-	ssr: false
-});
-const TaxaSampleHeatmap = dynamic(() => import("../taxonomy/TaxaSampleHeatmap"), {
-	ssr: false
-});
-const CompositionBarChart = dynamic(() => import("../taxonomy/composition/CompositionBarChart"), {
-	ssr: false
-});
-const TaxonomyLollipopChart = dynamic(() => import("../taxonomy/composition/TaxonomyLollipopChart"), {
-	ssr: false
-});
-const CompositionSunburst = dynamic(() => import("../taxonomy/composition/CompositionSunburst"), {
-	ssr: false
-});
-const DarkTaxaPlot = dynamic(() => import("../taxonomy/DarkTaxaPlot"), {
-	ssr: false
-});
+const TaxaBarChart = dynamic(() => import("../taxonomy/TaxaBarChart"), { ssr: false });
+const SampleTaxaAbundance = dynamic(() => import("../taxonomy/SampleTaxaAbundance"), { ssr: false });
+const TaxonomyTreemap = dynamic(() => import("../taxonomy/TaxonomyTreemap"), { ssr: false });
+const TaxaPrevalenceHistogram = dynamic(() => import("../taxonomy/TaxaPrevalenceHistogram"), { ssr: false });
+const TaxaSampleHeatmap = dynamic(() => import("../taxonomy/TaxaSampleHeatmap"), { ssr: false });
+const CompositionBarChart = dynamic(() => import("../taxonomy/composition/CompositionBarChart"), { ssr: false });
+const TaxonomyLollipopChart = dynamic(() => import("../taxonomy/composition/TaxonomyLollipopChart"), { ssr: false });
+const CompositionSunburst = dynamic(() => import("../taxonomy/composition/CompositionSunburst"), { ssr: false });
+const DarkTaxaPlot = dynamic(() => import("../taxonomy/DarkTaxaPlot"), { ssr: false });
 
 export type AssignsWithOccs = {
 	featureid: AssignmentModel["featureid"];

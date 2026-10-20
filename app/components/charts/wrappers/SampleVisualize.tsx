@@ -7,9 +7,7 @@ import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import dynamic from "next/dynamic";
-const SampleScatterPlot = dynamic(() => import("../SampleScatterPlot"), {
-	ssr: false
-});
+const SampleScatterPlot = dynamic(() => import("../SampleScatterPlot"), { ssr: false });
 
 export const DEFAULT_X_FIELD = "eventDate" as keyof SampleModel;
 export const DEFAULT_Y_FIELD = "minimumDepthInMeters" as keyof SampleModel;

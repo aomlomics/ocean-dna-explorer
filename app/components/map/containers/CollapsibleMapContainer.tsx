@@ -2,6 +2,7 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 
+/** {@link app/components/map/ActualMap.default | ActualMap} control wrapper that adds a handle to minimize the control. */
 export default function CollapsibleMapContainer({
 	children,
 	defaultCollapse = false,
