@@ -398,7 +398,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		<header
 			className={`w-full min-w-0 max-w-full ${
 				project.imageFileUrl_ODE
-					? "relative z-raised has-[.tooltip:hover]:z-tooltip focus-within:z-tooltip"
+					? "relative z-raised has-[.tooltip:hover]:z-tooltip has-[.dropdown:hover]:z-menu focus-within:z-menu"
 					: ""
 			}`}
 		>
