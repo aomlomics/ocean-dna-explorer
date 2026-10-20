@@ -395,7 +395,13 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	);
 
 	const headerBlock = (
-		<header className={`w-full min-w-0 max-w-full ${project.imageFileUrl_ODE ? "relative z-raised" : ""}`}>
+		<header
+			className={`w-full min-w-0 max-w-full ${
+				project.imageFileUrl_ODE
+					? "relative z-raised has-[.tooltip:hover]:z-tooltip focus-within:z-tooltip"
+					: ""
+			}`}
+		>
 			<div className="flex flex-wrap gap-x-3 gap-y-2 items-center justify-between">
 				<div className="flex flex-wrap gap-2 items-center min-w-0">
 					<TitleHoverTooltip tooltip={TableMetadata.project.description}>

@@ -115,18 +115,12 @@ export default function ActualTableFilter({
 		>
 			{!embedded ? (
 				<div
-					className="relative group flex justify-between items-center px-5 py-3 select-none transition-colors rounded-xl cursor-pointer hover:bg-primary/10"
+					className={`relative flex justify-between items-center px-5 py-3 select-none transition-colors rounded-xl cursor-pointer hover:bg-primary/10 ${!isOpen ? "md:tooltip tooltip-top before:text-base-content before:bg-base-200 before:border before:border-base-content/20" : ""}`}
+					data-tip={!isOpen ? "Apply filters to the data below by using the dropdown menus in this Filter Menu" : undefined}
 					onClick={() => setIsOpen((v) => !v)}
 					role="button"
 					aria-expanded={showBody}
 				>
-					{!isOpen && (
-						<div className="pointer-events-none absolute left-4/5 -translate-x-1/2 bottom-full mb-2 hidden md:block opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-							<div className="bg-primary text-primary-content rounded-md shadow-lg px-3 py-1.5 text-sm text-center max-w-sm whitespace-normal">
-								Apply filters to the data below by using the dropdown menus in this Filter Menu
-							</div>
-						</div>
-					)}
 					<div className="flex items-center gap-3">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
