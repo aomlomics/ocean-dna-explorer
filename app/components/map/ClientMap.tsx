@@ -26,7 +26,7 @@ export default function ClientMap({
 	legendOmit,
 	shapesToUrl,
 	disableSearch,
-	className = ""
+	className
 }: {
 	/** The URL to fetch location data from. */
 	url: string;

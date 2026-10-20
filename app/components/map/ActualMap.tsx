@@ -94,7 +94,7 @@ export default function ActualMap({
 	 * {@link NoLocationPointControl}, and {@link PopupWithSearch}.
 	 */
 	where?: Record<string, string>;
-	/** The database table that the map is displaying. */
+	/** The database table that the map is displaying. Defaults to "sample". */
 	table?: Uncapitalize<ModelName>;
 	/**
 	 * The database table that the points will always be grouped by in {@link ClusterGroup}s. When omitted, points will
@@ -103,15 +103,15 @@ export default function ActualMap({
 	titleTable?: Uncapitalize<ModelName>;
 	/** The default field that the {@link LegendControl} will display. */
 	defaultLegendField?: string;
-	/** Enable or disable clustering. If disabled, {@link ClusterControl} will be hidden. */
+	/** Enable or disable clustering. If disabled, {@link ClusterControl} will be hidden. Defaults to false. */
 	cluster?: boolean;
 	/** The default radius that points will cluster within. */
 	clusterRadius?: number;
-	/** Enable or disable the legend. If disabled, {@link LegendControl} will be hidden. */
+	/** Enable or disable the legend. If disabled, {@link LegendControl} will be hidden. Defaults to false. */
 	legend?: boolean;
-	/** Enable or disable drawing shapes. If disabled, {@link DrawSelectControl} will be hidden. */
+	/** Enable or disable drawing shapes. If disabled, {@link DrawSelectControl} will be hidden. Defaults to false. */
 	draw?: boolean;
-	/** Fields to omit from the dropdown in {@link LegendControl}. */
+	/** Fields to omit from the dropdown in {@link LegendControl}. Defaults to empty array. */
 	legendOmit?: string[];
 	/** Enable or disable writing drawn shapes from {@link DrawSelectControl} to the URL as search params. */
 	shapesToUrl?: true;

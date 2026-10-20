@@ -66,7 +66,7 @@ export default function Map({
 	legendOmit,
 	shapesToUrl,
 	disableSearch,
-	className = ""
+	className
 }: {
 	/** Styling for the div that wraps the nested {@link SuspenseMap}. */
 	className?: string;
