@@ -80,6 +80,16 @@ const ExploreIcon = () => (
 	</svg>
 );
 
+const VisualizeIcon = () => (
+	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
+		<path
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
+		/>
+	</svg>
+);
+
 const FAQIcon = () => (
 	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
 		<path
@@ -151,6 +161,7 @@ export default function HelpQuickNav() {
 					<QuickNavButton href="/docs/help/overview#faq" label="FAQ" icon={<FAQIcon />} color="text-primary" />
 					<QuickNavButton href="/docs/help/search" label="Search" icon={<SearchIcon />} color="text-primary" />
 					<QuickNavButton href="/docs/help/explore" label="Explore" icon={<ExploreIcon />} color="text-primary" />
+					<QuickNavButton href="/docs/help/visualize" label="Visualize" icon={<VisualizeIcon />} color="text-primary" />
 					<QuickNavButton
 						href="/docs/help/overview#login-and-roles"
 						label="Login & Roles"
@@ -172,6 +183,12 @@ export default function HelpQuickNav() {
 					/>
 					<QuickNavButton href="/docs/help/search" label="Search" icon={<SearchIcon />} color="text-emerald-600" />
 					<QuickNavButton href="/docs/help/explore" label="Explore" icon={<ExploreIcon />} color="text-emerald-600" />
+					<QuickNavButton
+						href="/docs/help/visualize"
+						label="Visualize"
+						icon={<VisualizeIcon />}
+						color="text-emerald-600"
+					/>
 					<QuickNavButton href="/docs/api" label="API Docs" icon={<APIIcon />} color="text-emerald-600" />
 				</div>
 			</div>

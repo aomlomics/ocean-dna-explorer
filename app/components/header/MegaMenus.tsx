@@ -522,8 +522,6 @@ export function ExploreMegaMenu() {
 // -----------------------------
 
 export function DocsMegaMenu() {
-	// NOTE: There is no `help#visualize` section in HelpSections currently.
-	// Using `/explore` as the closest existing “visualize-like” UI.
 	return (
 		<MegaMenu tabName="Docs" route="/docs" activePaths={["/docs"]} widthClass="max-w-[45.5rem]">
 			<div className="grid grid-cols-[1fr_1fr_15rem] gap-0">

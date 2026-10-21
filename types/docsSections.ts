@@ -57,6 +57,15 @@ const DocsSections = {
 				taxonomies: { title: "Taxonomies" }
 			}
 		},
+		visualize: {
+			title: "Visualize",
+			subsections: {
+				"using-visualize": { title: "How to Use Visualize" },
+				"sample-metadata": { title: "Sample Metadata" },
+				"taxonomy-charts": { title: "Taxonomy" },
+				"alpha-diversity": { title: "Alpha Diversity" }
+			}
+		},
 		submit: {
 			title: "Submit Data",
 			subsections: {
