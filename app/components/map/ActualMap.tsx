@@ -82,7 +82,7 @@ export default function ActualMap({
 	draw = false,
 	legendOmit = [],
 	shapesToUrl,
-	disableSearch
+	hideSearch
 }: {
 	/**
 	 * A list of location points where the decimalLatitude and decimalLongitude could be null. Any null values will be
@@ -116,10 +116,10 @@ export default function ActualMap({
 	/** Enable or disable writing drawn shapes from {@link DrawSelectControl} to the URL as search params. */
 	shapesToUrl?: true;
 	/**
-	 * Enable or disable the button that links to the Search page in {@link DrawSelectControl},
-	 * {@link NoLocationPointControl}, and {@link PopupWithSearch}.
+	 * Show or hide the button that links to the Search page in {@link DrawSelectControl}, {@link NoLocationPointControl},
+	 * and {@link PopupWithSearch}.
 	 */
-	disableSearch?: true;
+	hideSearch?: true;
 }) {
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
@@ -274,7 +274,7 @@ export default function ActualMap({
 						userDefinedOptions={userDefinedOptions}
 						mapRef={mapRef}
 						where={where}
-						disableSearch={disableSearch}
+						hideSearch={hideSearch}
 					/>
 				</div>
 				<div className="leaflet-top leaflet-right pt-37">
@@ -287,7 +287,7 @@ export default function ActualMap({
 							userDefinedOptions={userDefinedOptions}
 							mapRef={mapRef}
 							shapes={shapes}
-							disableSearch={disableSearch}
+							hideSearch={hideSearch}
 						/>
 					) : (
 						<></>
@@ -410,7 +410,7 @@ export default function ActualMap({
 											loc={loc}
 											legendInfo={legendInfo}
 											userDefinedOptions={userDefinedOptions}
-											disableSearch={disableSearch}
+											hideSearch={hideSearch}
 										/>
 									</Marker>
 								);
@@ -430,7 +430,7 @@ export default function ActualMap({
 								// 				id={id}
 								// 				legendInfo={legendInfo}
 								// 				userDefinedOptions={userDefinedOptions}
-								// 				disableSearch={disableSearch}
+								// 				hideSearch={hideSearch}
 								// 			/>
 								// 		</Polyline>
 								// 	);

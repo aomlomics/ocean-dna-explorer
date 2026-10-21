@@ -3,7 +3,6 @@
 import type { NullLocation } from "@/types/globals";
 import type { ModelName } from "@/types/tableMetadata";
 import dynamic from "next/dynamic";
-/** @ignore */
 const ActualMap = dynamic(() => import("@/app/components/map/ActualMap"), { ssr: false });
 
 /**
@@ -32,7 +31,7 @@ export default function DynamicMap({
 	draw,
 	legendOmit,
 	shapesToUrl,
-	disableSearch
+	hideSearch
 }: {
 	locations: NullLocation[];
 	where?: Record<string, string>;
@@ -45,7 +44,7 @@ export default function DynamicMap({
 	draw?: boolean;
 	legendOmit?: string[];
 	shapesToUrl?: true;
-	disableSearch?: true;
+	hideSearch?: true;
 }) {
 	return (
 		<ActualMap
@@ -60,7 +59,7 @@ export default function DynamicMap({
 			draw={draw}
 			legendOmit={legendOmit}
 			shapesToUrl={shapesToUrl}
-			disableSearch={disableSearch}
+			hideSearch={hideSearch}
 		/>
 	);
 }

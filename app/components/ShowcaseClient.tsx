@@ -796,7 +796,7 @@ const ProjectSamplesMap = memo(
 				</div>
 			);
 		}
-		return <DynamicMap locations={locations} cluster clusterRadius={42} disableSearch />;
+		return <DynamicMap locations={locations} cluster clusterRadius={42} hideSearch />;
 	},
 	(prev, next) => prev.projectId === next.projectId
 );

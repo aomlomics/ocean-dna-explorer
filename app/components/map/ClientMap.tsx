@@ -25,7 +25,7 @@ export default function ClientMap({
 	draw,
 	legendOmit,
 	shapesToUrl,
-	disableSearch,
+	hideSearch,
 	className
 }: {
 	/** The URL to fetch location data from. */
@@ -38,7 +38,7 @@ export default function ClientMap({
 	draw?: boolean;
 	legendOmit?: string[];
 	shapesToUrl?: true;
-	disableSearch?: true;
+	hideSearch?: true;
 	className?: string;
 } & (
 	| { titleTable?: Uncapitalize<ModelName>; defaultLegendField?: undefined }
@@ -94,7 +94,7 @@ export default function ClientMap({
 					draw={draw}
 					legendOmit={legendOmit}
 					shapesToUrl={shapesToUrl}
-					disableSearch={disableSearch}
+					hideSearch={hideSearch}
 				/>
 			)}
 		</div>

@@ -7,13 +7,21 @@ export default function CollapsibleMapContainer({
 	children,
 	defaultCollapse = false,
 	hiddenText = "Show",
-	dir = "right",
+	dir,
 	onCollapse
 }: {
+	/** The inner control elements. */
 	children: ReactNode;
+	/** Whether the control should start collapsed. Defaults to false. */
 	defaultCollapse?: boolean;
+	/** Text to show when hovering the handle when collapsed. Defaults to "Show". */
 	hiddenText?: string;
-	dir?: "up" | "down" | "left" | "right";
+	/** The direction that the control will expand towards. */
+	dir: "up" | "down" | "left" | "right";
+	/**
+	 * A function that will run when the control is collapsed and uncollapsed. The function must accept a boolean that
+	 * denotes whether the control is being collapsed, and the return value is void.
+	 */
 	onCollapse?: (collapse: boolean) => void;
 }) {
 	const [collapse, setCollapse] = useState(defaultCollapse);

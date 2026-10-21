@@ -279,9 +279,9 @@ export default function useMapLocations({
 	} else {
 		pointsOrGroups = filteredLocations;
 	}
-	const reducedPoints = titleTable
-		? Object.values(pointsOrGroups).reduce((acc, arr) => [...acc, ...arr], [])
-		: pointsOrGroups;
+	const reducedPoints = (
+		titleTable ? Object.values(pointsOrGroups).reduce((acc, arr) => [...acc, ...arr], []) : pointsOrGroups
+	) as (MapLocation | MapLocationWithValues)[];
 
 	//make legend options follow fieldOrder
 	const legendOptions = [];

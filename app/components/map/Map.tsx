@@ -65,14 +65,14 @@ export default function Map({
 	draw,
 	legendOmit,
 	shapesToUrl,
-	disableSearch,
+	hideSearch,
 	className
 }: {
 	/** Styling for the div that wraps the nested {@link SuspenseMap}. */
 	className?: string;
 	cluster?: boolean;
 	clusterRadius?: number;
-	disableSearch?: true;
+	hideSearch?: true;
 	draw?: boolean;
 	legend?: boolean;
 	legendOmit?: string[];
@@ -107,7 +107,7 @@ export default function Map({
 					draw={draw}
 					legendOmit={legendOmit}
 					shapesToUrl={shapesToUrl}
-					disableSearch={disableSearch}
+					hideSearch={hideSearch}
 				/>
 			</Suspense>
 		</div>
@@ -139,7 +139,7 @@ async function SuspenseMap({
 	draw,
 	legendOmit,
 	shapesToUrl,
-	disableSearch
+	hideSearch
 }: {
 	query?: () => Promise<NullLocation[]>;
 	locations?: NullLocation[];
@@ -153,7 +153,7 @@ async function SuspenseMap({
 	draw?: boolean;
 	legendOmit?: string[];
 	shapesToUrl?: true;
-	disableSearch?: true;
+	hideSearch?: true;
 }) {
 	if (locations) {
 		return (
@@ -169,7 +169,7 @@ async function SuspenseMap({
 				draw={draw}
 				legendOmit={legendOmit}
 				shapesToUrl={shapesToUrl}
-				disableSearch={disableSearch}
+				hideSearch={hideSearch}
 			/>
 		);
 	} else if (query) {
@@ -186,7 +186,7 @@ async function SuspenseMap({
 				draw={draw}
 				legendOmit={legendOmit}
 				shapesToUrl={shapesToUrl}
-				disableSearch={disableSearch}
+				hideSearch={hideSearch}
 			/>
 		);
 	}

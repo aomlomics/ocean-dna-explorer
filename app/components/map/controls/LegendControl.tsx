@@ -20,6 +20,16 @@ import chroma, { type Color } from "chroma-js";
 import Link from "next/link";
 import type useMapLocations from "../utils/useMapLocations";
 
+/**
+ * {@link app/components/map/ActualMap.default | ActualMap} control that shows a list of unique values in the dataset
+ * from a field controlled by a dropdown list of all fields on the table, alongside any field options from the dataset's
+ * userDefined field. For scalar fields, a gradient is shown with a color scheme dropdown. For discreet fields, a list
+ * of distinctly colored values is shown.
+ *
+ * **Components:**
+ *
+ * - {@link Legend}
+ */
 export default function LegendControl({
 	legend,
 	legendInfo,
@@ -33,16 +43,30 @@ export default function LegendControl({
 	titleTable,
 	defaultLegend
 }: {
+	/** Whether to enable or disable the control. */
 	legend: boolean;
+	/** The object that stores information about the legend. */
 	legendInfo: LegendInfo;
+	/** The setState function for the legendInfo. */
 	setLegendInfo: Dispatch<SetStateAction<LegendInfo>>;
+	/** The setState function for displaying loading. */
 	setLoading: Dispatch<SetStateAction<boolean>>;
+	/** A list of fields that can be selected to display in the legend. */
 	legendOptions: string[];
+	/** A list of the legendOptions that come from the dataset's userDefined field. */
 	userDefinedOptions: Set<string>;
+	/** A useRef for the parent map component. */
 	mapRef: RefObject<Map | null>;
+	/** Table that the map is showing points for. */
 	table: Uncapitalize<ModelName>;
+	/** A flattened list of locations returned by {@link useMapLocations}. */
 	reducedPoints: ReturnType<typeof useMapLocations>["reducedPoints"];
+	/**
+	 * The database table that the points will always be grouped by in {@link ClusterGroup}s. When omitted, points will
+	 * cluster to any other nearby points.
+	 */
 	titleTable?: Uncapitalize<ModelName>;
+	/** The default legendInfo value that the reset button will reset to. */
 	defaultLegend?: LegendInfo;
 }) {
 	const [filter, setFilter] = useState("");
@@ -58,7 +82,12 @@ export default function LegendControl({
 
 	return (
 		<LeafletControlContainer click scroll className="leaflet-bar border-none! mb-6! flex flex-col gap-2">
-			<CollapsibleMapContainer hiddenText="Show legend" defaultCollapse={!shown} onCollapse={(c) => setShown(!c)}>
+			<CollapsibleMapContainer
+				dir="right"
+				hiddenText="Show legend"
+				defaultCollapse={!shown}
+				onCollapse={(c) => setShown(!c)}
+			>
 				<ResizableMapContainer
 					growDirection={"up"}
 					detectChange={[
@@ -199,11 +228,20 @@ export default function LegendControl({
 	);
 }
 
+/**
+ * The component that displays the gradient or discreet list of values for {@link LegendControl}.
+ *
+ * **Components:**
+ *
+ * - {@link LegendItem}
+ */
 function Legend({
 	legendInfo,
 	setLegendInfo
 }: {
+	/** The object that stores information about the legend. */
 	legendInfo: LegendInfo;
+	/** The setState function for the legendInfo. */
 	setLegendInfo: Dispatch<SetStateAction<LegendInfo>>;
 }) {
 	if (!legendInfo) {
@@ -295,6 +333,7 @@ function Legend({
 	}
 }
 
+/** A singular legend item in the discreet list of values for {@link Legend}. */
 function LegendItem({
 	value,
 	color,
@@ -302,10 +341,18 @@ function LegendItem({
 	onClick,
 	hidden
 }: {
+	/** The text to display. */
 	value: string;
+	/** The color that has been assigned to this value. */
 	color: Color;
+	/** If provided, this item will be a clickable link that directs to this link URL. */
 	link?: string;
+	/**
+	 * The function to run when this legend item is clicked on. The function should toggle the item to be shown or hidden
+	 * in the legendInfo.
+	 */
 	onClick?: (e: MouseEvent<HTMLDivElement>) => void;
+	/** Whether the item is shown or hidden in the legendInfo. */
 	hidden?: boolean;
 }) {
 	const colorHex = color.hex();

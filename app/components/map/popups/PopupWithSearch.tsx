@@ -11,7 +11,7 @@ export default function PopupWithSearch({
 	loc,
 	legendInfo,
 	userDefinedOptions,
-	disableSearch
+	hideSearch
 }: {
 	table: Uncapitalize<ModelName>;
 	titleTable?: Uncapitalize<ModelName>;
@@ -19,7 +19,7 @@ export default function PopupWithSearch({
 	loc: MapLocationWithValues;
 	legendInfo: LegendInfo;
 	userDefinedOptions: Set<string>;
-	disableSearch?: true;
+	hideSearch?: true;
 }) {
 	return (
 		<Popup className="map-popup">
@@ -30,7 +30,7 @@ export default function PopupWithSearch({
 					loc={loc}
 					legendInfo={legendInfo}
 					userDefinedOptions={userDefinedOptions}
-					disableSearch={disableSearch}
+					hideSearch={hideSearch}
 					href={`/search?table=${table}&advanced=[["decimalLatitude","equals",${
 						loc.decimalLatitude
 					}],["decimalLongitude","equals",${loc.decimalLongitude}]${

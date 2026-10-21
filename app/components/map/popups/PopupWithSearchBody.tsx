@@ -23,7 +23,7 @@ export default function PopupWithSearchBody({
 	legendInfo,
 	userDefinedOptions,
 	href,
-	disableSearch
+	hideSearch
 }: {
 	table: Uncapitalize<ModelName>;
 	titleTable?: Uncapitalize<ModelName>;
@@ -31,7 +31,7 @@ export default function PopupWithSearchBody({
 	legendInfo: LegendInfo;
 	userDefinedOptions: Set<string>;
 	href?: string;
-	disableSearch?: true;
+	hideSearch?: true;
 }) {
 	const [filter, setFilter] = useState("");
 	const [filteredValues, setFilteredValues] = useState(loc.values ? loc.values : undefined);
@@ -122,7 +122,7 @@ export default function PopupWithSearchBody({
 								{filteredValues.length === 1 ? capitalizeTable(table) : TableMetadata[table].plural} (
 								{filteredValues.length})
 							</h2>
-							{disableSearch ? (
+							{hideSearch ? (
 								<></>
 							) : (
 								<Link

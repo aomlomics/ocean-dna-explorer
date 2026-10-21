@@ -90,7 +90,7 @@ export default function SearchContent({
 								draw
 								shapesToUrl
 								cluster
-								disableSearch
+								hideSearch
 							/>
 						</MapWrapper>
 					</div>

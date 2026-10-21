@@ -3,6 +3,10 @@
 import { type ReactNode, type RefObject, useEffect, useRef, useState } from "react";
 import type { Map } from "leaflet";
 
+/**
+ * {@link app/components/map/ActualMap.default | ActualMap} control wrapper that adds a draggable handle that resizes the
+ * control in a specified direction.
+ */
 export default function ResizableMapContainer({
 	children,
 	growDirection,
@@ -13,13 +17,30 @@ export default function ResizableMapContainer({
 	maxMinWidth,
 	maxMinHeight
 }: {
+	/** The inner control elements. */
 	children: ReactNode;
+	/**
+	 * The direction that the control is able to be resized into. If "up", then the handle will be on the top of the
+	 * control.
+	 */
 	growDirection: "up" | "down" | "left" | "right";
+	/** An array of variables to watch where changes to any variable in the array will trigger a resizing of the control. */
 	detectChange?: (string | boolean | undefined)[];
+	/** A useRef for the parent map component. */
 	mapRef: RefObject<Map | null>;
+	/**
+	 * The max width that the control is allowed to grow to, compared to the width of the parent map. Defaults to 0.75;
+	 * 75% of the map's width.
+	 */
 	maxMapWidth?: number;
+	/**
+	 * The max height that the control is allowed to grow to, compared to the height of the parent map. Defaults to 0.75;
+	 * 75% of the map's height.
+	 */
 	maxMapHeight?: number;
+	/** The smallest width that the control is able to resize to. */
 	maxMinWidth?: number;
+	/** The smallest height that the control is able to resize to. */
 	maxMinHeight?: number;
 }) {
 	const ref = useRef<HTMLDivElement>(null);

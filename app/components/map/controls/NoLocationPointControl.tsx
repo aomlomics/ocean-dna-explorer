@@ -17,7 +17,7 @@ export default function NoLocationPointsControl({
 	legendInfo,
 	userDefinedOptions,
 	mapRef,
-	disableSearch
+	hideSearch
 }: {
 	noLocationPoints: NullLocation[];
 	table: Uncapitalize<ModelName>;
@@ -25,7 +25,7 @@ export default function NoLocationPointsControl({
 	legendInfo: LegendInfo;
 	userDefinedOptions: Set<string>;
 	mapRef: RefObject<Map | null>;
-	disableSearch?: true;
+	hideSearch?: true;
 }) {
 	const [shown, setShown] = useState(false);
 
@@ -50,7 +50,7 @@ export default function NoLocationPointsControl({
 							table={table}
 							legendInfo={legendInfo}
 							userDefinedOptions={userDefinedOptions}
-							disableSearch={disableSearch}
+							hideSearch={hideSearch}
 							loc={{
 								decimalLatitude: NaN,
 								decimalLongitude: NaN,
