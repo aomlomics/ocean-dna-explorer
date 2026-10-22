@@ -235,7 +235,7 @@ function MegaMenu({
 			ref={containerRef}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
-			className="relative z-menu group/menu"
+			className="relative group/menu"
 		>
 			<div
 				aria-hidden="true"
@@ -288,7 +288,7 @@ function MegaMenu({
 				// Fixed + centered so it never gets cut off. We keep the hover area contiguous by making this element
 				// include the "gap" using a negative margin + padding "hover bridge", while the actual visible panel sits below.
 				className={[
-					"z-5",
+					"z-menu",
 					"fixed",
 					anchorPanelToTrigger ? "left-auto" : "left-1/2",
 					anchorPanelToTrigger ? "" : panelShiftRight ? "" : "-translate-x-1/2",
