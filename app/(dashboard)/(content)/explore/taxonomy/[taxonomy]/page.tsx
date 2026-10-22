@@ -1,4 +1,4 @@
-import { trustedPrisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
 import Link from "next/link";
 import { RanksBySpecificity } from "@/types/objects";
@@ -18,11 +18,12 @@ import type { TaxonomicRank } from "@/types/globals";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import type { ImageWithRelations } from "@/prismaImages/generated/zod";
 import type { TaxonomySpotlightModel } from "@/app/generated/prisma/models";
+import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
 
 export async function generateMetadata({ params }: { params: Promise<{ taxonomy: string }> }): Promise<Metadata> {
 	const { taxonomy } = await decodeRouteParams(params);
 
-	const dbTaxonomy = await trustedPrisma.taxonomy.findUnique({
+	const dbTaxonomy = await prisma.taxonomy.findUnique({
 		where: {
 			taxonomy
 		}
@@ -117,7 +118,7 @@ async function resolveTaxonomyPageGbif(taxonomyObj: TaxonomyModel): Promise<{
 export default async function TaxonomyPage({ params }: { params: Promise<{ taxonomy: string }> }) {
 	const { taxonomy } = await decodeRouteParams(params);
 
-	const dbTaxonomy = await trustedPrisma.taxonomy.findUnique({
+	const dbTaxonomy = await prisma.taxonomy.findUnique({
 		where: {
 			taxonomy
 		},
@@ -129,7 +130,16 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					project_id: true
 				}
 			},
-			TaxonomySpotlights: true
+			TaxonomySpotlights: true,
+			_count: {
+				select: {
+					Analyses: {
+						where: {
+							trusted: true
+						}
+					}
+				}
+			}
 		}
 	});
 
@@ -185,11 +195,16 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 							{dbTaxonomy.species || dbTaxonomy.genus || taxonomy.split(";").pop()?.replace("_", " ")}
 						</span>
 					</h1>
+
 					<TableInfo table="taxonomy" />
+
 					<span className="-translate-y-2 shrink-0 rounded-md bg-base-300 px-2.5 py-1 text-sm font-medium leading-normal text-base-content">
 						{databaseRankLabel}
 					</span>
+
+					<UntrustedInTrustedMode trusted={!!dbTaxonomy._count.Analyses} />
 				</div>
+
 				<p className="text-lg text-base-content/70">
 					Found in {dbTaxonomy.Samples.length === 1 ? "1 sample" : `${dbTaxonomy.Samples.length} samples`} across{" "}
 					{uniqueProjects.length === 1 ? "1 project" : `${uniqueProjects.length} projects`}

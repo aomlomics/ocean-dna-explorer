@@ -1,5 +1,5 @@
 import { Suspense, type ReactNode } from "react";
-import { trustedPrisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
 import EditHistory from "@/app/components/explore/EditHistory";
@@ -22,11 +22,12 @@ import { getBlobSizes } from "@/app/helpers/getBlobSizes";
 import { notFound } from "next/navigation";
 import type { AnalysisModel, AssayModel, TaxonomyModel } from "@/app/generated/prisma/models";
 import type { Metadata } from "next";
+import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
 
 export async function generateMetadata({ params }: { params: Promise<{ project_id: string }> }): Promise<Metadata> {
 	const { project_id } = await decodeRouteParams(params);
 
-	const project = await trustedPrisma.project.findUnique({
+	const project = await prisma.project.findUnique({
 		where: {
 			project_id
 		},
@@ -210,7 +211,7 @@ async function ProjectDownloadsBlock({
 export default async function Project_id({ params }: { params: Promise<{ project_id: string }> }) {
 	const { project_id } = await decodeRouteParams(params);
 
-	const project = await trustedPrisma.project.findUnique({
+	const project = await prisma.project.findUnique({
 		where: {
 			project_id
 		},
@@ -219,6 +220,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			Analyses: {
 				select: {
 					analysis_run_name: true,
+					trusted: true,
 					assay_name: true,
 					analysisMetadataFileUrl_ODE: true,
 					asvFileUrl_ODE: true,
@@ -397,7 +399,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	const headerBlock = (
 		<header className={`w-full min-w-0 max-w-full ${project.imageFileUrl_ODE ? "relative z-raised" : ""}`}>
 			<div className="flex flex-wrap gap-x-3 gap-y-2 items-center justify-between">
-				<div className="flex flex-wrap gap-2 items-center min-w-0">
+				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
 					<TitleHoverTooltip tooltip={TableMetadata.project.description}>
 						<h1
 							className={`flex items-center gap-2 text-4xl font-semibold text-primary mb-0 ${
@@ -408,7 +410,10 @@ export default async function Project_id({ params }: { params: Promise<{ project
 							<span className="min-w-0 wrap-anywhere">{project_id}</span>
 						</h1>
 					</TitleHoverTooltip>
+
 					<EditHistory editHistory={editHistory} />
+
+					<UntrustedInTrustedMode trusted={Analyses.some((a) => a.trusted)} />
 				</div>
 
 				{project.imageFileUrl_ODE ? (
@@ -583,9 +588,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			)}
 
 			{/* No cover: map + depth/assays + metadata below. With cover, metadata sits under map inside mapDepthGrid. */}
-			<section className="mt-2 space-y-8">
-				{!project.imageFileUrl_ODE ? mapDepthGrid : null}
-			</section>
+			<section className="mt-2 space-y-8">{!project.imageFileUrl_ODE ? mapDepthGrid : null}</section>
 		</div>
 	);
 }

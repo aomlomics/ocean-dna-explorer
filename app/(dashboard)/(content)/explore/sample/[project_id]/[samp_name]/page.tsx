@@ -1,5 +1,5 @@
 import DataDisplay from "@/app/components/explore/DataDisplay";
-import { trustedPrisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import MapComponent from "@/app/components/map/Map";
 import TableMetadata from "@/types/tableMetadata";
@@ -21,6 +21,7 @@ import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
 
 export async function generateMetadata({
 	params
@@ -29,7 +30,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
 	const { project_id, samp_name } = await decodeRouteParams(params);
 
-	const sample = await trustedPrisma.sample.findUnique({
+	const sample = await prisma.sample.findUnique({
 		where: {
 			project_id_samp_name: {
 				project_id,
@@ -55,7 +56,7 @@ export async function generateMetadata({
 export default async function Samp_name({ params }: { params: Promise<{ project_id: string; samp_name: string }> }) {
 	const { project_id, samp_name } = await decodeRouteParams(params);
 
-	const sample = await trustedPrisma.sample.findUnique({
+	const sample = await prisma.sample.findUnique({
 		where: {
 			project_id_samp_name: {
 				project_id,
@@ -83,9 +84,9 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 						}
 					},
 					Analyses: {
-						distinct: ["analysis_run_name"],
 						select: {
-							analysis_run_name: true
+							analysis_run_name: true,
+							trusted: true
 						}
 					}
 				}
@@ -103,9 +104,13 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 		}
 	}
 
+	let isTrusted = false;
 	const uniqueAnalyses = Libraries.reduce(
 		(acc, lib) => {
-			lib.Analyses.forEach((a) => acc.add(a.analysis_run_name));
+			lib.Analyses.forEach((a) => {
+				if (a.trusted) isTrusted = true;
+				acc.add(a.analysis_run_name);
+			});
 			return acc;
 		},
 		new Set() as Set<AnalysisModel["analysis_run_name"]>
@@ -136,14 +141,17 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 			</div>
 
 			<header>
-				<div className="flex gap-2 items-center">
+				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
 					<TitleHoverTooltip tooltip={TableMetadata.sample.description}>
-						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary">
 							<SampleIcon className="size-8! shrink-0" />
 							<span className="min-w-0 wrap-anywhere">{samp_name}</span>
 						</h1>
 					</TitleHoverTooltip>
+
+					<UntrustedInTrustedMode trusted={isTrusted} />
 				</div>
+
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This sample is a part of the{" "}
 					<Link href={exploreUrl({ table: "project", project_id })} className="text-primary hover:text-primary-focus">

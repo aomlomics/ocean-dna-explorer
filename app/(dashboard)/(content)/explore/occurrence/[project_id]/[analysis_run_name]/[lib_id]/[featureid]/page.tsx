@@ -2,7 +2,7 @@ import Map from "@/app/components/map/Map";
 import PhyloPic from "@/app/components/images/PhyloPic";
 import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
-import { trustedPrisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import {
 	AnalysisIcon,
@@ -19,6 +19,7 @@ import AssaysCard from "@/app/components/assay/AssaysCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
 
 export async function generateMetadata({
 	params
@@ -32,7 +33,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
 	const { project_id, analysis_run_name, lib_id, featureid } = await decodeRouteParams(params);
 
-	const occurrence = await trustedPrisma.occurrence.findUnique({
+	const occurrence = await prisma.occurrence.findUnique({
 		where: {
 			project_id_analysis_run_name_lib_id_featureid: {
 				project_id,
@@ -69,7 +70,7 @@ export default async function OccurrencePage({
 }) {
 	const { project_id, analysis_run_name, lib_id, featureid } = await decodeRouteParams(params);
 
-	const occurrence = await trustedPrisma.occurrence.findUnique({
+	const occurrence = await prisma.occurrence.findUnique({
 		where: {
 			project_id_analysis_run_name_lib_id_featureid: {
 				project_id,
@@ -87,6 +88,7 @@ export default async function OccurrencePage({
 			Analysis: {
 				select: {
 					assay_name: true,
+					trusted: true,
 					Assay: {
 						select: {
 							target_gene: true
@@ -132,55 +134,66 @@ export default async function OccurrencePage({
 					<div className="text-primary">
 						<FeatureIcon className="h-10! w-10!" />
 					</div>
+
 					<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
 						<div className="font-medium text-primary tabular-nums leading-tight text-sm whitespace-nowrap">
 							{featureid}
 						</div>
+
 						<div className="text-xs font-sans font-medium text-base-content/70 uppercase tracking-wider whitespace-nowrap">
 							Feature
 						</div>
 					</div>
 				</div>
 			</Link>
+
 			<Link href={exploreUrl({ table: "library", project_id, lib_id })} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-primary">
 						<LibraryIcon className="h-10! w-10!" />
 					</div>
+
 					<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
 						<div className="font-medium text-primary tabular-nums leading-tight text-sm whitespace-nowrap">
 							{lib_id}
 						</div>
+
 						<div className="text-xs font-sans font-medium text-base-content/70 uppercase tracking-wider whitespace-nowrap">
 							Library
 						</div>
 					</div>
 				</div>
 			</Link>
+
 			<Link href={exploreUrl({ table: "analysis", project_id, analysis_run_name })} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-primary">
 						<AnalysisIcon className="h-10! w-10!" />
 					</div>
+
 					<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
 						<div className="font-medium text-primary tabular-nums leading-tight text-sm whitespace-nowrap">
 							{analysis_run_name}
 						</div>
+
 						<div className="text-xs font-sans font-medium text-base-content/70 uppercase tracking-wider whitespace-nowrap">
 							Analysis
 						</div>
 					</div>
 				</div>
 			</Link>
+
 			<Link href={exploreUrl({ table: "project", project_id })} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-primary">
 						<ProjectIcon className="h-10! w-10!" />
 					</div>
+
 					<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
 						<div className="font-medium text-primary tabular-nums leading-tight text-sm whitespace-nowrap">
 							{project_id}
 						</div>
+
 						<div className="text-xs font-sans font-medium text-base-content/70 uppercase tracking-wider whitespace-nowrap">
 							Project
 						</div>
@@ -236,9 +249,9 @@ export default async function OccurrencePage({
 			</div>
 
 			<header>
-				<div className="flex gap-2 items-center">
+				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
 					<TitleHoverTooltip tooltip={TableMetadata.occurrence.description}>
-						<h1 className="mb-2 flex items-center gap-2 text-2xl sm:text-3xl font-semibold text-base-content/55 wrap-anywhere">
+						<h1 className="flex items-center gap-2 text-2xl sm:text-3xl font-semibold text-base-content/55 wrap-anywhere">
 							<OccurrenceIcon className="size-8! shrink-0 text-primary" />
 							<span className="min-w-0">
 								<span className="text-primary">{featureid}</span> in{" "}
@@ -248,7 +261,10 @@ export default async function OccurrencePage({
 							</span>
 						</h1>
 					</TitleHoverTooltip>
+
+					<UntrustedInTrustedMode trusted={occurrence.Analysis.trusted} />
 				</div>
+
 				<p className="mb-2 max-w-5xl text-sm text-base-content/65 wrap-anywhere">
 					An occurrence links a feature (<span className="font-medium text-primary">featureid</span>), library (
 					<span className="font-medium text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">lib_id</span>),
@@ -259,6 +275,7 @@ export default async function OccurrencePage({
 					), and project (
 					<span className="font-medium text-purple-300 [html[data-theme='light']_&]:text-purple-700">project_id</span>).
 				</p>
+
 				<div className="mt-4">{topStatCards}</div>
 			</header>
 
