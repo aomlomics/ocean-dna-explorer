@@ -513,7 +513,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	return (
 		<div id="project" className="space-y-8">
 			{project.imageFileUrl_ODE ? (
-				<div className="relative isolate -mt-4 w-screen max-w-[100vw] shrink-0 overflow-x-clip overflow-y-clip pt-4 pb-10 ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]">
+				<div className="relative isolate -mt-4 w-screen max-w-[100vw] shrink-0 overflow-x-clip pt-4 pb-10 ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]">
 					{/* Full-width page floor — photography only appears in the upper-right treatment */}
 					<div className="pointer-events-none absolute inset-0 z-0 bg-base-100" aria-hidden />
 
