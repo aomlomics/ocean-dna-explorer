@@ -9,9 +9,9 @@ import AdminButton from "./AdminButton";
 import TrustedToggle from "./TrustedToggle";
 
 export default function Header() {
-	// z-header + relative: navbar is a stacking context above page content, so its menus render over the page below
+	// Avoid a header stacking context so menus can render above page overlays.
 	return (
-		<header className="navbar w-full min-w-0 shrink-0 bg-base-100 border-b-4 border-primary h-20 xl:h-24 top-0 z-header relative overflow-visible">
+		<header className="navbar w-full min-w-0 shrink-0 bg-base-100 border-b-4 border-primary h-20 xl:h-24 top-0 relative overflow-visible">
 			{/* Mobile hamburger menu + Logo */}
 			<div className="navbar-start w-auto min-w-0 pr-2 md:pr-3 xl:pr-6 lg:shrink-0">
 				{/* Mobile hamburger dropdown */}
