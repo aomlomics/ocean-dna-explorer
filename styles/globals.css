@@ -65,7 +65,7 @@
   this is the central z index scale for shared ui layers
   it keeps unrelated parts of the app from overlapping each other in random ways... this 
   should avoid having to fix one-off errors regarding z index
-  use semantic classes like z-sticky z-menu z-modal and z-tooltip instead of raw numbers
+  use semantic classes like z-header z-menu z-modal and z-tooltip instead of raw numbers
   use this scale for cross app layers like header menus dialogs backdrops and toasts
   for ordering inside one component use small local values and keep that logic local
   TAILWIND got rid of the tailwind.config file a while ago. our previous z index values were ignored
@@ -79,7 +79,8 @@
 	--z-popover: 1200; /* popup panels that should stay under header and menus */
 	--z-tooltip: 1300; /* tooltip text that should stay under header and menus */
 	--z-scrim: 1400; /* dark page dimmer used behind nav related overlays */
-	--z-above-header: 2050; /* content that should sit above the header but below menus */
+	--z-header: 2000; /* the main header bar above normal page content */
+	--z-above-header: 2050; /* sits above the header and below menus */
 	--z-menu: 2100; /* mega menu and other header menus */
 	--z-backdrop: 3000; /* dark backdrop used behind modals */
 	--z-modal: 3100; /* modal windows and dialog panels */
@@ -111,6 +112,9 @@
 }
 @utility z-scrim {
 	z-index: var(--z-scrim);
+}
+@utility z-header {
+	z-index: var(--z-header);
 }
 @utility z-above-header {
 	z-index: var(--z-above-header);

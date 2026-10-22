@@ -9,7 +9,6 @@ import AdminButton from "./AdminButton";
 import TrustedToggle from "./TrustedToggle";
 
 export default function Header() {
-	// Avoid a header stacking context so menus can render above page overlays.
 	return (
 		<header className="navbar w-full min-w-0 shrink-0 bg-base-100 border-b-4 border-primary h-20 xl:h-24 top-0 relative overflow-visible">
 			{/* Mobile hamburger menu + Logo */}
