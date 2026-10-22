@@ -39,7 +39,7 @@ export default function Header() {
 
 			{/* Desktop tabs - lg shows compact labels; xl is full size. Below lg, use the mobile menu. */}
 			<div className="navbar-center hidden lg:flex flex-1 min-w-0 justify-center self-end px-2 xl:px-4">
-				<div className="flex w-full max-w-4xl items-end justify-center gap-1.5 xl:gap-3 z-menu -mb-2">
+				<div className="flex w-full max-w-4xl items-end justify-center gap-1.5 xl:gap-3 -mb-2">
 					<TabButton tabName="Home" route="/" />
 					<ExploreMegaMenu />
 					<TabButton tabName="Search" route="/search" />
