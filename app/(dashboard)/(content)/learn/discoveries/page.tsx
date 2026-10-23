@@ -406,14 +406,13 @@ export default function DiscoveriesPage() {
 								</ul>
 								<TextLink href="/search">Try BLAST on Search</TextLink>
 							</div>
-							<div className="flex flex-col gap-4 lg:order-1">
+							<div className="lg:order-1">
 								<ImageSlot
 									label="BLAST on Search"
-									note="BLAST panel with a sequence pasted in. Light and dark."
-								/>
-								<ImageSlot
-									label="BLAST results"
-									note="Matching features after a BLAST run. Light and dark."
+									alt="BLAST search on the Search page"
+									lightSrc="/images/learn/discoveries/discover_BLAST_light.webp"
+									darkSrc="/images/learn/discoveries/discover_BLAST_dark.webp"
+									sizes="(max-width: 1024px) 100vw, 42vw"
 								/>
 							</div>
 						</div>
