@@ -290,15 +290,13 @@ export default function FeaturedOrganisms({ spotlights }: { spotlights: Spotligh
 
 	return (
 		<div className="flex flex-col gap-6 lg:flex-row">
-			{/* Left: the detail panel (master-detail), sticky so it stays in view while the grid scrolls. */}
-			<div className="lg:w-1/3">
-				<div className="sticky top-0 h-fit">
-					<SelectedOrganismCard
-						key={activeOrganism.id}
-						spotlight={activeOrganism}
-						resolvedCommonName={getDisplayCommonName(activeOrganism)}
-					/>
-				</div>
+			{/* Left: the trading card, centered against the fixed-height photo grid. */}
+			<div className="lg:w-1/3 lg:self-center">
+				<SelectedOrganismCard
+					key={activeOrganism.id}
+					spotlight={activeOrganism}
+					resolvedCommonName={getDisplayCommonName(activeOrganism)}
+				/>
 			</div>
 
 			{/* Right: the masonry grid (master list). */}
@@ -358,7 +356,7 @@ function SelectedOrganismCard({
 			 * daisyUI hover-3d tilts its first child using the 8 empty hover-zone divs layered on top,
 			 * so nothing inside the card face can be clickable, hoverable, or scrollable.
 			 */}
-			<div className="hover-3d w-full">
+			<div className="hover-3d relative z-0 w-full">
 				{/*
 				 * The trading-card look is built from stacked frames: outer stock border ->
 				 * inner frame -> art frame -> text-box frame, plus gradient "gloss" overlays.
@@ -452,7 +450,7 @@ function SelectedOrganismCard({
 			</div>
 
 			{/* Photo credit lives outside the card face because hover-3d blocks hovering inside it. */}
-			<div className="mt-4 flex w-full flex-wrap items-center justify-center gap-3">
+			<div className="relative z-20 mt-4 flex w-full flex-wrap items-center justify-center gap-3">
 				<Link href={taxonomyHref} className="btn btn-primary btn-sm">
 					View taxonomy
 				</Link>
@@ -513,7 +511,7 @@ function ImageAttributionIcon({
 	return (
 		<div className="relative z-20" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
 			<div className="relative">
-				<div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-base-100/70 border border-base-200 backdrop-blur flex items-center justify-center shadow-sm">
+				<div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-base-100/70 border-2 border-primary backdrop-blur flex items-center justify-center shadow-sm">
 					<PhotoIcon />
 				</div>
 				{hover ? (
