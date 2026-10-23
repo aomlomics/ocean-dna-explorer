@@ -3,11 +3,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
-import FeaturedOrganisms from "../dataSummary/featuredOrganisms";
-import DashCard, { DashCardInfoButton } from "../dataSummary/DashCard";
-import { ProjectIcon, AnalysisIcon } from "@/app/components/icons";
-import InfoButton from "@/app/components/InfoButton";
+import DashCard, { DashCardInfoButton, type DashCardInfo } from "../dataSummary/DashCard";
+import { AnalysisIcon, AssayIcon, ProjectIcon, TrustedIcon, UntrustedIcon } from "@/app/components/icons";
 import { exploreUrl } from "@/app/helpers/utils";
+import SubmissionPager, { type SubmissionEntry } from "@/app/components/home/SubmissionPager";
 
 function formatSubmitted(date: Date) {
 	return new Date(date).toLocaleDateString(undefined, {
@@ -17,131 +16,184 @@ function formatSubmitted(date: Date) {
 	});
 }
 
-function LatestStamp({ label, date }: { label: string; date: Date }) {
-	return (
-		<time
-			dateTime={new Date(date).toISOString()}
-			title={`Submitted ${formatSubmitted(date)}`}
-			className="text-lg sm:text-xl font-semibold text-base-content/85 tabular-nums whitespace-nowrap"
-		>
-			<span className="text-primary font-normal">{label}</span>
-			<span className="mx-2 text-base-content/35 font-semibold" aria-hidden="true">
-				·
-			</span>
-			<span className="text-base-content/85">{formatSubmitted(date)}</span>
-		</time>
-	);
-}
-
-/**
- * Compact assay chip — shrinks to the assay name so it doesn't stretch
- * across the whole card. Used in both project + analysis cards.
- */
-function CompactAssayChip({ assay_name, target_gene }: { assay_name: string; target_gene: string }) {
+function CompactAssayChip({
+	assay_name,
+	target_gene,
+	prominent = false
+}: {
+	assay_name: string;
+	target_gene: string;
+	prominent?: boolean;
+}) {
 	return (
 		<Link
 			href={exploreUrl({ table: "assay", assay_name })}
-			className="group inline-flex items-center gap-2 rounded-lg bg-base-300/60 hover:bg-base-300 px-2 py-1.5 transition-colors max-w-full"
+			className={
+				prominent
+					? "flex w-fit max-w-full items-center gap-2.5 rounded-lg bg-base-300/70 px-2.5 py-2 transition-colors hover:bg-base-300"
+					: "flex w-fit max-w-full items-center gap-2 rounded-lg bg-base-300/60 px-2 py-1.5 transition-colors hover:bg-base-300"
+			}
 		>
-			<div className="relative w-5 h-5 shrink-0 flex items-center justify-center">
+			<span
+				className={
+					prominent
+						? "relative flex size-12 shrink-0 items-center justify-center"
+						: "relative flex size-8 shrink-0 items-center justify-center"
+				}
+			>
 				<Suspense fallback={<span className="loading loading-spinner loading-xs text-primary/60" aria-hidden="true" />}>
 					<AssayPhyloPic assay_name={assay_name} />
 				</Suspense>
-			</div>
-			<div className="flex items-center gap-1.5 text-xs min-w-0">
-				<span className="font-semibold text-base-content truncate">{target_gene}</span>
-				<span className="text-base-content/40">·</span>
-				<span className="text-base-content/65 truncate">{assay_name}</span>
-			</div>
+			</span>
+			<span className={prominent ? "text-left text-base leading-snug" : "text-left text-sm leading-snug"}>
+				<span className="font-semibold text-base-content">{target_gene}</span>
+				<span className="text-base-content/40"> · </span>
+				<span className="wrap-break-word text-base-content/75">{assay_name}</span>
+			</span>
 		</Link>
 	);
 }
 
-/**
- * Header glyphs — same icons used on the /submit page so the visual
- * language is consistent. Both table icons are square 24×24 drawings,
- * sized here to sit beside the submission stamp.
- */
-function ProjectGlyph({ className = "" }: { className?: string }) {
-	return <ProjectIcon className={["shrink-0", className].join(" ")} />;
+const submissionOrder = [{ dateSubmitted: "desc" as const }, { id: "desc" as const }];
+
+const projectSelect = {
+	project_id: true,
+	project_name: true,
+	institution: true,
+	assay_type: true,
+	dateSubmitted: true,
+	projectDescription: true,
+	imageFileUrl_ODE: true,
+	AssayPreps: {
+		select: {
+			assay_name: true,
+			Assay: { select: { target_gene: true } }
+		}
+	}
+} as const;
+
+const analysisSelect = {
+	analysis_run_name: true,
+	project_id: true,
+	assay_name: true,
+	trusted: true,
+	dateSubmitted: true,
+	Assay: { select: { target_gene: true } },
+	Project: { select: { project_name: true, institution: true } }
+} as const;
+
+function projectEntry(project: ProjectProps["project"]): SubmissionEntry {
+	const info: DashCardInfo = {
+		title: "Recent project",
+		description: "Newest projects submitted to ODE, most recent first. The arrows load one older project at a time.",
+		links: [
+			{ label: "View project", href: exploreUrl({ table: "project", project_id: project.project_id }) },
+			{ label: "Browse all projects", href: "/explore/project" }
+		]
+	};
+	return {
+		kind: "project",
+		dateLabel: formatSubmitted(project.dateSubmitted),
+		dateTime: project.dateSubmitted.toISOString(),
+		card: <LatestProjectCard project={project} info={info} />
+	};
 }
 
-function AnalysisGlyph({ className = "" }: { className?: string }) {
-	return <AnalysisIcon className={["shrink-0", className].join(" ")} />;
+function analysisEntry(analysis: AnalysisProps["analysis"]): SubmissionEntry {
+	const info: DashCardInfo = {
+		title: "Recent analysis",
+		description:
+			"Newest analysis runs submitted to ODE, most recent first. The arrows load one older analysis at a time. Trusted runs have been reviewed by the ODE team.",
+		links: [
+			{
+				label: "View analysis",
+				href: exploreUrl({
+					table: "analysis",
+					project_id: analysis.project_id,
+					analysis_run_name: analysis.analysis_run_name
+				})
+			},
+			{
+				label: "View parent project",
+				href: exploreUrl({ table: "project", project_id: analysis.project_id })
+			},
+			{ label: "Browse all analyses", href: "/explore/analysis" }
+		]
+	};
+	return {
+		kind: "analysis",
+		dateLabel: formatSubmitted(analysis.dateSubmitted),
+		dateTime: analysis.dateSubmitted.toISOString(),
+		card: <LatestAnalysisCard analysis={analysis} info={info} />
+	};
+}
+
+function validOffset(offset: number) {
+	return Number.isInteger(offset) && offset >= 0;
+}
+
+async function readProjectSubmission(offset: number): Promise<SubmissionEntry | null> {
+	if (!validOffset(offset)) return null;
+	const project = await trustedPrisma.project.findFirst({
+		orderBy: submissionOrder,
+		skip: offset,
+		select: projectSelect
+	});
+	return project ? projectEntry(project) : null;
+}
+
+async function readAnalysisSubmission(offset: number): Promise<SubmissionEntry | null> {
+	if (!validOffset(offset)) return null;
+	const analysis = await trustedPrisma.analysis.findFirst({
+		orderBy: submissionOrder,
+		skip: offset,
+		select: analysisSelect
+	});
+	return analysis ? analysisEntry(analysis) : null;
+}
+
+async function loadProjectSubmission(offset: number) {
+	"use server";
+	return readProjectSubmission(offset);
+}
+
+async function loadAnalysisSubmission(offset: number) {
+	"use server";
+	return readAnalysisSubmission(offset);
 }
 
 export default async function DataSummaryHighlights() {
-	const [latestProject, latestAnalysis] = await trustedPrisma.$transaction([
+	const [project, analysis, projectTotal, analysisTotal] = await trustedPrisma.$transaction([
 		trustedPrisma.project.findFirst({
-			orderBy: { dateSubmitted: "desc" },
-			select: {
-				project_id: true,
-				project_name: true,
-				institution: true,
-				assay_type: true,
-				dateSubmitted: true,
-				projectDescription: true,
-				imageFileUrl_ODE: true,
-				AssayPreps: {
-					select: {
-						assay_name: true,
-						Assay: { select: { target_gene: true } }
-					}
-				}
-			}
+			orderBy: submissionOrder,
+			select: projectSelect
 		}),
 		trustedPrisma.analysis.findFirst({
-			orderBy: { dateSubmitted: "desc" },
-			select: {
-				analysis_run_name: true,
-				project_id: true,
-				assay_name: true,
-				trusted: true,
-				dateSubmitted: true,
-				Assay: { select: { target_gene: true } },
-				Project: { select: { project_name: true, institution: true } }
-			}
-		})
+			orderBy: submissionOrder,
+			select: analysisSelect
+		}),
+		trustedPrisma.project.count(),
+		trustedPrisma.analysis.count()
 	]);
 
 	return (
-		<section className="space-y-6">
-			<div>
-				<h2 className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight">Latest Submissions</h2>
-			</div>
+		<section className="w-full space-y-6 pt-10">
+			<h2 className="text-center text-2xl font-semibold leading-tight text-base-content sm:text-3xl">
+				Latest Submissions
+			</h2>
 
-			{/*
-			 * 12-col split: project card is the wider "hero" (col-span-8);
-			 * analysis card is narrower (col-span-4) AND shorter since it has
-			 * less content. The analysis-side column is a flex-col so another
-			 * card could be stacked below it by the page layout if desired —
-			 * but we keep it simple here and just let the grid row end where
-			 * the project card ends.
-			 */}
-			<div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-				<div className="lg:col-span-8">
-					{latestProject ? <LatestProjectCard project={latestProject} /> : <EmptySubmissionCard label="project" />}
-				</div>
-				<div className="lg:col-span-4 flex flex-col">
-					{latestAnalysis ? <LatestAnalysisCard analysis={latestAnalysis} /> : <EmptySubmissionCard label="analysis" />}
-				</div>
+			<div className="grid grid-cols-1 items-stretch gap-8 lg:grid-cols-2 lg:gap-6">
+				{project ? (
+					<SubmissionPager initial={projectEntry(project)} total={projectTotal} loadAt={loadProjectSubmission} />
+				) : (
+					<EmptySubmissionCard label="project" />
+				)}
+				{analysis ? (
+					<SubmissionPager initial={analysisEntry(analysis)} total={analysisTotal} loadAt={loadAnalysisSubmission} />
+				) : (
+					<EmptySubmissionCard label="analysis" />
+				)}
 			</div>
-		</section>
-	);
-}
-
-/**
- * Separate export for Featured Organisms — rendered independently on the
- * page so its position is fully controlled by the page layout.
- */
-export function FeaturedOrganismsSection() {
-	return (
-		<section className="space-y-6">
-			<div className="flex items-center gap-2">
-				<h2 className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight">Featured Organisms</h2>
-				<InfoButton text="Hand-picked by the ODE team" dir="tooltip-right" />
-			</div>
-			<FeaturedOrganisms />
 		</section>
 	);
 }
@@ -159,138 +211,94 @@ type ProjectProps = {
 	};
 };
 
-/**
- * Latest Project Card — optional full-width image band at the top with the same
- * gradient into base-200 as Life Across ODE; body follows below in padded layout.
- */
-function LatestProjectCard({ project }: ProjectProps) {
-	const hasImage = Boolean(project.imageFileUrl_ODE);
+function LatestProjectCard({ project, info }: ProjectProps & { info: DashCardInfo }) {
+	const imageUrl = project.imageFileUrl_ODE;
 	const assays = dedupeAssays(
 		project.AssayPreps.map((ap) => ({ assay_name: ap.assay_name, target_gene: ap.Assay.target_gene }))
-	).slice(0, 4);
+	);
 
 	return (
-		<DashCard padding="none" className="h-full">
-			<>
-				{hasImage && (
-					<div className="relative h-48 w-full overflow-hidden rounded-t-2xl shrink-0 sm:h-52">
+		<div className="relative flex h-full flex-col">
+			<div className="absolute top-3 right-3 z-20 rounded-full bg-base-200/90">
+				<DashCardInfoButton info={info} />
+			</div>
+			<div className="relative h-36 w-full shrink-0 overflow-hidden sm:h-40">
+				{imageUrl ? (
+					<>
 						<Image
-							src={project.imageFileUrl_ODE as string}
+							src={imageUrl}
 							alt={project.project_name}
 							fill
 							className="object-cover"
-							sizes="(max-width: 1024px) 100vw, 58vw"
+							sizes="(min-width: 1024px) 40rem, 100vw"
 						/>
-						{/*
-						 * Faded gradient so the image softly bleeds into the card
-						 * body rather than ending on a hard horizontal line.
-						 * Fade target is base-200 (the card color) so the fade blends
-						 * with the DashCard body below — same language as kingdom cards.
-						 */}
 						<div
-							className="absolute inset-0 pointer-events-none bg-linear-to-b from-transparent to-base-200"
+							className="pointer-events-none absolute inset-0 bg-linear-to-b from-transparent from-40% to-base-200"
 							aria-hidden
 						/>
+					</>
+				) : (
+					<div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-base-300/40 text-base-content">
+						<ProjectIcon className="size-14! h-14! w-14! text-base-content" />
+						<span className="text-sm">No project image</span>
 					</div>
 				)}
-				<div
-					className={[
-						"flex flex-col grow relative",
-						hasImage
-							? "-mt-7 sm:-mt-8 z-10 rounded-t-2xl rounded-b-2xl bg-base-200 px-5 sm:px-6 pt-3 sm:pt-3.5 pb-5 sm:pb-6 gap-2"
-							: "p-5 sm:p-6 gap-3"
-					].join(" ")}
-				>
-					{/* Header row — glyph + submission stamp; info button right */}
-					<div className="flex items-center justify-between gap-3">
-						<div className="flex items-center gap-3 min-w-0">
-							<ProjectGlyph className="size-8! text-primary" />
-							<LatestStamp label="Project" date={project.dateSubmitted} />
-						</div>
-						<DashCardInfoButton
-							info={{
-								title: "Most recent project",
-								description:
-									"The newest project that has been submitted to ODE. New submissions appear here within minutes.",
-								links: [
-									{ label: "View project", href: exploreUrl({ table: "project", project_id: project.project_id }) },
-									{ label: "Browse all projects", href: "/explore/project" }
-								]
-							}}
-						/>
-					</div>
-
-					{/* Row 1 — project_id (big, serves as name) + submitted date next to it */}
-					<div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+			</div>
+			<div className="flex flex-1 flex-col gap-3 px-5 pt-4 pb-5 text-left sm:px-6 sm:pb-6">
+				<div className="flex items-start gap-3">
+					<ProjectIcon className="size-10! h-10! w-10! shrink-0 text-primary" />
+					<div className="min-w-0">
 						<h3
-							className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight tracking-tight break-all"
+							className="wrap-break-word text-xl font-semibold leading-tight tracking-tight text-base-content"
 							title={project.project_id}
 						>
 							{project.project_id}
 						</h3>
+						<p className="mt-0.5 wrap-break-word text-base font-medium leading-snug text-base-content/80">
+							{project.project_name}
+						</p>
 					</div>
-
-					<p className="text-lg sm:text-xl font-medium text-base-content leading-snug line-clamp-2">
-						{project.project_name}
-					</p>
-
-					<p className="text-sm text-base-content/65 leading-relaxed line-clamp-3">
-						{project.projectDescription ?? "No project description was provided in this submission."}
-					</p>
-
-					<dl className="grid grid-cols-2 gap-3 text-xs">
-						{project.institution && (
-							<div>
-								<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/70 mb-0.5">
-									Institution
-								</dt>
-								<dd className="text-base-content/85 truncate" title={project.institution}>
-									{project.institution}
-								</dd>
-							</div>
-						)}
-						{project.assay_type && (
-							<div>
-								<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/70 mb-0.5">
-									Assay type
-								</dt>
-								<dd className="text-base-content/85 truncate">{project.assay_type}</dd>
-							</div>
-						)}
-					</dl>
-
-					{assays.length > 0 ? (
-						<div className="mt-auto flex flex-wrap items-end justify-between gap-3">
-							<div className="flex flex-wrap gap-1.5 min-w-0">
-								{assays.map((a) => (
-									<CompactAssayChip key={a.assay_name} assay_name={a.assay_name} target_gene={a.target_gene} />
-								))}
-								{project.AssayPreps.length > assays.length && (
-									<span className="self-center text-xs text-base-content/55">
-										+{project.AssayPreps.length - assays.length} more
-									</span>
-								)}
-							</div>
-							<Link
-								href={exploreUrl({ table: "project", project_id: project.project_id })}
-								className="btn btn-sm btn-primary self-end"
-							>
-								View project
-							</Link>
-						</div>
-					) : (
-						<div className="mt-auto flex justify-end">
-							<Link
-								href={exploreUrl({ table: "project", project_id: project.project_id })}
-								className="btn btn-sm btn-primary"
-							>
-								View project
-							</Link>
-						</div>
-					)}
 				</div>
-			</>
-		</DashCard>
+
+				<p className="line-clamp-3 text-sm leading-relaxed text-base-content/65">
+					{project.projectDescription ?? "No project description was provided in this submission."}
+				</p>
+
+				<dl className="grid grid-cols-2 gap-3 text-xs">
+					<div className="min-w-0">
+						<dt className="mb-0.5 text-[10px] font-semibold tracking-wider text-base-content/70 uppercase">
+							Institution
+						</dt>
+						<dd className="truncate text-base-content/85" title={project.institution ?? undefined}>
+							{project.institution || "—"}
+						</dd>
+					</div>
+					<div className="min-w-0">
+						<dt className="mb-0.5 text-[10px] font-semibold tracking-wider text-base-content/70 uppercase">
+							Assay type
+						</dt>
+						<dd className="truncate text-base-content/85">{project.assay_type || "—"}</dd>
+					</div>
+				</dl>
+
+				<div>
+					<AssayLabel plural={assays.length !== 1} />
+					<div className="grid min-h-28 grid-cols-2 content-start justify-items-start gap-1.5">
+						{assays.map((a) => (
+							<CompactAssayChip key={a.assay_name} assay_name={a.assay_name} target_gene={a.target_gene} />
+						))}
+					</div>
+				</div>
+				<div className="mt-auto">
+					<Link
+						href={exploreUrl({ table: "project", project_id: project.project_id })}
+						className="btn btn-sm btn-primary"
+					>
+						View project
+					</Link>
+				</div>
+			</div>
+		</div>
 	);
 }
 
@@ -306,121 +314,102 @@ type AnalysisProps = {
 	};
 };
 
-/**
- * Latest Analysis Card — intentionally shorter than the project card since
- * it has less information. No left-side stripe. Big submission date on top.
- * The assay chip is inline (shrinks to content) instead of full width.
- */
-function LatestAnalysisCard({ analysis }: AnalysisProps) {
-	return (
-		<DashCard padding="none">
-			<div className="p-5 sm:p-6 flex flex-col gap-3 grow relative">
-				<div className="flex items-start justify-between gap-3">
-					<div className="flex items-center gap-3 min-w-0">
-						{/* Laptop / analysis glyph — same icon used on the /submit page. */}
-						<AnalysisGlyph className="size-8! text-primary" />
-						<LatestStamp label="Analysis" date={analysis.dateSubmitted} />
-						{/* Keep "Trusted" only when applicable; remove noisy "Unverified". */}
-						{analysis.trusted && (
-							<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-500 whitespace-nowrap">
-								<svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-									<path
-										fillRule="evenodd"
-										d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 111.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"
-										clipRule="evenodd"
-									/>
-								</svg>
-								Trusted
-							</span>
-						)}
-					</div>
-					<DashCardInfoButton
-						info={{
-							title: "Most recent analysis",
-							description: "The newest analysis run to be submitted. Trusted runs have been reviewed by the ODE team.",
-							links: [
-								{
-									label: "View analysis",
-									href: exploreUrl({
-										table: "analysis",
-										project_id: analysis.project_id,
-										analysis_run_name: analysis.analysis_run_name
-									})
-								},
-								{
-									label: "View parent project",
-									href: exploreUrl({ table: "project", project_id: analysis.project_id })
-								},
-								{ label: "Browse all analyses", href: "/explore/analysis" }
-							]
-						}}
-					/>
-				</div>
+function LatestAnalysisCard({ analysis, info }: AnalysisProps & { info: DashCardInfo }) {
+	const projectName = analysis.Project?.project_name;
+	const institution = analysis.Project?.institution;
 
-				<h3 className="text-base sm:text-lg font-semibold text-base-content leading-snug break-all line-clamp-2">
+	return (
+		<div className="relative flex h-full flex-col gap-4 px-5 pt-4 pb-5 text-left sm:px-6 sm:pb-6">
+			<div className="absolute top-3 right-3 z-20 rounded-full bg-base-200/90">
+				<DashCardInfoButton info={info} />
+			</div>
+
+			<div className="flex items-start gap-3 pr-10 pt-3">
+				<AnalysisIcon className="mt-0.5 size-10! h-10! w-10! shrink-0 text-primary" />
+				<h3 className="min-w-0 wrap-break-word text-3xl font-semibold leading-snug text-base-content">
 					{analysis.analysis_run_name}
 				</h3>
-
-				<dl className="text-xs space-y-2 grow">
-					<div>
-						<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/70 mb-0.5">Project</dt>
-						<dd>
-							<Link
-								href={exploreUrl({ table: "project", project_id: analysis.project_id })}
-								className="text-base-content/85 hover:text-primary transition-colors inline-flex items-baseline gap-1.5 max-w-full"
-								title={analysis.Project?.project_name || analysis.project_id}
-							>
-								<span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-base-300/70">
-									{analysis.project_id}
-								</span>
-								{analysis.Project?.project_name && <span className="truncate">{analysis.Project.project_name}</span>}
-							</Link>
-						</dd>
-					</div>
-					{analysis.Project?.institution && (
-						<div>
-							<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/70 mb-0.5">
-								Institution
-							</dt>
-							<dd className="text-base-content/85 truncate" title={analysis.Project.institution}>
-								{analysis.Project.institution}
-							</dd>
-						</div>
-					)}
-					<div>
-						<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/70 mb-1">Assay</dt>
-						{/* Inline — chip does NOT stretch to full width */}
-						<div className="flex">
-							<CompactAssayChip assay_name={analysis.assay_name} target_gene={analysis.Assay.target_gene} />
-						</div>
-					</div>
-				</dl>
-
-				{/* No divider line above the button. Tucked bottom-right. */}
-				<div className="mt-auto flex justify-start">
-					<Link
-						href={exploreUrl({
-							table: "analysis",
-							project_id: analysis.project_id,
-							analysis_run_name: analysis.analysis_run_name
-						})}
-						className="btn btn-sm btn-primary"
-					>
-						View analysis
-					</Link>
-				</div>
 			</div>
-		</DashCard>
+
+			<div>
+				<AssayLabel prominent />
+				<CompactAssayChip assay_name={analysis.assay_name} target_gene={analysis.Assay.target_gene} prominent />
+			</div>
+
+			<div className="min-w-0">
+				<div className="mb-1 flex items-center gap-2 text-[10px] font-semibold tracking-wider text-base-content uppercase">
+					<ProjectIcon className="size-6! h-6! w-6! shrink-0 text-base-content" />
+					<span>Project</span>
+				</div>
+				<Link
+					href={exploreUrl({ table: "project", project_id: analysis.project_id })}
+					className="block min-w-0 transition-colors hover:text-primary"
+					title={projectName || analysis.project_id}
+				>
+					<span className="block wrap-break-word text-base font-semibold leading-tight text-base-content">
+						{analysis.project_id}
+					</span>
+					{projectName ? (
+						<span className="mt-0.5 block wrap-break-word text-sm leading-snug text-base-content/60">
+							{projectName}
+						</span>
+					) : null}
+					{institution ? (
+						<span className="mt-0.5 block text-xs leading-snug text-base-content/50">{institution}</span>
+					) : null}
+				</Link>
+			</div>
+
+			<div className="mt-auto flex items-center justify-between gap-3">
+				<div className="inline-flex items-center gap-2.5 text-2xl font-semibold text-base-content">
+					{analysis.trusted ? (
+						<TrustedIcon className="size-11! h-11! w-11!" />
+					) : (
+						<UntrustedIcon className="size-11! h-11! w-11!" />
+					)}
+					{analysis.trusted ? "Trusted" : "Untrusted"}
+				</div>
+				<Link
+					href={exploreUrl({
+						table: "analysis",
+						project_id: analysis.project_id,
+						analysis_run_name: analysis.analysis_run_name
+					})}
+					className="btn btn-sm btn-primary"
+				>
+					View analysis
+				</Link>
+			</div>
+		</div>
 	);
 }
 
 function EmptySubmissionCard({ label }: { label: string }) {
 	return (
-		<DashCard>
+		<DashCard className="w-full">
 			<div className="h-44 sm:h-52 flex items-center justify-center text-sm text-base-content/60">
 				No {label} submissions yet.
 			</div>
 		</DashCard>
+	);
+}
+
+function AssayLabel({ prominent = false, plural = false }: { prominent?: boolean; plural?: boolean }) {
+	return (
+		<div
+			className={
+				prominent
+					? "mb-2 flex items-center gap-2 text-xs font-semibold tracking-wider text-base-content/70 uppercase"
+					: "mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold tracking-wider text-base-content/70 uppercase"
+			}
+		>
+			<AssayIcon
+				className={
+					prominent ? "size-7! h-7! w-7! shrink-0 text-base-content" : "size-6! h-6! w-6! shrink-0 text-base-content"
+				}
+			/>
+			{plural ? "Assays" : "Assay"}
+		</div>
 	);
 }
 

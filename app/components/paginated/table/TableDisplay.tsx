@@ -40,12 +40,13 @@ export default function TableDisplay({
 	onClear?: () => void;
 }) {
 	const [size, setSize] = useState<"lg" | "sm">("lg");
-	const [showCommonNames, setShowCommonNames] = useState(true);
 
 	// When inside an ExplorePage, mode is driven by ViewModeContext (list/grid control above the table).
 	// On other pages (e.g. search), the context is absent so we fall back to local state,
 	// which keeps the built-in toggle working independently.
 	const viewModeCtx = useViewMode();
+	// Search has no view-mode context. Keep common names off there until the user checks the box.
+	const [showCommonNames, setShowCommonNames] = useState(!!viewModeCtx);
 	const [localMode, setLocalMode] = useState<"table" | "grid">(displayMode);
 	const mode = viewModeCtx?.mode ?? localMode;
 	const setMode = (m: "table" | "grid") => {
@@ -126,7 +127,7 @@ export default function TableDisplay({
 	return (
 		<div className="flex flex-col">
 			{showBuiltInToggle && (
-				<div className="mb-6 self-center">
+				<div className="mb-6 self-center flex flex-col items-center gap-3">
 					<div className="inline-flex items-center gap-2 rounded-xl bg-base-200/40 p-1">
 						<button
 							type="button"
@@ -171,33 +172,37 @@ export default function TableDisplay({
 							Grid
 						</button>
 					</div>
+					{table === "taxonomy" && mode === "grid" ? (
+						<CommonNamesToggle checked={showCommonNames} onChange={setShowCommonNames} />
+					) : null}
 				</div>
 			)}
 
 			{viewModeCtx ? (
 				<div className="flex w-full flex-col items-center gap-3">
-					{table === "taxonomy" ? (
-						<div className="flex w-full flex-wrap items-center justify-center gap-3">
-							<label className="inline-flex items-center justify-center gap-2 text-sm">
-								<input
-									type="checkbox"
-									className="checkbox checkbox-sm"
-									checked={showCommonNames}
-									onChange={(e) => setShowCommonNames(e.target.checked)}
-								/>
-								<span>Show common names</span>
-							</label>
-							<InfoButton
-								text="GBIF common names are approximations and are not stored in our database."
-								dir="tooltip-right"
-							/>
-						</div>
-					) : null}
+					{table === "taxonomy" ? <CommonNamesToggle checked={showCommonNames} onChange={setShowCommonNames} /> : null}
 					<div className={`w-full ${dataShellClass}`}>{dataContent}</div>
 				</div>
 			) : (
 				<div className={dataShellClass}>{dataContent}</div>
 			)}
+		</div>
+	);
+}
+
+function CommonNamesToggle({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
+	return (
+		<div className="flex w-full flex-wrap items-center justify-center gap-3">
+			<label className="inline-flex items-center justify-center gap-2 text-sm">
+				<input
+					type="checkbox"
+					className="checkbox checkbox-sm"
+					checked={checked}
+					onChange={(e) => onChange(e.target.checked)}
+				/>
+				<span>Show common names</span>
+			</label>
+			<InfoButton text="GBIF common names are approximations and are not stored in our database." dir="tooltip-right" />
 		</div>
 	);
 }

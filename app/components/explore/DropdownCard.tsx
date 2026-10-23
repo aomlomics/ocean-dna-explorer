@@ -43,10 +43,14 @@ async function SuspenseDropdownCard({
 
 	return (
 		<div
-			className={`dropdown dropdown-hover bg-base-200 rounded-lg ${queryItems && queryItems.length ? "hover:bg-base-300 hover:rounded-b-none" : ""} ${className ?? ""}`}
+			className={`dropdown dropdown-hover aspect-square bg-base-200 rounded-lg sm:aspect-auto ${queryItems && queryItems.length ? "hover:bg-base-300 hover:rounded-b-none" : ""} ${className ?? ""}`}
 		>
-			<div tabIndex={0} role="button" className="w-full p-4 flex items-center gap-4 justify-between">
-				<div className="flex items-center gap-4">
+			<div
+				tabIndex={0}
+				role="button"
+				className="flex h-full w-full flex-col items-center justify-center gap-2 p-4 text-center sm:h-auto sm:flex-row sm:justify-between sm:gap-4 sm:text-left"
+			>
+				<div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-4">
 					<div className="w-12 h-12 shrink-0 flex items-center justify-center text-primary">{icon}</div>
 					<div>
 						<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">

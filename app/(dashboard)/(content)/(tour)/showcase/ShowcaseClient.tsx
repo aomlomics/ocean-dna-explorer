@@ -535,7 +535,7 @@ export default function ShowcaseClient({
 
 							<div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start">
 								<motion.div
-									className="relative w-fit"
+									className="relative aspect-square h-44 w-44 overflow-hidden rounded-full border-[6px] border-primary bg-base-300 sm:h-56 sm:w-56 xl:h-64 xl:w-64"
 									initial={
 										prefersReducedMotion
 											? false
@@ -551,16 +551,19 @@ export default function ShowcaseClient({
 									animate={{ x: 0, rotate: 0, scale: 1, opacity: 1 }}
 									transition={prefersReducedMotion ? { duration: 0 } : { duration: circleDuration, ease: PREMIUM_EASE }}
 								>
-									<div className="relative aspect-square h-44 overflow-hidden rounded-full border-[6px] border-primary bg-base-300 sm:h-56 xl:h-64">
-										{project.imageFileUrl_ODE ? (
-											// eslint-disable-next-line @next/next/no-img-element -- ODE image URLs are dynamic user uploads.
-											<img src={project.imageFileUrl_ODE} alt="" className="h-full w-full rounded-full object-cover" />
-										) : (
-											<div className="flex h-full w-full items-center justify-center rounded-full bg-linear-to-br from-primary/25 via-cyan-400/15 to-base-content/10">
-												<ProjectIcon className="h-[46%] w-[46%] text-primary/90" />
-											</div>
-										)}
-									</div>
+									{project.imageFileUrl_ODE ? (
+										<Image
+											src={project.imageFileUrl_ODE}
+											alt=""
+											width={256}
+											height={256}
+											className="h-full w-full object-cover"
+										/>
+									) : (
+										<div className="flex h-full w-full items-center justify-center bg-linear-to-br from-primary/25 via-cyan-400/15 to-base-content/10">
+											<ProjectIcon className="h-[46%] w-[46%] text-primary/90" />
+										</div>
+									)}
 								</motion.div>
 
 								<motion.div

@@ -9,6 +9,7 @@ import ClientMap from "../components/map/ClientMap";
 // Temporarily disabled for merge to main until Featured Organisms is ready.
 // import DataSummaryHighlights, { FeaturedOrganismsSection } from "../components/DataSummaryHighlights";
 import DataSummaryHighlights from "../components/home/DataSummaryHighlights";
+import TaxonomySpotlights from "../components/home/TaxonomySpotlights";
 import DashCard from "../components/dataSummary/DashCard";
 import { DepthCoverageCard } from "../components/dataSummary/DepthCoverageCard";
 import {
@@ -221,6 +222,11 @@ export default async function Home() {
 						</div>
 					</div>
 
+					{/* Taxonomy Spotlights — photo grid + trading card, hidden when none exist */}
+					<Suspense>
+						<TaxonomySpotlights />
+					</Suspense>
+
 					{/* Row 3 — Latest submissions (project + analysis) */}
 					<Suspense>
 						<DataSummaryHighlights />
@@ -238,7 +244,7 @@ export default async function Home() {
 				</div>
 
 				{/* Funding Institutes Section */}
-				<div className="mt-24 lg:mt-32 mb-12 lg:mb-24">
+				<div className="mt-32 lg:mt-44 mb-12 lg:mb-24">
 					<h2 className="text-2xl lg:text-3xl text-primary mb-6 lg:mb-8 text-center">Supported By:</h2>
 
 					<div className="max-w-4xl mx-auto text-lg text-main mb-8 lg:mb-16 text-center leading-tight">

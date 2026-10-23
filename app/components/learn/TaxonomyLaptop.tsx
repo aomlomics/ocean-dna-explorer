@@ -6,20 +6,25 @@ import LaptopScreen, { type LaptopScreenBounds } from "@/app/components/learn/La
 // Marine species with verified scientific names
 const identifications = [
 	{
-		src: "/images/outlines/xl_dolphin.svg",
+		src: "/images/learn/edna101/outlines/xl_dolphin.svg",
 		common: "Clymene Dolphin",
 		scientific: "Stenella clymene",
 		confidence: "98.7"
 	},
 	{
-		src: "/images/outlines/lg_bluefin_tuna.svg",
+		src: "/images/learn/edna101/outlines/lg_bluefin_tuna.svg",
 		common: "Bluefin Tuna",
 		scientific: "Thunnus thynnus",
 		confidence: "94.2"
 	},
-	{ src: "/images/outlines/xl_lamniformes.svg", common: "Order: Lamniformes", scientific: "", confidence: "91.5" },
 	{
-		src: "/images/outlines/sm_copepod.svg",
+		src: "/images/learn/edna101/outlines/xl_lamniformes.svg",
+		common: "Order: Lamniformes",
+		scientific: "",
+		confidence: "91.5"
+	},
+	{
+		src: "/images/learn/edna101/outlines/sm_copepod.svg",
 		common: "Type of: Copepod",
 		scientific: "Calanus finmarchicus",
 		confidence: "92.3"

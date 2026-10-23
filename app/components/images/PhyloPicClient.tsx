@@ -1,10 +1,13 @@
 "use client";
 
 import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
+import { limitPhyloPic } from "@/app/helpers/limitedFetch";
 import { useEffect, useState } from "react";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 import { matchGbifForPhylopic } from "./matchGbifForPhylopic";
 import { TAXONOMY_GRID_TOOLTIP_CLASS } from "../paginated/grid/TaxonomyGridTooltip";
+
+const phyloPicCache = new Map<string, { imageUrl: string; imageDetails: string }>();
 
 export default function PhyloPicClient({
 	taxonomy,
@@ -18,9 +21,20 @@ export default function PhyloPicClient({
 	const [imageDetails, setImageDetails] = useState("");
 
 	useEffect(() => {
+		const cached = phyloPicCache.get(taxonomy.taxonomy);
+		if (cached) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
+			setImageUrl(cached.imageUrl);
+			setImageDetails(cached.imageDetails);
+			setLoading(false);
+			return;
+		}
+
+		let cancelled = false;
 		async function fetchData() {
 			setLoading(true);
 			const match = await matchGbifForPhylopic(taxonomy);
+			if (cancelled) return;
 			if (!match) {
 				setLoading(false);
 				return;
@@ -31,22 +45,25 @@ export default function PhyloPicClient({
 			//retry PhyloPic API call
 			for (let i = 0; i < 3; i++) {
 				try {
-					const phyloPicRes = await fetch(
-						`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${objectIDs}`,
-						{ signal: AbortSignal.timeout(3000) }
+					const phyloPicRes = await limitPhyloPic(() =>
+						fetch(`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${objectIDs}`, {
+							signal: AbortSignal.timeout(3000)
+						})
 					);
 					const phyloPic = await phyloPicRes.json();
 
 					if (phyloPic.errors) {
 						break;
 					}
-					setImageUrl(phyloPic._embedded.primaryImage._links.vectorFile.href);
-					setImageDetails(
-						phyloPic._embedded.primaryImage._links.nodes.reduce(
-							(acc: string, n: { title: string }) => (acc ? n.title + " | " + acc : n.title),
-							""
-						)
-					);
+					const imageUrl = phyloPic._embedded.primaryImage._links.vectorFile.href as string;
+					const imageDetails = phyloPic._embedded.primaryImage._links.nodes.reduce(
+						(acc: string, n: { title: string }) => (acc ? n.title + " | " + acc : n.title),
+						""
+					) as string;
+					phyloPicCache.set(taxonomy.taxonomy, { imageUrl, imageDetails });
+					if (cancelled) return;
+					setImageUrl(imageUrl);
+					setImageDetails(imageDetails);
 
 					break;
 				} catch {
@@ -54,10 +71,13 @@ export default function PhyloPicClient({
 					await new Promise((res) => setTimeout(res, 1000));
 				}
 			}
-			setLoading(false);
+			if (!cancelled) setLoading(false);
 		}
 
 		fetchData();
+		return () => {
+			cancelled = true;
+		};
 	}, [taxonomy]);
 
 	return (

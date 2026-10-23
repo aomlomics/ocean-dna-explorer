@@ -20,103 +20,9 @@ interface DoughnutChartProps {
 	compact?: boolean;
 }
 
-// Generate distinct colors using the existing distinct-colors library
 function generateDistinctColors(count: number): string[] {
-	// Primary blue from your site's design system
-	const primaryBlue = "#64ABDC"; // Light blue primary
-
 	if (count === 0) return [];
-	if (count === 1) return [primaryBlue];
-
-	// For multiple colors, use primary blue for the first (most abundant)
-	// and generate distinct colors for the rest
-	const remainingCount = count - 1;
-
-	// Generate distinct colors, excluding the primary blue area
-	const colors = distinctColors({
-		count: remainingCount,
-		// Exclude the blue hue range to avoid conflicts with primary blue
-		hueMin: 0,
-		hueMax: 360,
-		lightMin: 30,
-		lightMax: 80,
-		chromaMin: 40,
-		chromaMax: 90,
-		quality: 100
-	});
-
-	// Convert to hex and filter out colors too similar to primary blue
-	const distinctHexColors = colors
-		.map((color) => color.hex())
-		.filter((color) => {
-			// Simple check to avoid colors too similar to primary blue
-			const hexColor = color.toLowerCase();
-			const primaryHex = primaryBlue.toLowerCase();
-
-			// Extract RGB values for comparison
-			const colorR = parseInt(hexColor.slice(1, 3), 16);
-			const colorG = parseInt(hexColor.slice(3, 5), 16);
-			const colorB = parseInt(hexColor.slice(5, 7), 16);
-
-			const primaryR = parseInt(primaryHex.slice(1, 3), 16);
-			const primaryG = parseInt(primaryHex.slice(3, 5), 16);
-			const primaryB = parseInt(primaryHex.slice(5, 7), 16);
-
-			// Calculate color distance (simple Euclidean distance)
-			const distance = Math.sqrt(
-				Math.pow(colorR - primaryR, 2) + Math.pow(colorG - primaryG, 2) + Math.pow(colorB - primaryB, 2)
-			);
-
-			// Keep colors that are sufficiently different (threshold of 60)
-			return distance > 60;
-		});
-
-	// If we filtered out too many, generate more
-	if (distinctHexColors.length < remainingCount) {
-		const additionalColors = distinctColors({
-			count: remainingCount - distinctHexColors.length + 5, // Generate extra
-			hueMin: 0,
-			hueMax: 360,
-			lightMin: 25,
-			lightMax: 85,
-			chromaMin: 35,
-			chromaMax: 95,
-			quality: 150
-		}).map((color) => color.hex());
-
-		distinctHexColors.push(...additionalColors);
-	}
-
-	// Return primary blue first, then the distinct colors
-	return [primaryBlue, ...distinctHexColors.slice(0, remainingCount)];
-}
-
-// Generate colors but place primary blue at the provided index (e.g., most abundant)
-function generateColorsWithPrimaryAtIndex(count: number, primaryIndex: number): string[] {
-	// Primary blue from your site's design system
-	const primaryBlue = "#64ABDC";
-
-	if (count === 0) return [];
-	if (count === 1) return [primaryBlue];
-
-	const baseColors = generateDistinctColors(count); // starts with primary at index 0
-
-	// If primary is already at the desired index, return
-	if (primaryIndex === 0) return baseColors;
-
-	// Otherwise, move primaryBlue to primaryIndex while preserving order of the rest
-	const colors = [...baseColors.slice(1)]; // remove the first primary color
-
-	const result: string[] = new Array(count);
-	result[primaryIndex] = primaryBlue;
-
-	let cursor = 0;
-	for (let i = 0; i < count; i++) {
-		if (i === primaryIndex) continue;
-		result[i] = colors[cursor++]!;
-	}
-
-	return result;
+	return distinctColors({ count, chromaMin: 35, lightMin: 35 }).map((color) => color.hex());
 }
 
 function CustomLegend({
@@ -181,8 +87,7 @@ function CustomLegend({
 export default function DoughnutChart({ labels, data, compact = false }: DoughnutChartProps) {
 	const { theme } = useTheme();
 	const textColor = "var(--color-base-content)";
-	// Determine the index of the most abundant value
-	const colors = generateColorsWithPrimaryAtIndex(labels.length, data.indexOf(Math.max(...data)));
+	const colors = generateDistinctColors(labels.length);
 
 	const chartData = {
 		labels,

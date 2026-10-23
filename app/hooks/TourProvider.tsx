@@ -16,7 +16,11 @@ export default function TourProvider({ children }: { children: ReactNode }) {
 	const [stepTime, setStepTime] = useState(DEFAULT_TOUR_STEP_TIME);
 	const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-	function stopTour() {
+	function stopTour(e?: Event) {
+		// Real user input is isTrusted. Ambient wordcloud/motion can fire synthetic
+		// click/keydown after ~12s, which is why a 5s step advances and a 19s step does not.
+		if (e && !e.isTrusted) return;
+
 		document.removeEventListener("click", stopTour);
 		document.removeEventListener("keydown", stopTour);
 		clearTimeout(timeoutRef.current!);

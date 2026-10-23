@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import { SHARED_TOOLTIP_THEME_CLASS } from "@/app/components/viewAsSearchTooltip";
 
-export const TAXONOMY_GRID_TOOLTIP_CLASS = `tooltip tooltip-top relative z-tooltip before:z-tooltip after:z-tooltip [--tt-bg:var(--color-base-200)] before:!whitespace-normal before:[overflow-wrap:anywhere] before:break-words ${SHARED_TOOLTIP_THEME_CLASS}`;
+export const TAXONOMY_GRID_TOOLTIP_CLASS =
+	"tooltip before:text-base-content before:bg-base-200 before:border before:border-base-content/20";
 
 export default function TaxonomyGridTooltip({
 	tip,
@@ -15,7 +15,10 @@ export default function TaxonomyGridTooltip({
 	className?: string;
 }) {
 	return (
-		<div className={`${TAXONOMY_GRID_TOOLTIP_CLASS} ${dir} ${className}`.trim()} data-tip={tip}>
+		<div
+			className={`${TAXONOMY_GRID_TOOLTIP_CLASS} ${dir} before:max-w-[min(90vw,24rem)] before:whitespace-normal before:wrap-anywhere ${className}`.trim()}
+			data-tip={tip}
+		>
 			{children}
 		</div>
 	);

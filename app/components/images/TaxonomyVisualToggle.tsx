@@ -156,7 +156,8 @@ export default function TaxonomyVisualToggle({
 									GBIF photo
 								</button>
 
-								{taxonomySpotlights?.length ? (
+								{/* Spotlights render on the homepage only, so this toggle stays off. */}
+								{false && taxonomySpotlights?.length ? (
 									<button
 										className={`join-item btn btn-xs rounded-btn sm:btn-sm ${mode === "spotlight" ? "btn-primary" : "btn-ghost"}`}
 										onClick={() => setMode("spotlight")}
@@ -212,7 +213,7 @@ export default function TaxonomyVisualToggle({
 						<div
 							className={`absolute inset-0 overflow-clip p-1 transition-opacity duration-150 flex justify-center items-center ${spotlightLayerClass}`}
 						>
-							{taxonomySpotlights?.length ? (
+							{false && taxonomySpotlights?.length ? (
 								<div className="w-full h-full grid grid-cols-[auto_1fr_auto] justify-items-center items-center">
 									<button
 										className="btn btn-secondary rounded-full"

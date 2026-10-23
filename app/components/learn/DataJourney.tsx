@@ -154,7 +154,7 @@ export default function DataJourney() {
 					{/* Right: Water drop diagram */}
 					<div className="relative w-full h-90 sm:h-110 lg:h-130 overflow-hidden">
 						<Image
-							src="/images/biorender/water_drop.png"
+							src="/images/learn/edna101/biorender/water_drop.png"
 							alt="Sources of environmental DNA in water"
 							fill
 							sizes="(max-width: 1024px) 180vw, 1200px"
@@ -162,7 +162,7 @@ export default function DataJourney() {
 							priority
 						/>
 						<Image
-							src="/images/biorender/water_drop_dark.png"
+							src="/images/learn/edna101/biorender/water_drop_dark.png"
 							alt="Sources of environmental DNA in water"
 							fill
 							sizes="(max-width: 1024px) 180vw, 1200px"
@@ -186,7 +186,7 @@ export default function DataJourney() {
 							{/* Ship image */}
 							<div className="relative w-full h-75 sm:h-95 lg:h-115">
 								<Image
-									src="/images/biorender/ship_with_ctd.png"
+									src="/images/learn/edna101/biorender/ship_with_ctd.png"
 									alt="Research vessel deploying CTD rosette"
 									fill
 									sizes="(max-width: 1024px) 100vw, 700px"
@@ -194,7 +194,7 @@ export default function DataJourney() {
 									priority
 								/>
 								<Image
-									src="/images/biorender/ship_with_ctd_dark.png"
+									src="/images/learn/edna101/biorender/ship_with_ctd_dark.png"
 									alt="Research vessel deploying CTD rosette"
 									fill
 									sizes="(max-width: 1024px) 100vw, 700px"
@@ -232,7 +232,7 @@ export default function DataJourney() {
 							{/* Sample bio image */}
 							<div className="relative w-full h-65 sm:h-85 lg:h-100">
 								<Image
-									src="/images/biorender/sample_bio.png"
+									src="/images/learn/edna101/biorender/sample_bio.png"
 									alt="CTD to Niskin to sample bottles workflow"
 									fill
 									sizes="(max-width: 1024px) 100vw, 760px"
@@ -240,7 +240,7 @@ export default function DataJourney() {
 									priority
 								/>
 								<Image
-									src="/images/biorender/sample_bio_dark.png"
+									src="/images/learn/edna101/biorender/sample_bio_dark.png"
 									alt="CTD to Niskin to sample bottles workflow"
 									fill
 									sizes="(max-width: 1024px) 100vw, 760px"
@@ -273,14 +273,14 @@ export default function DataJourney() {
 
 							<div className="relative w-full h-60 sm:h-75 lg:h-87.5">
 								<Image
-									src="/images/biorender/dna_extraction.png"
+									src="/images/learn/edna101/biorender/dna_extraction.png"
 									alt="DNA extraction workflow"
 									fill
 									sizes="(max-width: 1024px) 100vw, 700px"
 									className="object-contain [html[data-theme='dark']_&]:hidden"
 								/>
 								<Image
-									src="/images/biorender/dna_extraction_dark.png"
+									src="/images/learn/edna101/biorender/dna_extraction_dark.png"
 									alt="DNA extraction workflow"
 									fill
 									sizes="(max-width: 1024px) 100vw, 700px"
@@ -293,14 +293,14 @@ export default function DataJourney() {
 						<div id="step5" className="grid lg:grid-cols-[1.3fr_1fr] gap-4 lg:gap-8 items-center">
 							<div className="relative w-full h-60 sm:h-75 lg:h-87.5">
 								<Image
-									src="/images/biorender/second_wetlab_step.png"
+									src="/images/learn/edna101/biorender/second_wetlab_step.png"
 									alt="PCR amplification targeting specific genetic markers"
 									fill
 									sizes="(max-width: 1024px) 100vw, 700px"
 									className="object-contain [html[data-theme='dark']_&]:hidden"
 								/>
 								<Image
-									src="/images/biorender/second_wetlab_step_dark.png"
+									src="/images/learn/edna101/biorender/second_wetlab_step_dark.png"
 									alt="PCR amplification targeting specific genetic markers"
 									fill
 									sizes="(max-width: 1024px) 100vw, 700px"
@@ -319,7 +319,7 @@ export default function DataJourney() {
 						<div>
 							<div className="relative w-full max-w-5xl mx-auto h-55 sm:h-70 lg:h-80 overflow-hidden">
 								<Image
-									src="/images/biorender/thermocycler.png"
+									src="/images/learn/edna101/biorender/thermocycler.png"
 									alt="Thermocycler PCR amplification"
 									fill
 									sizes="(max-width: 1024px) 100vw, 900px"
@@ -327,7 +327,7 @@ export default function DataJourney() {
 									className="object-contain scale-125 lg:scale-150 [html[data-theme='dark']_&]:hidden"
 								/>
 								<Image
-									src="/images/biorender/thermocycler_dark.png"
+									src="/images/learn/edna101/biorender/thermocycler_dark.png"
 									alt="Thermocycler PCR amplification"
 									fill
 									sizes="(max-width: 1024px) 100vw, 900px"
@@ -356,7 +356,7 @@ export default function DataJourney() {
 					<div>
 						<div className="relative w-full max-w-5xl mx-auto h-55 sm:h-70 lg:h-80 overflow-hidden mt-0">
 							<Image
-								src="/images/biorender/library_bio.png"
+								src="/images/learn/edna101/biorender/library_bio.png"
 								alt="Sequencing workflow"
 								fill
 								sizes="(max-width: 1024px) 100vw, 900px"
@@ -364,7 +364,7 @@ export default function DataJourney() {
 								className="object-contain scale-125 lg:scale-150 [html[data-theme='dark']_&]:hidden"
 							/>
 							<Image
-								src="/images/biorender/library_bio_dark.png"
+								src="/images/learn/edna101/biorender/library_bio_dark.png"
 								alt="Sequencing workflow"
 								fill
 								sizes="(max-width: 1024px) 100vw, 900px"
@@ -426,14 +426,14 @@ export default function DataJourney() {
 
 							<div className="relative w-full h-80 sm:h-105 lg:h-125 lg:-mt-10">
 								<Image
-									src="/images/biorender/feature_bio.png"
+									src="/images/learn/edna101/biorender/feature_bio.png"
 									alt="Feature identification from sequence data"
 									fill
 									sizes="(max-width: 1024px) 100vw, 700px"
 									className="object-contain [html[data-theme='dark']_&]:hidden"
 								/>
 								<Image
-									src="/images/biorender/feature_bio_dark.png"
+									src="/images/learn/edna101/biorender/feature_bio_dark.png"
 									alt="Feature identification from sequence data"
 									fill
 									sizes="(max-width: 1024px) 100vw, 700px"
@@ -491,7 +491,7 @@ export default function DataJourney() {
 					className="flex flex-col items-center gap-2 text-base-content/60 hover:text-base-content/80 transition-colors"
 				>
 					<Image
-						src="/images/biorender/biorender_logo.jpeg"
+						src="/images/learn/edna101/biorender/biorender_logo.jpeg"
 						alt="BioRender"
 						width={360}
 						height={120}

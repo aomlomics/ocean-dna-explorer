@@ -405,7 +405,13 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	);
 
 	const headerBlock = (
-		<header className={`w-full min-w-0 max-w-full ${project.imageFileUrl_ODE ? "relative z-raised" : ""}`}>
+		<header
+			className={`w-full min-w-0 max-w-full ${
+				project.imageFileUrl_ODE
+					? "relative z-raised has-[.tooltip:hover]:z-tooltip has-[.dropdown:hover]:z-menu focus-within:z-menu"
+					: ""
+			}`}
+		>
 			<div className="flex flex-wrap gap-x-3 gap-y-2 items-center justify-between">
 				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
 					<TitleHoverTooltip tooltip={TableMetadata.project.description}>
@@ -477,7 +483,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	const glanceBlock = (
 		<div className="flex flex-col h-full">
 			{/* z-raised: sit above header so View as Search tooltips aren't covered */}
-			<div className="relative z-raised flex flex-wrap gap-3">
+			<div className="relative z-raised grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
 				<StatCard
 					title="Samples"
 					value={Samples.length}

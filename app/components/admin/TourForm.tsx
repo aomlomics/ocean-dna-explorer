@@ -42,7 +42,7 @@ export default function TourForm() {
 			projectSeconds: `${projectDurationSeconds ?? 30}`,
 			taxaPerProject: `${taxaPerProject}`
 		});
-		if (selectedTourProjects.length && selectedTourProjects.length < projects.length) {
+		if (selectedTourProjects.length) {
 			params.set("projectIds", selectedTourProjects.join(","));
 		}
 		return params;
@@ -167,13 +167,13 @@ export default function TourForm() {
 					project_id = response.result[0].project_id;
 
 					if (!projects.length) {
-						setProjects(response.result.map((r: { project_id: string }) => r.project_id).sort());
+						const projectIds = response.result.map((r: { project_id: string }) => r.project_id).sort();
+						setProjects(projectIds);
 						setSelectedTourProjects((current) => {
-							if (!projects.length) return [];
-							if (!current.length) return projects;
-							const available = new Set(projects);
+							if (!current.length) return projectIds;
+							const available = new Set(projectIds);
 							const retained = current.filter((id) => available.has(id));
-							return retained.length ? retained : projects;
+							return retained.length ? retained : projectIds;
 						});
 					}
 				}
@@ -275,7 +275,6 @@ export default function TourForm() {
 			{ url: "/sponsors" },
 			{ url: getShowcaseStepUrl() },
 			{ url: "/#dataSummary" },
-			{ url: "/#dataTaxa" },
 			{ url: "/explore/project" },
 			{ url: project_id ? exploreUrl({ table: "project", project_id, hash: "project" }) : "/search?table=project" },
 			{

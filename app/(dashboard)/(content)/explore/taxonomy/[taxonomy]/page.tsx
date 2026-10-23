@@ -9,9 +9,9 @@ import GbifIucnStatus from "@/app/components/images/GbifIucnStatus";
 import { matchGbifForPhylopic } from "@/app/components/images/matchGbifForPhylopic";
 import TaxonomyVisualToggle from "@/app/components/images/TaxonomyVisualToggle";
 import CopyButton from "@/app/components/CopyButton";
-import { VIEW_AS_SEARCH_TOOLTIP_CLASS } from "@/app/components/viewAsSearchTooltip";
 import TableInfo from "@/app/components/TableInfo";
 import { decodeRouteParams } from "@/app/helpers/utils";
+import { resolveGbifCommonName } from "@/app/helpers/resolveGbifCommonName";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { TaxonomicRank } from "@/types/globals";
@@ -64,42 +64,27 @@ function finestDisplayedRank(db: TaxonomyModel): {
 	return null;
 }
 
-function isEnglishVernacularLang(raw: string | undefined): boolean {
-	const lang = (raw ?? "").trim().toLowerCase();
-	if (!lang) return false;
-	if (lang === "en" || lang === "eng") return true;
-	return lang.startsWith("en-") || lang.startsWith("en_");
-}
-
-/** GBIF + PhyloPic URL for this page — GBIF backbone match is identical to PhyloPicClient (`matchGbifForPhylopic` only). */
+/** PhyloPic URL for this page — GBIF backbone match is identical to PhyloPicClient (`matchGbifForPhylopic` only). Common name uses the explore-card resolver. */
 async function resolveTaxonomyPageGbif(taxonomyObj: TaxonomyModel): Promise<{
-	taxonKey: number;
-	mediaTaxonKey: number;
+	taxonKey: number | null;
+	mediaTaxonKey: number | null;
 	commonName: string | null;
-	phyloPic: { imageUrl: string | null; rank: string; title: string };
+	phyloPic: { imageUrl: string | null; rank: string; title: string } | null;
 } | null> {
-	const matched = await matchGbifForPhylopic(taxonomyObj);
-	if (!matched) return null;
+	const [matched, commonName] = await Promise.all([
+		matchGbifForPhylopic(taxonomyObj),
+		resolveGbifCommonName(taxonomyObj)
+	]);
+	if (!matched) {
+		if (!commonName) return null;
+		return { taxonKey: null, mediaTaxonKey: null, commonName, phyloPic: null };
+	}
 
 	const { taxonKey, objectIDs, rankMatched, mediaTaxonKey } = matched;
 
-	const [vnRes, phyloPicRes] = await Promise.all([
-		fetch(`https://api.gbif.org/v1/species/${taxonKey}/vernacularNames?limit=80`),
-		fetch(`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${objectIDs}`)
-	]);
-
-	let commonName: string | null = null;
-	try {
-		const vnJson = await vnRes.json();
-		const results: { vernacularName?: string; language?: string }[] = Array.isArray(vnJson?.results)
-			? vnJson.results
-			: [];
-		const eng = results.find((r) => isEnglishVernacularLang(r.language) && r.vernacularName?.trim());
-		const name = eng?.vernacularName;
-		if (typeof name === "string" && name.trim()) commonName = name.trim();
-	} catch {
-		// optional
-	}
+	const phyloPicRes = await fetch(
+		`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${objectIDs}`
+	);
 
 	const phyloPicJson = await phyloPicRes.json();
 	let imageUrl: string | null = null;
@@ -277,7 +262,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					<div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full lg:w-2/3">
 						<Link href={`/search?table=analysis&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
 							<div
-								className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`}
+								className="tooltip tooltip-top flex aspect-square w-full flex-col justify-center bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 sm:aspect-auto before:text-base-content before:bg-base-200 before:border before:border-base-content/20"
 								data-tip="View Analyses as Search"
 							>
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
@@ -292,7 +277,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 
 						<Link href={`/search?table=project&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
 							<div
-								className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`}
+								className="tooltip tooltip-top flex aspect-square w-full flex-col justify-center bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 sm:aspect-auto before:text-base-content before:bg-base-200 before:border before:border-base-content/20"
 								data-tip="View Projects as Search"
 							>
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
@@ -307,7 +292,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 
 						<Link href={`/search?table=sample&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
 							<div
-								className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`}
+								className="tooltip tooltip-top flex aspect-square w-full flex-col justify-center bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 sm:aspect-auto before:text-base-content before:bg-base-200 before:border before:border-base-content/20"
 								data-tip="View Samples as Search"
 							>
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
@@ -330,7 +315,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 							}}
 						>
 							<div
-								className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`}
+								className="tooltip tooltip-top flex aspect-square w-full flex-col justify-center bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 sm:aspect-auto before:text-base-content before:bg-base-200 before:border before:border-base-content/20"
 								data-tip="Find other Features with this Taxonomy"
 							>
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">

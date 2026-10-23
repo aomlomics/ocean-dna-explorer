@@ -1,7 +1,6 @@
 import { DeadValueEnum } from "@/types/enums";
 import Link from "next/link";
 import { type ReactNode, Suspense } from "react";
-import { SHARED_TOOLTIP_THEME_CLASS } from "../viewAsSearchTooltip";
 
 export default function StatCard({
 	title,
@@ -91,38 +90,25 @@ async function SuspenseStatCard({
 
 	const shouldDefaultToSearchTooltip = typeof link === "string" && link.startsWith("/search?");
 	const resolvedTooltip = tooltip ?? (shouldDefaultToSearchTooltip ? "View as Search" : undefined);
-	const isViewAsSearchTooltip = resolvedTooltip === "View as Search";
 	const tooltipClassName = resolvedTooltip
-		? isViewAsSearchTooltip
-			? ""
-			: `tooltip tooltip-secondary before:text-primary-content ${SHARED_TOOLTIP_THEME_CLASS}`
+		? "tooltip tooltip-top before:text-base-content before:bg-base-200 before:border before:border-base-content/20"
 		: "";
-	const showCustomViewAsSearchTooltip = Boolean(resolvedTooltip) && isViewAsSearchTooltip;
-	const customViewAsSearchTooltip = showCustomViewAsSearchTooltip ? (
-		<div className="pointer-events-none absolute bottom-full left-1/2 z-tooltip mb-2 hidden -translate-x-1/2 group-hover/vas:block group-focus-within/vas:block">
-			<div className="relative rounded-md border border-base-content/20 bg-base-200 px-3 py-2 text-sm leading-relaxed text-base-content shadow-xl whitespace-nowrap">
-				<span
-					aria-hidden="true"
-					className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-r border-b border-base-content/20 bg-base-200"
-				/>
-				{resolvedTooltip}
-			</div>
-		</div>
-	) : null;
 
 	let content;
 	let innerClassName;
 	if (layout === "horizontal" && queryVal !== undefined) {
 		const hug = horizontalCardWidth === "hug";
-		innerClassName = hug ? " items-center gap-4" : " w-full items-center gap-4";
+		innerClassName = hug
+			? " aspect-square flex-col items-center justify-center gap-2 text-center sm:aspect-auto sm:flex-row sm:gap-4 sm:text-left"
+			: " aspect-square w-full flex-col items-center justify-center gap-2 text-center sm:aspect-auto sm:flex-row sm:gap-4 sm:text-left";
 		content = (
 			<>
-				<div className="w-16 h-16 shrink-0 flex items-center justify-center text-primary">{icon}</div>
+				<div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center text-primary">{icon}</div>
 				<div
 					className={
 						hug
-							? "flex min-w-min flex-col gap-0.5 overflow-visible"
-							: "flex min-w-min flex-1 flex-col gap-0.5 overflow-visible"
+							? "flex min-w-min flex-col items-center gap-0.5 overflow-visible sm:items-start"
+							: "flex min-w-min flex-col items-center gap-0.5 overflow-visible sm:flex-1 sm:items-start"
 					}
 				>
 					<div
@@ -138,7 +124,7 @@ async function SuspenseStatCard({
 		);
 	} else {
 		// Vertical centered layout for other cards
-		innerClassName = " flex-col items-center text-center";
+		innerClassName = " aspect-square flex-col items-center justify-center text-center sm:aspect-auto";
 		content = (
 			<>
 				{icon && icon !== "eye" && (
@@ -171,24 +157,25 @@ async function SuspenseStatCard({
 	if (link) {
 		const hug = layout === "horizontal" && horizontalCardWidth === "hug";
 		return (
-			<Link href={link} className={[className, hug ? "block w-max max-w-full" : undefined].filter(Boolean).join(" ")}>
+			<Link
+				href={link}
+				className={[className, hug ? "block w-full sm:w-max sm:max-w-full" : undefined].filter(Boolean).join(" ")}
+			>
 				<div
-					className={`bg-base-200 p-4 ${hug ? "" : "h-full"} rounded-lg flex hover:bg-base-300 transition-all duration-300 hover:scale-105 ${innerClassName} ${tooltipClassName} ${showCustomViewAsSearchTooltip ? "group/vas relative" : ""}`}
-					data-tip={showCustomViewAsSearchTooltip ? undefined : resolvedTooltip}
+					className={`bg-base-200 p-4 ${hug ? "" : "h-full"} rounded-lg flex hover:bg-base-300 transition-all duration-300 hover:scale-105 ${innerClassName} ${tooltipClassName}`}
+					data-tip={resolvedTooltip}
 				>
 					{content}
-					{customViewAsSearchTooltip}
 				</div>
 			</Link>
 		);
 	} else {
 		return (
 			<div
-				className={`bg-base-200 p-4 rounded-lg flex ${innerClassName} ${tooltipClassName} ${className ?? ""} ${showCustomViewAsSearchTooltip ? "group/vas relative" : ""}`}
-				data-tip={showCustomViewAsSearchTooltip ? undefined : resolvedTooltip}
+				className={`bg-base-200 p-4 rounded-lg flex ${innerClassName} ${tooltipClassName} ${className ?? ""}`}
+				data-tip={resolvedTooltip}
 			>
 				{content}
-				{customViewAsSearchTooltip}
 			</div>
 		);
 	}
