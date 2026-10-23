@@ -2,13 +2,15 @@ import Link from "next/link";
 import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
 import DataDisplay from "@/app/components/explore/DataDisplay";
-import { trustedPrisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { LibraryIcon, AssayIcon, SampleIcon } from "@/app/components/icons";
 import StatCard from "@/app/components/explore/StatCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
+import { cookies } from "next/headers";
 
 export async function generateMetadata({
 	params
@@ -17,7 +19,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
 	const { project_id, lib_id } = await decodeRouteParams(params);
 
-	const library = await trustedPrisma.library.findUnique({
+	const library = await prisma.library.findUnique({
 		where: {
 			project_id_lib_id: {
 				project_id,
@@ -43,7 +45,7 @@ export async function generateMetadata({
 export default async function Lib_id({ params }: { params: Promise<{ project_id: string; lib_id: string }> }) {
 	const { project_id, lib_id } = await decodeRouteParams(params);
 
-	const library = await trustedPrisma.library.findUnique({
+	const query = {
 		where: {
 			project_id_lib_id: {
 				project_id,
@@ -63,11 +65,18 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 				}
 			}
 		}
-	});
+	};
 
-	if (!library) notFound();
+	let library = await trustedPrisma.library.findUnique(query);
+	let showTrustedWarning = false;
+	if (!library) {
+		const cookieStore = await cookies();
+		if (cookieStore.get("trusted")?.value !== "false") library = await prisma.library.findUnique(query);
+		if (!library) notFound();
+		showTrustedWarning = true;
+	}
 
-	const { Sample: sample, Assay: assay, ...justLibrary } = library;
+	const { Sample, Assay, ...justLibrary } = library;
 
 	return (
 		<div className="space-y-6 pb-8">
@@ -84,28 +93,31 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 			</div>
 
 			<header>
-				<div className="flex gap-2 items-center">
+				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
 					<TitleHoverTooltip tooltip={TableMetadata.library.description}>
-						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary">
 							<LibraryIcon className="size-8! shrink-0" />
 							<span className="min-w-0 wrap-anywhere">{library.lib_id}</span>
 						</h1>
 					</TitleHoverTooltip>
+
+					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
+
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This library connects{" "}
 					<Link
-						href={exploreUrl({ table: "sample", project_id, samp_name: sample.samp_name })}
+						href={exploreUrl({ table: "sample", project_id, samp_name: Sample.samp_name })}
 						className="text-primary hover:text-primary-focus break-all"
 					>
-						sample {sample.samp_name}
+						sample {Sample.samp_name}
 					</Link>{" "}
 					with{" "}
 					<Link
-						href={exploreUrl({ table: "assay", assay_name: assay.assay_name })}
+						href={exploreUrl({ table: "assay", assay_name: Assay.assay_name })}
 						className="text-primary hover:text-primary-focus break-all"
 					>
-						assay {assay.assay_name}
+						assay {Assay.assay_name}
 					</Link>{" "}
 					in project{" "}
 					<Link
@@ -135,16 +147,16 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 						<StatCard
 							title="Sample"
 							icon={<SampleIcon />}
-							link={exploreUrl({ table: "sample", project_id, samp_name: sample.samp_name })}
-							value={sample.samp_name}
+							link={exploreUrl({ table: "sample", project_id, samp_name: Sample.samp_name })}
+							value={Sample.samp_name}
 							className="w-2/3"
 						/>
 
 						<StatCard
 							title="Assay"
 							icon={<AssayIcon />}
-							link={exploreUrl({ table: "assay", assay_name: assay.assay_name })}
-							value={assay.assay_name}
+							link={exploreUrl({ table: "assay", assay_name: Assay.assay_name })}
+							value={Assay.assay_name}
 							className="w-2/3"
 						/>
 					</div>

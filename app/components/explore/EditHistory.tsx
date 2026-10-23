@@ -3,8 +3,8 @@ import { getSubmissionFileName } from "@/app/helpers/utils";
 
 export default async function EditHistory({ editHistory }: { editHistory: PrismaJson.EditHistoryType | null }) {
 	return (
-		<div className="dropdown dropdown-hover ml-1">
-			<div tabIndex={0} role="button" className="flex items-center gap-2 p-0 ml-1 pb-1.5">
+		<div className="dropdown dropdown-hover">
+			<div tabIndex={0} role="button" className="flex items-center gap-2 p-0 pb-1.5">
 				<svg
 					viewBox="0 0 24 24"
 					fill="none"

@@ -1,4 +1,4 @@
-import { trustedPrisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import MapComponent from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/table/Table";
@@ -26,6 +26,8 @@ import { exploreUrl } from "@/app/helpers/utils";
 import type { Metadata } from "next";
 import type { TaxonomicRank } from "@/types/globals";
 import { FIRST_TAXONOMY_VISUALIZE_TAB, TAXONOMY_VISUALIZE_TABS } from "@/app/components/charts/taxonomy/tabs";
+import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
+import { cookies } from "next/headers";
 
 export async function generateMetadata({
 	params
@@ -34,7 +36,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
 	const { project_id, analysis_run_name } = await decodeRouteParams(params);
 
-	const analysis = await trustedPrisma.analysis.findUnique({
+	const analysis = await prisma.analysis.findUnique({
 		where: {
 			project_id_analysis_run_name: {
 				project_id,
@@ -98,7 +100,7 @@ export default async function Project_id_Analysis_run_name({
 		redirect(exploreUrl({ table: "analysis", project_id, analysis_run_name }));
 	}
 
-	const analysis = await trustedPrisma.analysis.findUnique({
+	const query = {
 		where: {
 			project_id_analysis_run_name: {
 				project_id,
@@ -133,8 +135,17 @@ export default async function Project_id_Analysis_run_name({
 				}
 			}
 		}
-	});
-	if (!analysis) notFound();
+	};
+
+	let analysis = await trustedPrisma.analysis.findUnique(query);
+	let showTrustedWarning = false;
+	if (!analysis) {
+		const cookieStore = await cookies();
+		if (cookieStore.get("trusted")?.value !== "false") analysis = await prisma.analysis.findUnique(query);
+		if (!analysis) notFound();
+		showTrustedWarning = true;
+	}
+
 	const { _count, editHistory, Assay, Tags, AlphaDiversities, ...justAnalysis } = analysis;
 
 	const analysisFiles = [
@@ -168,19 +179,24 @@ export default async function Project_id_Analysis_run_name({
 			</div>
 
 			<header>
-				<div className="flex gap-2 items-center">
+				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
 					<TitleHoverTooltip tooltip={TableMetadata.analysis.description}>
-						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary">
 							<AnalysisIcon className="size-8! shrink-0" />
 							<span className="min-w-0 wrap-anywhere">{analysis_run_name}</span>
 						</h1>
 					</TitleHoverTooltip>
+
 					<EditHistory editHistory={editHistory} />
+
+					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 					{analysis.trusted && <div className="badge badge-primary text-neutral-content p-3 select-none">Trusted</div>}
+
 					{Tags.map((t) => (
 						<AnalysisTag key={t.tagName} tag={t} />
 					))}
 				</div>
+
 				<p className="text-lg text-base-content/70">
 					Part of the{" "}
 					<Link href={exploreUrl({ table: "project", project_id })} className="link link-primary link-hover">
@@ -199,7 +215,7 @@ export default async function Project_id_Analysis_run_name({
 				<div className="lg:col-span-2 space-y-6">
 					<MapComponent
 						query={async () =>
-							await trustedPrisma.sample.findMany({
+							await prisma.sample.findMany({
 								where: {
 									Libraries: {
 										some: {
@@ -261,7 +277,7 @@ export default async function Project_id_Analysis_run_name({
 							<StatCard
 								title="Samples"
 								query={async () =>
-									await trustedPrisma.sample.count({
+									await prisma.sample.count({
 										where: {
 											Libraries: {
 												some: {
@@ -374,7 +390,7 @@ async function TaxonomyVisualizeSuspense({
 	project_id: AnalysisModel["project_id"];
 	analysis_run_name: AnalysisModel["analysis_run_name"];
 }) {
-	const analysis = await trustedPrisma.analysis.findUnique({
+	const analysis = await prisma.analysis.findUnique({
 		where: {
 			project_id_analysis_run_name: {
 				project_id,

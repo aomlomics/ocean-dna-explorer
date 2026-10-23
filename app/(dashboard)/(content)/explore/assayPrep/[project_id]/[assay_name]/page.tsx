@@ -2,13 +2,15 @@ import Link from "next/link";
 import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
 import DataDisplay from "@/app/components/explore/DataDisplay";
-import { trustedPrisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { AssayPrepIcon, ProjectIcon } from "@/app/components/icons";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
+import { cookies } from "next/headers";
 
 export async function generateMetadata({
 	params
@@ -17,7 +19,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
 	const { project_id, assay_name } = await decodeRouteParams(params);
 
-	const assayPrep = await trustedPrisma.assayPrep.findUnique({
+	const assayPrep = await prisma.assayPrep.findUnique({
 		where: {
 			project_id_assay_name: {
 				project_id,
@@ -47,7 +49,7 @@ export default async function Project_id_Assay_name({
 }) {
 	const { project_id, assay_name } = await decodeRouteParams(params);
 
-	const assayPrep = await trustedPrisma.assayPrep.findUnique({
+	const query = {
 		where: {
 			project_id_assay_name: {
 				project_id,
@@ -68,11 +70,18 @@ export default async function Project_id_Assay_name({
 				}
 			}
 		}
-	});
+	};
 
-	if (!assayPrep) notFound();
+	let assayPrep = await trustedPrisma.assayPrep.findUnique(query);
+	let showTrustedWarning = false;
+	if (!assayPrep) {
+		const cookieStore = await cookies();
+		if (cookieStore.get("trusted")?.value !== "false") assayPrep = await prisma.assayPrep.findUnique(query);
+		if (!assayPrep) notFound();
+		showTrustedWarning = true;
+	}
 
-	const { Project: project, Assay: assay, ...justAssayPrep } = assayPrep;
+	const { Project, Assay, ...justAssayPrep } = assayPrep;
 
 	return (
 		<div className="space-y-6 pb-8">
@@ -89,17 +98,20 @@ export default async function Project_id_Assay_name({
 			</div>
 
 			<header>
-				<div className="flex gap-2 items-center">
+				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
 					<TitleHoverTooltip tooltip={TableMetadata.assayPrep.description}>
-						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary">
 							<AssayPrepIcon className="size-8! shrink-0" />
 							<span className="min-w-0 wrap-anywhere">{assayPrep.assay_name}</span>
 						</h1>
 					</TitleHoverTooltip>
+
+					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
+
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					Assay preparation for{" "}
-					{assay ? (
+					{Assay ? (
 						<Link
 							href={exploreUrl({ table: "assay", assay_name })}
 							className="text-primary hover:text-primary-focus break-all"
@@ -110,7 +122,7 @@ export default async function Project_id_Assay_name({
 						<span className="italic">an unspecified assay</span>
 					)}{" "}
 					in project{" "}
-					{project ? (
+					{Project ? (
 						<Link
 							href={exploreUrl({ table: "project", project_id })}
 							className="text-primary hover:text-primary-focus break-all"
@@ -138,11 +150,11 @@ export default async function Project_id_Assay_name({
 
 					{/* Context cards */}
 					<div className="space-y-4">
-						{assay && (
-							<AssaysCard title="Assay used:" assays={[{ assay_name, target_gene: assay.target_gene ?? assay_name }]} />
+						{Assay && (
+							<AssaysCard title="Assay used:" assays={[{ assay_name, target_gene: Assay.target_gene ?? assay_name }]} />
 						)}
 
-						{project && (
+						{Project && (
 							<Link href={exploreUrl({ table: "project", project_id })} className="group block w-2/3">
 								<div className="bg-base-200 p-4 rounded-lg hover:bg-base-300 transition-colors flex flex-col items-center text-center max-w-xs mx-auto">
 									<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">

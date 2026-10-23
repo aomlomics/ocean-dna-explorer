@@ -297,6 +297,7 @@ export async function parseAssignmentsFile({
 	}
 }
 
+//TODO: check if assignments file has features not in occurrence file
 export async function parseOccurrencesFile({
 	channel,
 	project_id,

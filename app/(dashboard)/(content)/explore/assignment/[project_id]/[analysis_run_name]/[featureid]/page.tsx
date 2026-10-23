@@ -1,7 +1,7 @@
 import Link from "next/link";
 import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
-import { trustedPrisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import GcDonut from "@/app/components/charts/GcDonut";
 import { AssignmentIcon } from "@/app/components/icons";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
@@ -9,6 +9,8 @@ import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { RanksBySpecificity } from "@/types/objects";
+import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
+import { cookies } from "next/headers";
 
 export async function generateMetadata({
 	params
@@ -17,7 +19,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
 	const { project_id, analysis_run_name, featureid } = await decodeRouteParams(params);
 
-	const assignment = await trustedPrisma.assignment.findUnique({
+	const assignment = await prisma.assignment.findUnique({
 		where: {
 			project_id_analysis_run_name_featureid: {
 				project_id,
@@ -48,7 +50,7 @@ export default async function AssignmentPage({
 }) {
 	const { project_id, analysis_run_name, featureid } = await decodeRouteParams(params);
 
-	const assignment = await trustedPrisma.assignment.findUnique({
+	const query = {
 		where: {
 			project_id_analysis_run_name_featureid: {
 				project_id,
@@ -56,9 +58,16 @@ export default async function AssignmentPage({
 				featureid
 			}
 		}
-	});
+	};
 
-	if (!assignment) notFound();
+	let assignment = await trustedPrisma.assignment.findUnique(query);
+	let showTrustedWarning = false;
+	if (!assignment) {
+		const cookieStore = await cookies();
+		if (cookieStore.get("trusted")?.value !== "false") assignment = await prisma.assignment.findUnique(query);
+		if (!assignment) notFound();
+		showTrustedWarning = true;
+	}
 
 	const rawConfidence = assignment.Confidence ?? 0;
 	const confidencePercent = Math.max(0, Math.min(100, rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence));
@@ -101,14 +110,17 @@ export default async function AssignmentPage({
 			</div>
 
 			<header>
-				<div className="flex gap-2 items-center">
+				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
 					<TitleHoverTooltip tooltip={TableMetadata.assignment.description}>
-						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary">
 							<AssignmentIcon className="size-8! shrink-0" />
 							Assignment
 						</h1>
 					</TitleHoverTooltip>
+
+					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
+
 				<div className="mt-3 mb-4 inline-flex items-center gap-5 bg-base-200 rounded-xl px-5 py-4">
 					<div className="flex flex-col">
 						<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Assignment confidence</p>
@@ -116,6 +128,7 @@ export default async function AssignmentPage({
 					</div>
 					<GcDonut percentage={confidencePercent} size={72} strokeWidth={8} />
 				</div>
+
 				<p className="text-lg text-base-content/90 max-w-3xl">
 					Assignment of feature{" "}
 					<Link
@@ -140,6 +153,7 @@ export default async function AssignmentPage({
 					</Link>
 					.
 				</p>
+
 				<p className="text-lg text-base-content/90 max-w-3xl mt-4">
 					The key (identifier) for an assignment is the combination of analysis_run_name and featureid.
 				</p>

@@ -235,7 +235,7 @@ function MegaMenu({
 			ref={containerRef}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
-			className="relative z-menu group/menu"
+			className="relative group/menu"
 		>
 			<div
 				aria-hidden="true"
@@ -253,10 +253,7 @@ function MegaMenu({
 				tabIndex={0}
 				href={route}
 				prefetch={MENU_LINK_PREFETCH}
-				className={[
-					"relative z-20 flex items-center gap-1 px-2.5 min-[1400px]:px-4 py-2 transition-colors text-sm min-[1400px]:text-lg select-none rounded-t-xl",
-					isActive ? "bg-primary text-primary-content" : open ? "bg-base-300" : "hover:bg-base-300"
-				].join(" ")}
+				className={`z-20 flex items-center gap-1 px-2.5 min-[1400px]:px-4 py-2 transition-colors text-sm min-[1400px]:text-lg select-none rounded-t-xl ${isActive ? "bg-primary text-primary-content" : open ? "bg-base-300" : "hover:bg-base-300"}`}
 				onClick={handleTabLinkClick}
 			>
 				<div className="select-none">{tabName}</div>
@@ -288,7 +285,7 @@ function MegaMenu({
 				// Fixed + centered so it never gets cut off. We keep the hover area contiguous by making this element
 				// include the "gap" using a negative margin + padding "hover bridge", while the actual visible panel sits below.
 				className={[
-					"z-5",
+					"z-menu",
 					"fixed",
 					anchorPanelToTrigger ? "left-auto" : "left-1/2",
 					anchorPanelToTrigger ? "" : panelShiftRight ? "" : "-translate-x-1/2",
