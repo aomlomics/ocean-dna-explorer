@@ -1,13 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import { PhotoIcon } from "@/app/components/icons";
 import Link from "next/link";
+import { PhotoIcon } from "@/app/components/icons";
+import { exploreUrl } from "@/app/helpers/utils";
 import { useEffect, useMemo, useState } from "react";
 import { MasonryPhotoAlbum, type Photo, type RenderImageContext, type RenderImageProps } from "react-photo-album";
 import "react-photo-album/masonry.css";
-import ImagePreviewModal from "../ImagePreviewModal";
-import { exploreUrl } from "@/app/helpers/utils";
+import type { TaxonomySpotlightModel } from "@/app/generated/prisma/models";
+import type { AttributionModel, ImageModel } from "@/app/generated/prismaImages/models";
+
+export type SpotlightWithImage = TaxonomySpotlightModel & {
+	Image?: ImageModel & { Attribution: AttributionModel | null };
+};
 
 export type FeaturedOrganismGroup =
 	| "Fish"
@@ -1228,23 +1233,30 @@ export const FEATURED_ORGANISMS: FeaturedOrganism[] = applyFeaturedOrganismMetad
 	}
 ]);
 
-type FeaturedFilterGroup = "All" | "Fish" | "Invertebrates" | "Protists" | "Fungi" | "Other";
-
-const FEATURED_FILTER_GROUPS: FeaturedFilterGroup[] = ["All", "Fish", "Invertebrates", "Protists", "Fungi", "Other"];
-const FILTER_TAB_BASE =
-	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
-
 const DEFAULT_IMAGE_SRC = "/images/featured_organisms/lanternfish.webp";
 
 const IUCN_BADGE_CLASS: Record<string, string> = {
-	"Least Concern": "border-emerald-400/30 bg-emerald-500/10 text-emerald-300",
-	"Near Threatened": "border-lime-400/30 bg-lime-500/10 text-lime-300",
-	Vulnerable: "border-amber-400/30 bg-amber-500/10 text-amber-300",
-	Endangered: "border-orange-400/30 bg-orange-500/10 text-orange-300",
-	"Critically Endangered": "border-rose-400/30 bg-rose-500/10 text-rose-300",
-	"Data Deficient": "border-slate-400/30 bg-slate-500/10 text-slate-300",
-	"Not Evaluated": "border-slate-400/30 bg-slate-500/10 text-slate-300"
+	"Least Concern": "border-emerald-500/30 bg-emerald-500/10 text-emerald-600",
+	"Near Threatened": "border-lime-500/30 bg-lime-500/10 text-lime-600",
+	Vulnerable: "border-amber-500/30 bg-amber-500/10 text-amber-600",
+	Endangered: "border-orange-500/30 bg-orange-500/10 text-orange-600",
+	"Critically Endangered": "border-rose-500/30 bg-rose-500/10 text-rose-600",
+	"Data Deficient": "border-base-content/20 bg-base-content/10 text-base-content/70",
+	"Not Evaluated": "border-base-content/20 bg-base-content/10 text-base-content/70"
 };
+
+/** GBIF `distributions[].threatStatus` vocabulary, ordered from least to most severe. */
+const GBIF_THREAT_LABELS: [string, string][] = [
+	["NOT_EVALUATED", "Not Evaluated"],
+	["DATA_DEFICIENT", "Data Deficient"],
+	["LEAST_CONCERN", "Least Concern"],
+	["NEAR_THREATENED", "Near Threatened"],
+	["VULNERABLE", "Vulnerable"],
+	["ENDANGERED", "Endangered"],
+	["CRITICALLY_ENDANGERED", "Critically Endangered"],
+	["EXTINCT_IN_THE_WILD", "Extinct in the Wild"],
+	["EXTINCT", "Extinct"]
+];
 
 const gbifCommonNameCache = new Map<number, string | null>();
 const gbifKeyByNameCache = new Map<string, number | null>();
@@ -1322,26 +1334,49 @@ async function fetchGbifCommonName(taxonKey: number): Promise<string | null> {
 	}
 }
 
-/**
- * react-photo-album photo shape, extended with the full organism so a click
- * handler can recover the original data object from the clicked photo.
- */
-type OrganismPhoto = Photo & { organism: FeaturedOrganism };
+/** Returns the most severe IUCN category GBIF reports for the taxon, or null if none. */
+async function fetchGbifIucnStatus(taxonKey: number): Promise<string | null> {
+	try {
+		const res = await fetch(`https://api.gbif.org/v1/species/${taxonKey}/distributions?limit=200`);
+		if (!res.ok) return null;
+		const json = (await res.json()) as { results?: { threatStatus?: string }[] };
+		const statuses = new Set(
+			(json.results ?? []).map((r) => (r.threatStatus ?? "").trim().toUpperCase().replace(/\s+/g, "_"))
+		);
+		const worst = GBIF_THREAT_LABELS.findLast(([status]) => statuses.has(status));
+		return worst ? worst[1] : null;
+	} catch {
+		return null;
+	}
+}
+
+/** Scientific name is the last rank of the taxonomy path (e.g. "...;Mola;Mola_mola;" -> "Mola mola"). */
+function getScientificName(taxonomy: string): string {
+	const lastRank = taxonomy.split(";").findLast((rank) => rank.trim());
+	return lastRank?.trim().replace(/_/g, " ") || taxonomy;
+}
 
 /**
- * Map organism data into the photo format the library accepts. The dummy dataset
- * has no intrinsic image dimensions, so we assign a safe dummy 800x800 to every
- * photo on the fly. The masonry layout only needs an aspect ratio to lay out
- * columns; 800x800 makes every tile square until real dimensions exist.
+ * react-photo-album photo shape, extended with the full spotlight so a click
+ * handler can recover the original data object from the clicked photo.
  */
-function toOrganismPhotos(organisms: FeaturedOrganism[]): OrganismPhoto[] {
-	return organisms.map((organism) => ({
-		key: organism.id,
-		src: organism.imageUrl ?? organism.imageSrc ?? DEFAULT_IMAGE_SRC,
-		width: 800,
-		height: 800,
-		alt: organism.commonName?.trim() || organism.taxonomyName,
-		organism
+type OrganismPhoto = Photo & { spotlight: SpotlightWithImage };
+
+type PhotoSize = { width: number; height: number };
+
+/**
+ * Map spotlight data into the photo format the library accepts. The Image table
+ * has no intrinsic image dimensions, so each tile starts as a square 800x800 and
+ * switches to its measured size once the image has loaded in the browser.
+ */
+function toOrganismPhotos(spotlights: SpotlightWithImage[], sizesById: Record<number, PhotoSize>): OrganismPhoto[] {
+	return spotlights.map((spotlight) => ({
+		key: String(spotlight.id),
+		src: spotlight.imageFileUrl_ODE || DEFAULT_IMAGE_SRC,
+		width: sizesById[spotlight.id]?.width ?? 800,
+		height: sizesById[spotlight.id]?.height ?? 800,
+		alt: spotlight.commonName?.trim() || getScientificName(spotlight.taxonomy),
+		spotlight
 	}));
 }
 
@@ -1354,55 +1389,48 @@ function masonryColumns(containerWidth: number): number {
 	return 5;
 }
 
-export default function FeaturedOrganisms() {
-	const [activeGroup, setActiveGroup] = useState<FeaturedFilterGroup>("All");
+export default function FeaturedOrganisms({ spotlights }: { spotlights: SpotlightWithImage[] }) {
 	// `null` until the user picks a tile; the detail panel falls back to `activeOrganism` below.
-	const [selectedOrganism, setSelectedOrganism] = useState<FeaturedOrganism | null>(null);
-	const [gbifCommonNamesById, setGbifCommonNamesById] = useState<Record<string, string>>({});
+	const [selectedOrganism, setSelectedOrganism] = useState<SpotlightWithImage | null>(null);
+	const [gbifCommonNamesById, setGbifCommonNamesById] = useState<Record<number, string>>({});
+	const [sizesById, setSizesById] = useState<Record<number, PhotoSize>>({});
 
-	const filteredOrganisms = useMemo(() => {
-		if (activeGroup === "All") return FEATURED_ORGANISMS;
-		return FEATURED_ORGANISMS.filter((organism) => toFilterGroup(organism.group) === activeGroup);
-	}, [activeGroup]);
-
-	// Map the (currently visible) organism data into react-photo-album's photo shape.
-	const photos = useMemo(() => toOrganismPhotos(filteredOrganisms), [filteredOrganisms]);
+	// Map the spotlight data into react-photo-album's photo shape.
+	const photos = useMemo(() => toOrganismPhotos(spotlights, sizesById), [spotlights, sizesById]);
 
 	// Pick a random default once on the client so the detail panel is never empty.
 	// Must be an effect: Math.random() during render fails the purity lint, and during SSR
 	// it would mismatch the server HTML and the browser HTML.
 	useEffect(() => {
 		// eslint-disable-next-line react-hooks/set-state-in-effect
-		setSelectedOrganism(
-			(current) => current ?? FEATURED_ORGANISMS[Math.floor(Math.random() * FEATURED_ORGANISMS.length)]!
-		);
+		setSelectedOrganism((current) => current ?? spotlights[Math.floor(Math.random() * spotlights.length)]!);
 	}, []);
 
-	// The organism shown in the detail panel. Falls back to the first entry during the
+	// The spotlight shown in the detail panel. Falls back to the first entry during the
 	// brief pre-mount window before the random default is applied.
-	const activeOrganism = selectedOrganism ?? FEATURED_ORGANISMS[0]!;
+	const activeOrganism = selectedOrganism ?? spotlights[0]!;
 
 	useEffect(() => {
 		let cancelled = false;
 
 		async function loadMissingCommonNames() {
-			const targets = FEATURED_ORGANISMS.filter((organism) => {
-				const hasLocalCommonName = Boolean(organism.commonName?.trim());
-				const alreadyLoaded = Boolean(gbifCommonNamesById[organism.id]);
+			const targets = spotlights.filter((spotlight) => {
+				const hasLocalCommonName = Boolean(spotlight.commonName?.trim());
+				const alreadyLoaded = Boolean(gbifCommonNamesById[spotlight.id]);
 				return !hasLocalCommonName && !alreadyLoaded;
 			});
 			if (!targets.length) return;
 
 			const resolvedEntries = await Promise.all(
-				targets.map(async (organism): Promise<[string, string | null]> => {
-					const taxonKey = organism.gbifTaxonKey ?? (await resolveGbifTaxonKeyFromName(organism.taxonomyName));
-					if (!taxonKey) return [organism.id, null];
+				targets.map(async (spotlight): Promise<[number, string | null]> => {
+					const taxonKey = await resolveGbifTaxonKeyFromName(getScientificName(spotlight.taxonomy));
+					if (!taxonKey) return [spotlight.id, null];
 					if (gbifCommonNameCache.has(taxonKey)) {
-						return [organism.id, gbifCommonNameCache.get(taxonKey) ?? null];
+						return [spotlight.id, gbifCommonNameCache.get(taxonKey) ?? null];
 					}
 					const gbifName = await fetchGbifCommonName(taxonKey);
 					gbifCommonNameCache.set(taxonKey, gbifName);
-					return [organism.id, gbifName];
+					return [spotlight.id, gbifName];
 				})
 			);
 
@@ -1429,12 +1457,12 @@ export default function FeaturedOrganisms() {
 		};
 	}, [gbifCommonNamesById]);
 
-	function getDisplayCommonName(organism: FeaturedOrganism): string {
-		const local = organism.commonName?.trim();
+	function getDisplayCommonName(spotlight: SpotlightWithImage): string {
+		const local = spotlight.commonName?.trim();
 		if (local) return local;
-		const fromGbif = gbifCommonNamesById[organism.id]?.trim();
+		const fromGbif = gbifCommonNamesById[spotlight.id]?.trim();
 		if (fromGbif) return fromGbif;
-		return createFallbackCommonName(organism);
+		return getScientificName(spotlight.taxonomy);
 	}
 
 	// Custom image renderer: inject the native Next.js Image into each masonry slot.
@@ -1444,8 +1472,8 @@ export default function FeaturedOrganisms() {
 		{ alt, sizes }: RenderImageProps,
 		{ photo, width, height }: RenderImageContext<OrganismPhoto>
 	) {
-		const isSelected = photo.organism.id === activeOrganism.id;
-		const label = getDisplayCommonName(photo.organism);
+		const isSelected = photo.spotlight.id === activeOrganism.id;
+		const label = getDisplayCommonName(photo.spotlight);
 		return (
 			<div
 				className={[
@@ -1454,7 +1482,18 @@ export default function FeaturedOrganisms() {
 				].join(" ")}
 				style={{ width: "100%", aspectRatio: `${width} / ${height}` }}
 			>
-				<Image src={photo.src} alt={alt ?? ""} fill sizes={sizes} className="object-cover object-center" />
+				<Image
+					src={photo.src}
+					alt={alt ?? ""}
+					fill
+					sizes={sizes}
+					className="object-cover object-center"
+					onLoad={(e) => {
+						const id = photo.spotlight.id;
+						const { naturalWidth: width, naturalHeight: height } = e.currentTarget;
+						setSizesById((prev) => (prev[id] ? prev : { ...prev, [id]: { width, height } }));
+					}}
+				/>
 				{/* Always-visible common name across the bottom of every grid tile. */}
 				<div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/40 to-transparent px-2 pb-1.5 pt-6">
 					<p className="truncate text-center text-xs font-semibold text-white">{label}</p>
@@ -1464,103 +1503,120 @@ export default function FeaturedOrganisms() {
 	}
 
 	return (
-		<section className="space-y-6">
-			<div className="flex flex-wrap items-center gap-2">
-				{FEATURED_FILTER_GROUPS.map((group) => {
-					const isActive = activeGroup === group;
-					return (
-						<button
-							key={group}
-							type="button"
-							onClick={() => setActiveGroup(group)}
-							className={`${FILTER_TAB_BASE} ${
-								isActive
-									? "bg-primary text-primary-content shadow-md"
-									: "bg-base-200/90 text-base-content hover:bg-base-300 active:brightness-95"
-							}`}
-							aria-pressed={isActive}
-						>
-							{group}
-						</button>
-					);
-				})}
+		<div className="flex flex-col gap-6 lg:flex-row">
+			{/* Left: the detail panel (master-detail), sticky so it stays in view while the grid scrolls. */}
+			<div className="lg:w-1/3">
+				<div className="sticky top-0 h-fit">
+					<SelectedOrganismCard
+						key={activeOrganism.id}
+						spotlight={activeOrganism}
+						resolvedCommonName={getDisplayCommonName(activeOrganism)}
+					/>
+				</div>
 			</div>
 
-			<div className="flex flex-col gap-6 lg:flex-row">
-				{/* Left: the detail panel (master-detail), sticky so it stays in view while the grid scrolls. */}
-				<div className="lg:w-1/3">
-					<div className="sticky top-0 h-fit">
-						<SelectedOrganismCard
-							key={activeOrganism.id}
-							organism={activeOrganism}
-							resolvedCommonName={getDisplayCommonName(activeOrganism)}
+			{/* Right: the masonry grid (master list). */}
+			<div className="lg:w-2/3">
+				<div className="rounded-2xl bg-base-200 p-3 shadow-sm md:p-4">
+					{/* Padding on all sides leaves room for the selected tile's ring, which the scroll box would otherwise clip. */}
+					<div className="h-[75vh] overflow-y-auto p-1">
+						<MasonryPhotoAlbum
+							photos={photos}
+							columns={masonryColumns}
+							spacing={12}
+							sizes={{
+								size: "calc(100vw - 2rem)",
+								sizes: [{ viewport: "(min-width: 1024px)", size: "60vw" }]
+							}}
+							render={{ image: renderOrganismImage }}
+							onClick={({ photo }) => setSelectedOrganism(photo.spotlight)}
 						/>
 					</div>
 				</div>
-
-				{/* Right: the masonry grid (master list). */}
-				<div className="lg:w-2/3">
-					<div className="rounded-2xl bg-base-200 p-3 shadow-sm md:p-4">
-						{filteredOrganisms.length === 0 ? (
-							<div className="rounded-xl bg-base-100/40 px-4 py-3 text-sm text-base-content/70">
-								No featured organisms in this group yet.
-							</div>
-						) : (
-							<div className="h-[75vh] overflow-y-auto pr-1">
-								<MasonryPhotoAlbum
-									photos={photos}
-									columns={masonryColumns}
-									spacing={12}
-									sizes={{
-										size: "calc(100vw - 2rem)",
-										sizes: [{ viewport: "(min-width: 1024px)", size: "60vw" }]
-									}}
-									render={{ image: renderOrganismImage }}
-									onClick={({ photo }) => setSelectedOrganism(photo.organism)}
-								/>
-							</div>
-						)}
-					</div>
-				</div>
 			</div>
-		</section>
+		</div>
 	);
 }
 
 function SelectedOrganismCard({
-	organism,
+	spotlight,
 	resolvedCommonName
 }: {
-	organism: FeaturedOrganism;
+	spotlight: SpotlightWithImage;
 	resolvedCommonName: string;
 }) {
 	const [imageFailed, setImageFailed] = useState(false);
-	const [previewOpen, setPreviewOpen] = useState(false);
+	// `undefined` while the GBIF lookup is in flight.
+	const [iucnStatus, setIucnStatus] = useState<string>();
 	const commonName = resolvedCommonName;
-	const imageSrc = organism.imageUrl ?? organism.imageSrc ?? DEFAULT_IMAGE_SRC;
-	const imageAttribution = getImageAttributionDetails(organism);
-	const iucnStatus = organism.iucnStatus ?? "Not Evaluated";
-	const taxonomyString = toSingleTaxonomyString(organism.taxonomyString);
-	const taxonomyHref = taxonomyString
-		? exploreUrl({ table: "taxonomy", taxonomy: taxonomyString })
-		: "/explore/taxonomy";
+	const scientificName = getScientificName(spotlight.taxonomy);
+	const imageSrc = spotlight.imageFileUrl_ODE || DEFAULT_IMAGE_SRC;
+	const imageAttribution = getImageAttributionDetails(spotlight);
+	const taxonomyHref = exploreUrl({ table: "taxonomy", taxonomy: spotlight.taxonomy });
+
+	useEffect(() => {
+		let cancelled = false;
+		(async () => {
+			const taxonKey = await resolveGbifTaxonKeyFromName(scientificName);
+			const status = taxonKey ? await fetchGbifIucnStatus(taxonKey) : null;
+			if (!cancelled) setIucnStatus(status ?? "Not Evaluated");
+		})();
+		return () => {
+			cancelled = true;
+		};
+	}, [scientificName]);
 
 	return (
-		<article className="overflow-hidden rounded-2xl bg-transparent">
-			<div className="translate-y-0 opacity-100 transition-[transform,opacity] duration-250 ease-out will-change-transform">
-				<div className="p-3 md:p-4">
-					<div className="relative h-72 w-full overflow-hidden rounded-2xl bg-transparent sm:h-80">
-						{imageFailed ? (
-							<div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-sky-900/70 to-indigo-900/70 text-5xl font-semibold text-white/85">
-								{commonName.charAt(0).toUpperCase()}
+		<div className="flex flex-col items-center">
+			{/*
+			 * daisyUI hover-3d tilts its first child using the 8 empty hover-zone divs layered on top,
+			 * so nothing inside the card face can be clickable, hoverable, or scrollable.
+			 */}
+			<div className="hover-3d w-full">
+				{/*
+				 * The trading-card look is built from stacked frames: outer stock border ->
+				 * inner frame -> art frame -> text-box frame, plus gradient "gloss" overlays.
+				 */}
+				<div className="relative w-full overflow-hidden rounded-2xl border-[5px] border-primary/75 bg-linear-to-br from-base-200/82 via-base-100/92 to-base-200/80 p-2 shadow-[0_14px_45px_-12px_rgba(0,0,0,0.6)] sm:p-2.5">
+					{/* Holo-like shading in ODE blues only (no white), kept subtle. */}
+					<div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(125%_76%_at_50%_-4%,rgba(100,171,220,0.14),transparent_52%),radial-gradient(120%_70%_at_8%_0%,rgba(35,61,127,0.11),transparent_55%),radial-gradient(95%_70%_at_92%_8%,rgba(14,165,233,0.09),transparent_58%),radial-gradient(78%_60%_at_85%_96%,rgba(100,171,220,0.1),transparent_60%)]" />
+					<div className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(135deg,transparent_0%,rgba(35,61,127,0.05)_30%,transparent_52%,rgba(100,171,220,0.08)_78%,rgba(56,189,248,0.08)_92%,transparent_100%)] opacity-55" />
+
+					{/* Centered top notch tab, connected to top border. */}
+					<div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-px">
+						<div className="bg-primary/75 p-0.5 [clip-path:polygon(0_0,100%_0,100%_76%,92%_100%,8%_100%,0_76%)]">
+							<div className="bg-base-200/92 px-5 py-px [clip-path:polygon(0_0,100%_0,100%_76%,92%_100%,8%_100%,0_76%)]">
+								<span className="text-[11px] font-semibold text-primary/90">oceandnaexplorer.org</span>
 							</div>
-						) : (
-							<button
-								type="button"
-								className="absolute inset-0 z-10 block cursor-zoom-in"
-								onClick={() => setPreviewOpen(true)}
-								aria-label={`Open full-size image for ${commonName}`}
-							>
+						</div>
+					</div>
+
+					{/* Inner frame (the card's second line). */}
+					<div className="relative z-10 flex flex-col gap-2.5 rounded-xl p-3 pt-6 sm:p-3.5 sm:pt-6">
+						{/* Header: name + scientific name (left), ODE logo emblem (right). */}
+						<div className="flex items-start justify-between gap-2">
+							<div className="min-w-0 flex-1">
+								<h3 className="truncate text-xl font-extrabold leading-tight text-base-content sm:text-2xl">
+									{commonName}
+								</h3>
+								<p className="mt-0.5 truncate text-sm italic leading-snug text-base-content/60">{scientificName}</p>
+							</div>
+							<Image
+								src="/images/ode_logo_clean.svg"
+								alt=""
+								width={40}
+								height={40}
+								className="h-9 w-9 shrink-0 sm:h-10 sm:w-10"
+							/>
+						</div>
+
+						{/* Card art window (framed + beveled; kept short so the text box breathes). */}
+						<div className="relative aspect-3/2 w-full overflow-hidden rounded-lg border-2 border-primary/75 bg-base-300/40 shadow-[inset_0_2px_12px_rgba(0,0,0,0.35)]">
+							{imageFailed ? (
+								<div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-sky-900/70 to-indigo-900/70 text-5xl font-semibold text-white/85">
+									{commonName.charAt(0).toUpperCase()}
+								</div>
+							) : (
 								<Image
 									src={imageSrc}
 									alt={commonName}
@@ -1569,48 +1625,54 @@ function SelectedOrganismCard({
 									className="object-cover object-center"
 									onError={() => setImageFailed(true)}
 								/>
-							</button>
-						)}
-						<ImageAttributionIcon attribution={imageAttribution} fallbackTitle={commonName} />
-					</div>
-					<ImagePreviewModal
-						isOpen={previewOpen}
-						onClose={() => setPreviewOpen(false)}
-						src={imageSrc}
-						alt={commonName}
-					/>
-				</div>
+							)}
+						</div>
 
-				<div className="flex flex-col gap-4 p-4 pt-2 sm:p-5 sm:pt-2">
-					<div>
-						<h3 className="text-2xl font-semibold text-base-content">{commonName}</h3>
-					</div>
+						{/* IUCN status strip. */}
+						<div className="flex items-center gap-2">
+							<span className="text-xs font-semibold text-base-content/60">IUCN status</span>
+							<span
+								className={[
+									"inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
+									IUCN_BADGE_CLASS[iucnStatus ?? ""] ?? IUCN_BADGE_CLASS["Not Evaluated"]
+								].join(" ")}
+							>
+								{iucnStatus ?? "Loading..."}
+							</span>
+						</div>
 
-					<div className="flex flex-wrap items-center gap-2">
-						<p className="text-base italic text-base-content/70">{organism.taxonomyName}</p>
-						<span className="text-base-content/30">•</span>
-						<span
-							className={[
-								"inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
-								IUCN_BADGE_CLASS[iucnStatus] ?? IUCN_BADGE_CLASS["Not Evaluated"]
-							].join(" ")}
-						>
-							IUCN: {iucnStatus}
-						</span>
-					</div>
+						{/* Description box (the "attack text" area). Fixed height + clamp so every card is the same size. */}
+						<div className="rounded-lg border border-base-content/10 bg-base-100/60 p-3">
+							<p className="line-clamp-6 h-34 text-sm leading-relaxed text-base-content/85">{spotlight.description}</p>
+						</div>
 
-					<p className="max-h-60 overflow-y-auto pr-1 text-[0.95rem] leading-relaxed text-base-content/85">
-						{organism.description}
-					</p>
-
-					<div className="flex flex-wrap items-center gap-3 pt-1">
-						<Link href={taxonomyHref} className="btn btn-primary btn-sm">
-							View taxonomy
-						</Link>
+						{/* Footer: source project + reserved QR spot. */}
+						<div className="flex items-center justify-between gap-2 border-t border-base-content/10 pt-2">
+							<span className="truncate text-xs text-base-content/60">
+								Project: <span className="font-semibold text-base-content/80">{spotlight.project_id}</span>
+							</span>
+							{/* QR code placeholder: taxonomy-page QR link will render here later. */}
+						</div>
 					</div>
 				</div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
 			</div>
-		</article>
+
+			{/* Photo credit lives outside the card face because hover-3d blocks hovering inside it. */}
+			<div className="mt-4 flex w-full flex-wrap items-center justify-center gap-3">
+				<Link href={taxonomyHref} className="btn btn-primary btn-sm">
+					View taxonomy
+				</Link>
+				<ImageAttributionIcon attribution={imageAttribution} fallbackTitle={commonName} />
+			</div>
+		</div>
 	);
 }
 
@@ -1628,31 +1690,22 @@ type ImageAttributionDetails = {
 	isMissing?: boolean;
 };
 
-function normalizeImageAttribution(attribution: string | undefined): string | undefined {
-	const value = attribution?.trim();
-	if (!value) return undefined;
-	if (/to be updated|pending|coming soon/i.test(value)) return undefined;
-	return value;
-}
-
-function getImageAttributionDetails(organism: FeaturedOrganism): ImageAttributionDetails {
+function getImageAttributionDetails(spotlight: SpotlightWithImage): ImageAttributionDetails {
+	const image = spotlight.Image;
+	const attribution = image?.Attribution;
 	const details: ImageAttributionDetails = {
-		title: cleanAttributionValue(organism.attributionTitle),
-		names: cleanAttributionValue(organism.attributionNames),
-		institution: cleanAttributionValue(organism.attributionInstitution),
-		attributionUrl: cleanAttributionValue(organism.attributionUrl),
-		imageSourceUrl: cleanAttributionValue(organism.imageSourceUrl),
-		licenseName: cleanAttributionValue(organism.licenseName),
-		licenseUrl: cleanAttributionValue(organism.licenseUrl),
-		location: cleanAttributionValue(organism.location),
-		imageName: cleanAttributionValue(organism.imageName)
+		title: cleanAttributionValue(attribution?.attributionTitle),
+		names: cleanAttributionValue(attribution?.attributionNames.join(", ")),
+		institution: cleanAttributionValue(attribution?.attributionInstitution ?? undefined),
+		attributionUrl: cleanAttributionValue(attribution?.attributionUrl ?? undefined),
+		licenseName: cleanAttributionValue(image?.license ?? undefined),
+		location: cleanAttributionValue(image?.location ?? undefined),
+		imageName: cleanAttributionValue(image?.name ?? undefined)
 	};
 	const hasStructuredValues = Object.values(details).some(Boolean);
 	if (hasStructuredValues) {
 		return details;
 	}
-	const legacyText = normalizeImageAttribution(organism.imageAttribution);
-	if (legacyText) return { legacyText };
 	return {
 		legacyText: "Attribution details coming soon.",
 		isMissing: true
@@ -1673,7 +1726,7 @@ function ImageAttributionIcon({
 
 	return (
 		<div
-			className="absolute bottom-2 right-2 z-20"
+			className="relative z-20"
 			onMouseEnter={() => setHover(true)}
 			onMouseLeave={() => setHover(false)}
 		>
@@ -1739,39 +1792,4 @@ function ImageAttributionIcon({
 			</div>
 		</div>
 	);
-}
-
-function toSingleTaxonomyString(taxonomyString: string | undefined): string | undefined {
-	if (!taxonomyString) return undefined;
-	const normalized = taxonomyString.trim();
-	// Guard against accidentally passing a list of taxonomy paths.
-	if (normalized.includes(",") || normalized.includes("|") || normalized.includes("\n")) {
-		return undefined;
-	}
-	return normalized;
-}
-
-function toFilterGroup(group: FeaturedOrganismGroup): FeaturedFilterGroup {
-	switch (group) {
-		case "Fish":
-			return "Fish";
-		case "Protists and Microbial Eukaryotes":
-			return "Protists";
-		case "Invertebrate animals":
-		case "Invertebrate organisms":
-			return "Invertebrates";
-		case "Other":
-			return "Other";
-		default:
-			return "Other";
-	}
-}
-
-function createFallbackCommonName(organism: FeaturedOrganism): string {
-	const fromId = organism.id
-		.split("-")
-		.filter(Boolean)
-		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-		.join(" ");
-	return fromId || organism.taxonomyName;
 }

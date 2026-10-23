@@ -15,9 +15,9 @@ import { resolveGbifCommonName } from "@/app/helpers/resolveGbifCommonName";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { TaxonomicRank } from "@/types/globals";
-import { prismaImages } from "@/app/helpers/prismaImages";
-import type { ImageWithRelations } from "@/prismaImages/generated/zod";
-import type { TaxonomySpotlightModel } from "@/app/generated/prisma/models";
+// import { prismaImages } from "@/app/helpers/prismaImages";
+// import type { ImageWithRelations } from "@/prismaImages/generated/zod";
+// import type { TaxonomySpotlightModel } from "@/app/generated/prisma/models";
 
 export async function generateMetadata({ params }: { params: Promise<{ taxonomy: string }> }): Promise<Metadata> {
 	const { taxonomy } = await decodeRouteParams(params);
@@ -111,27 +111,27 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					project_id: true
 				}
 			},
-			TaxonomySpotlights: true
+			// TaxonomySpotlights: true
 		}
 	});
 
 	if (!dbTaxonomy) notFound();
 
 	//get images and attributions for spotlights
-	const images = await prismaImages.image.findMany({
-		where: {
-			url: {
-				in: dbTaxonomy.TaxonomySpotlights.map((sl) => sl.imageFileUrl_ODE)
-			}
-		},
-		include: {
-			Attribution: true
-		}
-	});
-	const spotlightsWithImages = dbTaxonomy.TaxonomySpotlights.map((sl) => ({
-		...sl,
-		Image: images.find((i) => sl.imageFileUrl_ODE === i.url)
-	})) as (TaxonomySpotlightModel & { Image: ImageWithRelations })[];
+	// const images = await prismaImages.image.findMany({
+	// 	where: {
+	// 		url: {
+	// 			in: dbTaxonomy.TaxonomySpotlights.map((sl) => sl.imageFileUrl_ODE)
+	// 		}
+	// 	},
+	// 	include: {
+	// 		Attribution: true
+	// 	}
+	// });
+	// const spotlightsWithImages = dbTaxonomy.TaxonomySpotlights.map((sl) => ({
+	// 	...sl,
+	// 	Image: images.find((i) => sl.imageFileUrl_ODE === i.url)
+	// })) as (TaxonomySpotlightModel & { Image: ImageWithRelations })[];
 
 	// Get unique project IDs for display
 	const uniqueProjects = dbTaxonomy.Analyses.map((a) => a.project_id);
@@ -192,7 +192,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						databaseRankLabel={databaseRankLabel}
 						databaseScientificName={databaseScientificName}
 						commonName={pageGbif?.commonName ?? null}
-						taxonomySpotlights={spotlightsWithImages}
+						taxonomySpotlights={[]}
 					>
 						<div className="flex flex-col items-start gap-3">
 							<CopyButton taxonomy={taxonomy} variant="button" label="Copy Taxonomy" />

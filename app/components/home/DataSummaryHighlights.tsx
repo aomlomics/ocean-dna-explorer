@@ -3,10 +3,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
-import FeaturedOrganisms from "../dataSummary/featuredOrganisms";
 import DashCard, { DashCardInfoButton, type DashCardInfo } from "../dataSummary/DashCard";
 import { AnalysisIcon, AssayIcon, ProjectIcon, TrustedIcon, UntrustedIcon } from "@/app/components/icons";
-import InfoButton from "@/app/components/InfoButton";
 import { exploreUrl } from "@/app/helpers/utils";
 import SubmissionPager, { type SubmissionEntry } from "@/app/components/home/SubmissionPager";
 
@@ -179,7 +177,7 @@ export default async function DataSummaryHighlights() {
 	]);
 
 	return (
-		<section className="w-full space-y-6">
+		<section className="w-full space-y-6 pt-10">
 			<h2 className="text-center text-2xl font-semibold leading-tight text-base-content sm:text-3xl">
 				Latest Submissions
 			</h2>
@@ -196,18 +194,6 @@ export default async function DataSummaryHighlights() {
 					<EmptySubmissionCard label="analysis" />
 				)}
 			</div>
-		</section>
-	);
-}
-
-export function FeaturedOrganismsSection() {
-	return (
-		<section className="space-y-6">
-			<div className="flex items-center gap-2">
-				<h2 className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight">Featured Organisms</h2>
-				<InfoButton text="Hand-picked by the ODE team" dir="tooltip-right" />
-			</div>
-			<FeaturedOrganisms />
 		</section>
 	);
 }
