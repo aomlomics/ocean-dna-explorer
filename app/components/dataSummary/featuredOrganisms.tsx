@@ -511,11 +511,7 @@ function ImageAttributionIcon({
 	const headline = attribution.imageName ?? attribution.title ?? fallbackTitle;
 
 	return (
-		<div
-			className="relative z-20"
-			onMouseEnter={() => setHover(true)}
-			onMouseLeave={() => setHover(false)}
-		>
+		<div className="relative z-20" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
 			<div className="relative">
 				<div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-base-100/70 border border-base-200 backdrop-blur flex items-center justify-center shadow-sm">
 					<PhotoIcon />

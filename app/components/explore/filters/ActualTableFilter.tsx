@@ -116,7 +116,9 @@ export default function ActualTableFilter({
 			{!embedded ? (
 				<div
 					className={`relative flex justify-between items-center px-5 py-3 select-none transition-colors rounded-xl cursor-pointer hover:bg-primary/10 ${!isOpen ? "md:tooltip tooltip-top before:text-base-content before:bg-base-200 before:border before:border-base-content/20" : ""}`}
-					data-tip={!isOpen ? "Apply filters to the data below by using the dropdown menus in this Filter Menu" : undefined}
+					data-tip={
+						!isOpen ? "Apply filters to the data below by using the dropdown menus in this Filter Menu" : undefined
+					}
 					onClick={() => setIsOpen((v) => !v)}
 					role="button"
 					aria-expanded={showBody}

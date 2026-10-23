@@ -68,7 +68,10 @@ async function resolveTaxonomyPageGbif(taxonomyObj: TaxonomyModel): Promise<{
 	commonName: string | null;
 	phyloPic: { imageUrl: string | null; rank: string; title: string } | null;
 } | null> {
-	const [matched, commonName] = await Promise.all([matchGbifForPhylopic(taxonomyObj), resolveGbifCommonName(taxonomyObj)]);
+	const [matched, commonName] = await Promise.all([
+		matchGbifForPhylopic(taxonomyObj),
+		resolveGbifCommonName(taxonomyObj)
+	]);
 	if (!matched) {
 		if (!commonName) return null;
 		return { taxonKey: null, mediaTaxonKey: null, commonName, phyloPic: null };

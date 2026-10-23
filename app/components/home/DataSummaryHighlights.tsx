@@ -333,11 +333,7 @@ function LatestAnalysisCard({ analysis, info }: AnalysisProps & { info: DashCard
 
 			<div>
 				<AssayLabel prominent />
-				<CompactAssayChip
-					assay_name={analysis.assay_name}
-					target_gene={analysis.Assay.target_gene}
-					prominent
-				/>
+				<CompactAssayChip assay_name={analysis.assay_name} target_gene={analysis.Assay.target_gene} prominent />
 			</div>
 
 			<div className="min-w-0">
@@ -409,9 +405,7 @@ function AssayLabel({ prominent = false, plural = false }: { prominent?: boolean
 		>
 			<AssayIcon
 				className={
-					prominent
-						? "size-7! h-7! w-7! shrink-0 text-base-content"
-						: "size-6! h-6! w-6! shrink-0 text-base-content"
+					prominent ? "size-7! h-7! w-7! shrink-0 text-base-content" : "size-6! h-6! w-6! shrink-0 text-base-content"
 				}
 			/>
 			{plural ? "Assays" : "Assay"}

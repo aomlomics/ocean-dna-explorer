@@ -4,7 +4,8 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Visualize | Help",
-	description: "Learn what each Visualize chart shows: sample metadata scatter plots, taxonomy graphs, and alpha diversity."
+	description:
+		"Learn what each Visualize chart shows: sample metadata scatter plots, taxonomy graphs, and alpha diversity."
 };
 
 export default function HelpVisualizePage() {
@@ -51,7 +52,9 @@ export default function HelpVisualizePage() {
 								</li>
 								<li>Filter the input data with the query builder. You do not pick a results table here.</li>
 								<li>Set the chart options: axes, taxonomic rank, grouping, and similar controls on that chart</li>
-								<li>Pan and zoom on scatter plots and stacked bars. Copy a PNG of the current chart with the copy button.</li>
+								<li>
+									Pan and zoom on scatter plots and stacked bars. Copy a PNG of the current chart with the copy button.
+								</li>
 							</ol>
 						</>
 					)
@@ -145,9 +148,7 @@ export default function HelpVisualizePage() {
 								metric, group samples on the X axis by a sample field, and optionally split the boxes by a second field
 								(hue). You can overlay the individual points.
 							</p>
-							<p className="mb-4">
-								Use it to compare diversity across habitats, projects, or other sample metadata.
-							</p>
+							<p className="mb-4">Use it to compare diversity across habitats, projects, or other sample metadata.</p>
 						</>
 					)
 				}

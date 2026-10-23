@@ -549,9 +549,7 @@ export default function ShowcaseClient({
 												: { x: "-14vw", rotate: -16, scale: 0.9, opacity: 0 }
 									}
 									animate={{ x: 0, rotate: 0, scale: 1, opacity: 1 }}
-									transition={
-										prefersReducedMotion ? { duration: 0 } : { duration: circleDuration, ease: PREMIUM_EASE }
-									}
+									transition={prefersReducedMotion ? { duration: 0 } : { duration: circleDuration, ease: PREMIUM_EASE }}
 								>
 									{project.imageFileUrl_ODE ? (
 										<Image

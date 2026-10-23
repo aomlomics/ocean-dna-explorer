@@ -589,9 +589,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			)}
 
 			{/* No cover: map + depth/assays + metadata below. With cover, metadata sits under map inside mapDepthGrid. */}
-			<section className="mt-2 space-y-8">
-				{!project.imageFileUrl_ODE ? mapDepthGrid : null}
-			</section>
+			<section className="mt-2 space-y-8">{!project.imageFileUrl_ODE ? mapDepthGrid : null}</section>
 		</div>
 	);
 }

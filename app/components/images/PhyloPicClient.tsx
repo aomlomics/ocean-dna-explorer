@@ -46,10 +46,9 @@ export default function PhyloPicClient({
 			for (let i = 0; i < 3; i++) {
 				try {
 					const phyloPicRes = await limitPhyloPic(() =>
-						fetch(
-							`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${objectIDs}`,
-							{ signal: AbortSignal.timeout(3000) }
-						)
+						fetch(`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${objectIDs}`, {
+							signal: AbortSignal.timeout(3000)
+						})
 					);
 					const phyloPic = await phyloPicRes.json();
 

@@ -63,8 +63,9 @@ export default function ApiSchemaPage() {
 							</div>
 
 							<p className="mb-4">
-								This Entity Relationship Diagram shows the data tables of the database, the tables you will usually want to query. Internal,
-								non-data tables are listed separately below. Use this diagram as a reference when constructing queries with the{" "}
+								This Entity Relationship Diagram shows the data tables of the database, the tables you will usually want
+								to query. Internal, non-data tables are listed separately below. Use this diagram as a reference when
+								constructing queries with the{" "}
 								<Link href="/docs/api/queryParameters#relations" className="text-primary">
 									relations
 								</Link>{" "}

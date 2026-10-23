@@ -105,7 +105,12 @@ function PagerControls({
 	const noun = kind === "project" ? "project" : "analysis";
 
 	return (
-		<div className="inline-flex items-center" role="group" aria-label={`Recent ${noun} submissions`} aria-busy={pending}>
+		<div
+			className="inline-flex items-center"
+			role="group"
+			aria-label={`Recent ${noun} submissions`}
+			aria-busy={pending}
+		>
 			<button
 				type="button"
 				onClick={() => onOffset(index - 1)}
@@ -138,12 +143,7 @@ function PagerControls({
 function Chevron({ direction }: { direction: "left" | "right" }) {
 	return (
 		<svg className="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-			<path
-				strokeLinecap="round"
-				strokeLinejoin="round"
-				d={direction === "left" ? "M15 6l-6 6 6 6" : "M9 6l6 6-6 6"}
-			/>
+			<path strokeLinecap="round" strokeLinejoin="round" d={direction === "left" ? "M15 6l-6 6 6 6" : "M9 6l6 6-6 6"} />
 		</svg>
 	);
 }
-

@@ -180,9 +180,7 @@ export default function TableDisplay({
 
 			{viewModeCtx ? (
 				<div className="flex w-full flex-col items-center gap-3">
-					{table === "taxonomy" ? (
-						<CommonNamesToggle checked={showCommonNames} onChange={setShowCommonNames} />
-					) : null}
+					{table === "taxonomy" ? <CommonNamesToggle checked={showCommonNames} onChange={setShowCommonNames} /> : null}
 					<div className={`w-full ${dataShellClass}`}>{dataContent}</div>
 				</div>
 			) : (
@@ -192,13 +190,7 @@ export default function TableDisplay({
 	);
 }
 
-function CommonNamesToggle({
-	checked,
-	onChange
-}: {
-	checked: boolean;
-	onChange: (checked: boolean) => void;
-}) {
+function CommonNamesToggle({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
 	return (
 		<div className="flex w-full flex-wrap items-center justify-center gap-3">
 			<label className="inline-flex items-center justify-center gap-2 text-sm">
@@ -210,10 +202,7 @@ function CommonNamesToggle({
 				/>
 				<span>Show common names</span>
 			</label>
-			<InfoButton
-				text="GBIF common names are approximations and are not stored in our database."
-				dir="tooltip-right"
-			/>
+			<InfoButton text="GBIF common names are approximations and are not stored in our database." dir="tooltip-right" />
 		</div>
 	);
 }
