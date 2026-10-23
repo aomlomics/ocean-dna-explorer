@@ -1,0 +1,3 @@
+P2-23, P1-6 (use distinct), P1-2 (bounding box in database query for shapes)
+
+make trusted checkbox more obvious on analysis submit page
