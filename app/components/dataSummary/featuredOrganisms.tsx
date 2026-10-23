@@ -356,7 +356,7 @@ function SelectedOrganismCard({
 			 * daisyUI hover-3d tilts its first child using the 8 empty hover-zone divs layered on top,
 			 * so nothing inside the card face can be clickable, hoverable, or scrollable.
 			 */}
-			<div className="hover-3d relative z-0 w-full">
+			<div className="hover-3d z-2 w-full">
 				{/*
 				 * The trading-card look is built from stacked frames: outer stock border ->
 				 * inner frame -> art frame -> text-box frame, plus gradient "gloss" overlays.
@@ -450,7 +450,7 @@ function SelectedOrganismCard({
 			</div>
 
 			{/* Photo credit lives outside the card face because hover-3d blocks hovering inside it. */}
-			<div className="relative z-20 mt-4 flex w-full flex-wrap items-center justify-center gap-3">
+			<div className="mt-4 flex w-full flex-wrap items-center justify-center gap-3">
 				<Link href={taxonomyHref} className="btn btn-primary btn-sm">
 					View taxonomy
 				</Link>
@@ -509,67 +509,65 @@ function ImageAttributionIcon({
 	const headline = attribution.imageName ?? attribution.title ?? fallbackTitle;
 
 	return (
-		<div className="relative z-20" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-			<div className="relative">
-				<div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-base-100/70 border-2 border-primary backdrop-blur flex items-center justify-center shadow-sm">
-					<PhotoIcon />
-				</div>
-				{hover ? (
-					<div className="absolute bottom-full right-0 w-72 max-w-[86vw] rounded-lg border border-base-200 bg-base-100/95 p-2.5 text-xs text-base-content shadow-lg backdrop-blur">
-						<div className="space-y-1.5 wrap-break-word">
-							<p className="font-semibold">{headline}</p>
-							{attribution.title ? <p>{attribution.title}</p> : null}
-							{combinedCredit ? <p>{combinedCredit}</p> : null}
-							{attribution.location ? <p>{attribution.location}</p> : null}
-							{attribution.attributionUrl ? (
-								<p>
-									<a
-										className="link link-primary break-all"
-										href={attribution.attributionUrl}
-										target="_blank"
-										rel="noreferrer"
-									>
-										{attribution.attributionUrl}
-									</a>
-								</p>
-							) : null}
-							{attribution.imageSourceUrl ? (
-								<p>
-									<a
-										className="link link-primary break-all"
-										href={attribution.imageSourceUrl}
-										target="_blank"
-										rel="noreferrer"
-									>
-										{attribution.imageSourceUrl}
-									</a>
-								</p>
-							) : null}
-							{licenseText ? (
-								<p>
-									{attribution.licenseUrl ? (
-										<a
-											className="link link-primary break-all"
-											href={attribution.licenseUrl}
-											target="_blank"
-											rel="noreferrer"
-										>
-											{licenseText}
-										</a>
-									) : (
-										licenseText
-									)}
-								</p>
-							) : null}
-							{attribution.legacyText ? (
-								<p className={attribution.isMissing ? "text-base-content/70 italic" : undefined}>
-									{attribution.legacyText}
-								</p>
-							) : null}
-						</div>
-					</div>
-				) : null}
+		<div className="relative" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+			<div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-base-100/70 border-2 border-primary backdrop-blur flex items-center justify-center shadow-sm">
+				<PhotoIcon />
 			</div>
+			{hover ? (
+				<div className="absolute z-20 bottom-full right-0 w-72 max-w-[86vw] rounded-lg border border-base-200 bg-base-100/95 p-2.5 text-xs text-base-content shadow-lg backdrop-blur">
+					<div className="space-y-1.5 wrap-break-word">
+						<p className="font-semibold">{headline}</p>
+						{attribution.title ? <p>{attribution.title}</p> : null}
+						{combinedCredit ? <p>{combinedCredit}</p> : null}
+						{attribution.location ? <p>{attribution.location}</p> : null}
+						{attribution.attributionUrl ? (
+							<p>
+								<a
+									className="link link-primary break-all"
+									href={attribution.attributionUrl}
+									target="_blank"
+									rel="noreferrer"
+								>
+									{attribution.attributionUrl}
+								</a>
+							</p>
+						) : null}
+						{attribution.imageSourceUrl ? (
+							<p>
+								<a
+									className="link link-primary break-all"
+									href={attribution.imageSourceUrl}
+									target="_blank"
+									rel="noreferrer"
+								>
+									{attribution.imageSourceUrl}
+								</a>
+							</p>
+						) : null}
+						{licenseText ? (
+							<p>
+								{attribution.licenseUrl ? (
+									<a
+										className="link link-primary break-all"
+										href={attribution.licenseUrl}
+										target="_blank"
+										rel="noreferrer"
+									>
+										{licenseText}
+									</a>
+								) : (
+									licenseText
+								)}
+							</p>
+						) : null}
+						{attribution.legacyText ? (
+							<p className={attribution.isMissing ? "text-base-content/70 italic" : undefined}>
+								{attribution.legacyText}
+							</p>
+						) : null}
+					</div>
+				</div>
+			) : null}
 		</div>
 	);
 }
