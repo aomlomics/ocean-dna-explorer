@@ -1,4 +1,4 @@
-import { prisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
 import Link from "next/link";
 import { RanksBySpecificity } from "@/types/objects";
@@ -19,6 +19,8 @@ import { prismaImages } from "@/app/helpers/prismaImages";
 import type { ImageWithRelations } from "@/prismaImages/generated/zod";
 import type { TaxonomySpotlightModel } from "@/app/generated/prisma/models";
 import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
+import { cookies } from "next/headers";
+import type { Prisma } from "@/app/generated/prisma/client";
 
 export async function generateMetadata({ params }: { params: Promise<{ taxonomy: string }> }): Promise<Metadata> {
 	const { taxonomy } = await decodeRouteParams(params);
@@ -118,32 +120,30 @@ async function resolveTaxonomyPageGbif(taxonomyObj: TaxonomyModel): Promise<{
 export default async function TaxonomyPage({ params }: { params: Promise<{ taxonomy: string }> }) {
 	const { taxonomy } = await decodeRouteParams(params);
 
-	const dbTaxonomy = await prisma.taxonomy.findUnique({
+	const query = {
 		where: {
 			taxonomy
 		},
 		include: {
 			Samples: true,
 			Analyses: {
-				distinct: ["project_id"],
+				distinct: ["project_id"] as Prisma.AnalysisScalarFieldEnum[],
 				select: {
 					project_id: true
 				}
 			},
-			TaxonomySpotlights: true,
-			_count: {
-				select: {
-					Analyses: {
-						where: {
-							trusted: true
-						}
-					}
-				}
-			}
+			TaxonomySpotlights: true
 		}
-	});
+	};
 
-	if (!dbTaxonomy) notFound();
+	let dbTaxonomy = await trustedPrisma.taxonomy.findUnique(query);
+	let showTrustedWarning = false;
+	if (!dbTaxonomy) {
+		const cookieStore = await cookies();
+		if (cookieStore.get("trusted")?.value !== "false") dbTaxonomy = await prisma.taxonomy.findUnique(query);
+		if (!dbTaxonomy) notFound();
+		showTrustedWarning = true;
+	}
 
 	//get images and attributions for spotlights
 	const images = await prismaImages.image.findMany({
@@ -198,11 +198,11 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 
 					<TableInfo table="taxonomy" />
 
-					<span className="-translate-y-2 shrink-0 rounded-md bg-base-300 px-2.5 py-1 text-sm font-medium leading-normal text-base-content">
+					<span className="-translate-y-2 shrink-0 rounded-md bg-base-300 px-2.5 py-1 text-sm font-medium leading-normal text-base-content mr-2">
 						{databaseRankLabel}
 					</span>
 
-					<UntrustedInTrustedMode trusted={!!dbTaxonomy._count.Analyses} />
+					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
 
 				<p className="text-lg text-base-content/70">

@@ -1,9 +1,9 @@
 import DataDisplay from "@/app/components/explore/DataDisplay";
-import { prisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/table/Table";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import PrimerDiagram from "@/app/components/explore/PrimerDiagram";
 import GcDonut from "@/app/components/charts/GcDonut";
 import StatCard from "@/app/components/explore/StatCard";
@@ -14,6 +14,7 @@ import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
 import type { Metadata } from "next";
 import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
+import { cookies } from "next/headers";
 
 export async function generateMetadata({ params }: { params: Promise<{ assay_name: string }> }): Promise<Metadata> {
 	const { assay_name } = await decodeRouteParams(params);
@@ -93,7 +94,7 @@ export default async function Assay_name({
 		redirect(exploreUrl({ table: "assay", assay_name }));
 	}
 
-	const assay = await prisma.assay.findUnique({
+	const query = {
 		where: {
 			assay_name
 		},
@@ -102,7 +103,6 @@ export default async function Assay_name({
 			Analyses: {
 				select: {
 					analysis_run_name: true,
-					trusted: true,
 					_count: {
 						select: {
 							Taxonomies: true
@@ -111,9 +111,17 @@ export default async function Assay_name({
 				}
 			}
 		}
-	});
+	};
 
-	if (!assay) return <>Assay not found</>;
+	let assay = await trustedPrisma.assay.findUnique(query);
+	let showTrustedWarning = false;
+	if (!assay) {
+		const cookieStore = await cookies();
+		if (cookieStore.get("trusted")?.value !== "false") assay = await prisma.assay.findUnique(query);
+		if (!assay) notFound();
+		showTrustedWarning = true;
+	}
+
 	const { Libraries, Analyses, ...justAssay } = assay;
 
 	const forwardGc = calculateGcContent(assay.pcr_primer_forward);
@@ -140,7 +148,7 @@ export default async function Assay_name({
 						<span className="min-w-0 wrap-anywhere">{assay_name}</span>
 					</h1>
 
-					<UntrustedInTrustedMode trusted={Analyses.some((a) => a.trusted)} />
+					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
 
 				<div className="mt-1 w-full min-w-0 max-w-full text-sm text-base-content/80 space-y-1">

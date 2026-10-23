@@ -2,7 +2,7 @@ import Link from "next/link";
 import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
 import DataDisplay from "@/app/components/explore/DataDisplay";
-import { prisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { LibraryIcon, AssayIcon, SampleIcon } from "@/app/components/icons";
 import StatCard from "@/app/components/explore/StatCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
@@ -10,6 +10,7 @@ import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
+import { cookies } from "next/headers";
 
 export async function generateMetadata({
 	params
@@ -44,7 +45,7 @@ export async function generateMetadata({
 export default async function Lib_id({ params }: { params: Promise<{ project_id: string; lib_id: string }> }) {
 	const { project_id, lib_id } = await decodeRouteParams(params);
 
-	const library = await prisma.library.findUnique({
+	const query = {
 		where: {
 			project_id_lib_id: {
 				project_id,
@@ -62,22 +63,20 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 					assay_name: true,
 					target_gene: true
 				}
-			},
-			_count: {
-				select: {
-					Analyses: {
-						where: {
-							trusted: true
-						}
-					}
-				}
 			}
 		}
-	});
+	};
 
-	if (!library) notFound();
+	let library = await trustedPrisma.library.findUnique(query);
+	let showTrustedWarning = false;
+	if (!library) {
+		const cookieStore = await cookies();
+		if (cookieStore.get("trusted")?.value !== "false") library = await prisma.library.findUnique(query);
+		if (!library) notFound();
+		showTrustedWarning = true;
+	}
 
-	const { Sample, Assay, _count, ...justLibrary } = library;
+	const { Sample, Assay, ...justLibrary } = library;
 
 	return (
 		<div className="space-y-6 pb-8">
@@ -102,7 +101,7 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 						</h1>
 					</TitleHoverTooltip>
 
-					<UntrustedInTrustedMode trusted={!!_count.Analyses} />
+					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
 
 				<p className="text-lg text-base-content/70 max-w-4xl">

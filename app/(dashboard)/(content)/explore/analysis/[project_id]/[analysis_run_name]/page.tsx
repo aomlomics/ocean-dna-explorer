@@ -1,4 +1,4 @@
-import { prisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import MapComponent from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/table/Table";
@@ -27,6 +27,7 @@ import type { Metadata } from "next";
 import type { TaxonomicRank } from "@/types/globals";
 import { FIRST_TAXONOMY_VISUALIZE_TAB, TAXONOMY_VISUALIZE_TABS } from "@/app/components/charts/taxonomy/tabs";
 import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
+import { cookies } from "next/headers";
 
 export async function generateMetadata({
 	params
@@ -99,7 +100,7 @@ export default async function Project_id_Analysis_run_name({
 		redirect(exploreUrl({ table: "analysis", project_id, analysis_run_name }));
 	}
 
-	const analysis = await prisma.analysis.findUnique({
+	const query = {
 		where: {
 			project_id_analysis_run_name: {
 				project_id,
@@ -134,8 +135,17 @@ export default async function Project_id_Analysis_run_name({
 				}
 			}
 		}
-	});
-	if (!analysis) notFound();
+	};
+
+	let analysis = await trustedPrisma.analysis.findUnique(query);
+	let showTrustedWarning = false;
+	if (!analysis) {
+		const cookieStore = await cookies();
+		if (cookieStore.get("trusted")?.value !== "false") analysis = await prisma.analysis.findUnique(query);
+		if (!analysis) notFound();
+		showTrustedWarning = true;
+	}
+
 	const { _count, editHistory, Assay, Tags, AlphaDiversities, ...justAnalysis } = analysis;
 
 	const analysisFiles = [
@@ -179,7 +189,7 @@ export default async function Project_id_Analysis_run_name({
 
 					<EditHistory editHistory={editHistory} />
 
-					<UntrustedInTrustedMode trusted={analysis.trusted} />
+					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 					{analysis.trusted && <div className="badge badge-primary text-neutral-content p-3 select-none">Trusted</div>}
 
 					{Tags.map((t) => (

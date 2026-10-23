@@ -1,5 +1,5 @@
 import DataDisplay from "@/app/components/explore/DataDisplay";
-import { prisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import MapComponent from "@/app/components/map/Map";
 import TableMetadata from "@/types/tableMetadata";
@@ -22,6 +22,7 @@ import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
+import { cookies } from "next/headers";
 
 export async function generateMetadata({
 	params
@@ -56,7 +57,7 @@ export async function generateMetadata({
 export default async function Samp_name({ params }: { params: Promise<{ project_id: string; samp_name: string }> }) {
 	const { project_id, samp_name } = await decodeRouteParams(params);
 
-	const sample = await prisma.sample.findUnique({
+	const query = {
 		where: {
 			project_id_samp_name: {
 				project_id,
@@ -85,16 +86,23 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 					},
 					Analyses: {
 						select: {
-							analysis_run_name: true,
-							trusted: true
+							analysis_run_name: true
 						}
 					}
 				}
 			}
 		}
-	});
+	};
 
-	if (!sample) notFound();
+	let sample = await trustedPrisma.sample.findUnique(query);
+	let showTrustedWarning = false;
+	if (!sample) {
+		const cookieStore = await cookies();
+		if (cookieStore.get("trusted")?.value !== "false") sample = await prisma.sample.findUnique(query);
+		if (!sample) notFound();
+		showTrustedWarning = true;
+	}
+
 	const { Taxonomies, Libraries, ...justSample } = sample;
 
 	const uniqueAssays = [] as { assay_name: AssayModel["assay_name"]; target_gene: AssayModel["target_gene"] }[];
@@ -104,13 +112,9 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 		}
 	}
 
-	let isTrusted = false;
 	const uniqueAnalyses = Libraries.reduce(
 		(acc, lib) => {
-			lib.Analyses.forEach((a) => {
-				if (a.trusted) isTrusted = true;
-				acc.add(a.analysis_run_name);
-			});
+			lib.Analyses.forEach((a) => acc.add(a.analysis_run_name));
 			return acc;
 		},
 		new Set() as Set<AnalysisModel["analysis_run_name"]>
@@ -149,7 +153,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 						</h1>
 					</TitleHoverTooltip>
 
-					<UntrustedInTrustedMode trusted={isTrusted} />
+					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
 
 				<p className="text-lg text-base-content/70 max-w-4xl">

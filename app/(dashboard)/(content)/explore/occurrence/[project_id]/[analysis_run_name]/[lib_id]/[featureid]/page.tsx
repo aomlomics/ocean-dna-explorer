@@ -2,7 +2,7 @@ import Map from "@/app/components/map/Map";
 import PhyloPic from "@/app/components/images/PhyloPic";
 import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
-import { prisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import {
 	AnalysisIcon,
@@ -20,6 +20,7 @@ import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
+import { cookies } from "next/headers";
 
 export async function generateMetadata({
 	params
@@ -70,7 +71,7 @@ export default async function OccurrencePage({
 }) {
 	const { project_id, analysis_run_name, lib_id, featureid } = await decodeRouteParams(params);
 
-	const occurrence = await prisma.occurrence.findUnique({
+	const query = {
 		where: {
 			project_id_analysis_run_name_lib_id_featureid: {
 				project_id,
@@ -88,7 +89,6 @@ export default async function OccurrencePage({
 			Analysis: {
 				select: {
 					assay_name: true,
-					trusted: true,
 					Assay: {
 						select: {
 							target_gene: true
@@ -107,8 +107,16 @@ export default async function OccurrencePage({
 				}
 			}
 		}
-	});
-	if (!occurrence) notFound();
+	};
+
+	let occurrence = await trustedPrisma.occurrence.findUnique(query);
+	let showTrustedWarning = false;
+	if (!occurrence) {
+		const cookieStore = await cookies();
+		if (cookieStore.get("trusted")?.value !== "false") occurrence = await prisma.occurrence.findUnique(query);
+		if (!occurrence) notFound();
+		showTrustedWarning = true;
+	}
 
 	const occurrenceTitle = `${featureid} in ${lib_id} (${analysis_run_name})`;
 	const occurrenceInfo = {
@@ -262,7 +270,7 @@ export default async function OccurrencePage({
 						</h1>
 					</TitleHoverTooltip>
 
-					<UntrustedInTrustedMode trusted={occurrence.Analysis.trusted} />
+					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
 
 				<p className="mb-2 max-w-5xl text-sm text-base-content/65 wrap-anywhere">

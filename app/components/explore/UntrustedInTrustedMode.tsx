@@ -1,23 +1,13 @@
-"use client";
-
-import { useTrusted } from "@/app/hooks/TrustedProvider";
 import { UntrustedIcon } from "../icons";
 
-export default function UntrustedInTrustedMode({ trusted }: { trusted: boolean }) {
-	const { trusted: trustedToggle, setTrusted } = useTrusted();
-
-	if (trusted || !trustedToggle) {
-		return <></>;
-	}
-
+export default function UntrustedInTrustedMode() {
 	return (
 		<div
 			className="tooltip tooltip-warning before:z-50 cursor-pointer flex gap-2 badge badge-warning py-3.5 px-2"
-			data-tip="You are currently viewing untrusted data while in trusted mode. Data you see on this page may not be reflected on the rest of the site. To remedy this, click here to disable trusted mode."
-			onClick={() => setTrusted(false)}
+			data-tip="You are currently viewing non-trusted data while in trusted mode. This page is behaving as if trusted mode is disabled, showing all data. The data you see on this page may not be reflected on the rest of the site."
 		>
 			<UntrustedIcon />
-			<span>Untrusted</span>
+			<span>Non-trusted</span>
 		</div>
 	);
 }

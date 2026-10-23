@@ -1,7 +1,7 @@
 import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
 import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
-import { prisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -17,6 +17,9 @@ import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import type { Metadata } from "next";
 import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
+import type { Prisma } from "@/app/generated/prisma/client";
+import { cookies } from "next/headers";
+import type { AnalysisModel, AssayModel } from "@/app/generated/prisma/models";
 
 export async function generateMetadata({ params }: { params: Promise<{ featureid: string }> }): Promise<Metadata> {
 	const { featureid } = await decodeRouteParams(params);
@@ -106,7 +109,7 @@ export default async function Featureid({
 		redirect(exploreUrl({ table: "feature", featureid }));
 	}
 
-	const { feature, isTrusted, taxaCounts, assaySummaries } = await prisma.$transaction(async (tx) => {
+	const query = async (tx: Prisma.TransactionClient) => {
 		const feature = await tx.feature.findUnique({
 			where: {
 				featureid
@@ -126,17 +129,9 @@ export default async function Featureid({
 			}
 		});
 
-		const isTrusted = !!(await tx.assignment.findFirst({
-			where: {
-				featureid,
-				Analysis: {
-					trusted: true
-				}
-			}
-		}));
-
-		const taxaCounts = [] as { taxonomy: string; count: number }[];
 		if (feature) {
+			const taxaCounts = [] as { taxonomy: TaxonomyModel["taxonomy"]; count: number }[];
+
 			for (const { Taxonomy } of feature.Assignments) {
 				taxaCounts.push({
 					taxonomy: Taxonomy.taxonomy,
@@ -148,45 +143,54 @@ export default async function Featureid({
 					})
 				});
 			}
-		}
 
-		const assignmentAssays = await tx.assignment.findMany({
-			where: {
-				featureid
-			},
-			select: {
-				Analysis: {
-					select: {
-						assay_name: true,
-						Assay: {
-							select: {
-								target_gene: true
+			const assignmentAssays = await tx.assignment.findMany({
+				where: {
+					featureid
+				},
+				select: {
+					Analysis: {
+						select: {
+							assay_name: true,
+							Assay: {
+								select: {
+									target_gene: true
+								}
 							}
 						}
 					}
 				}
-			}
-		});
+			});
 
-		const uniqueAssays = assignmentAssays.reduce(
-			(acc, a) => ({
-				...acc,
-				[a.Analysis.assay_name]: {
-					target_gene: a.Analysis.Assay.target_gene
-				}
-			}),
-			{} as Record<string, { target_gene: string }>
-		);
+			const uniqueAssays = assignmentAssays.reduce(
+				(acc, a) => ({
+					...acc,
+					[a.Analysis.assay_name]: {
+						target_gene: a.Analysis.Assay.target_gene
+					}
+				}),
+				{} as Record<AnalysisModel["assay_name"], { target_gene: AssayModel["target_gene"] }>
+			);
 
-		const assaySummaries = Object.entries(uniqueAssays).map(([assay_name, assay]) => ({
-			assay_name,
-			target_gene: assay.target_gene
-		}));
+			const assaySummaries = Object.entries(uniqueAssays).map(([assay_name, assay]) => ({
+				assay_name,
+				target_gene: assay.target_gene
+			}));
 
-		return { feature, isTrusted, taxaCounts, assaySummaries };
-	});
+			return { feature, taxaCounts, assaySummaries };
+		}
+	};
 
-	if (!feature) notFound();
+	let result = await trustedPrisma.$transaction(query);
+	let showTrustedWarning = false;
+	if (!result) {
+		const cookieStore = await cookies();
+		if (cookieStore.get("trusted")?.value !== "false") result = await prisma.$transaction(query);
+		if (!result) notFound();
+		showTrustedWarning = true;
+	}
+
+	const { feature, taxaCounts, assaySummaries } = result;
 
 	taxaCounts.sort((a, b) => b.count - a.count);
 	const taxonomyById = new globalThis.Map(
@@ -229,7 +233,7 @@ export default async function Featureid({
 						</h1>
 					</TitleHoverTooltip>
 
-					<UntrustedInTrustedMode trusted={isTrusted} />
+					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
 
 				<p className="text-lg text-base-content/70 max-w-3xl">

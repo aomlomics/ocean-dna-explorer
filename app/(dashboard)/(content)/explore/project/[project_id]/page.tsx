@@ -1,5 +1,5 @@
 import { Suspense, type ReactNode } from "react";
-import { prisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
 import EditHistory from "@/app/components/explore/EditHistory";
@@ -23,6 +23,7 @@ import { notFound } from "next/navigation";
 import type { AnalysisModel, AssayModel, TaxonomyModel } from "@/app/generated/prisma/models";
 import type { Metadata } from "next";
 import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
+import { cookies } from "next/headers";
 
 export async function generateMetadata({ params }: { params: Promise<{ project_id: string }> }): Promise<Metadata> {
 	const { project_id } = await decodeRouteParams(params);
@@ -211,7 +212,7 @@ async function ProjectDownloadsBlock({
 export default async function Project_id({ params }: { params: Promise<{ project_id: string }> }) {
 	const { project_id } = await decodeRouteParams(params);
 
-	const project = await prisma.project.findUnique({
+	const query = {
 		where: {
 			project_id
 		},
@@ -220,7 +221,6 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			Analyses: {
 				select: {
 					analysis_run_name: true,
-					trusted: true,
 					assay_name: true,
 					analysisMetadataFileUrl_ODE: true,
 					asvFileUrl_ODE: true,
@@ -238,8 +238,16 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				}
 			}
 		}
-	});
-	if (!project) notFound();
+	};
+
+	let project = await trustedPrisma.project.findUnique(query);
+	let showTrustedWarning = false;
+	if (!project) {
+		const cookieStore = await cookies();
+		if (cookieStore.get("trusted")?.value !== "false") project = await prisma.project.findUnique(query);
+		if (!project) notFound();
+		showTrustedWarning = true;
+	}
 	const { Samples, Analyses, editHistory, ...justProject } = project;
 
 	const uniqueAssays = Analyses.reduce(
@@ -413,7 +421,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 
 					<EditHistory editHistory={editHistory} />
 
-					<UntrustedInTrustedMode trusted={Analyses.some((a) => a.trusted)} />
+					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
 
 				{project.imageFileUrl_ODE ? (

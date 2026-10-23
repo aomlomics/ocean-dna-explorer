@@ -2,7 +2,7 @@ import Link from "next/link";
 import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
 import DataDisplay from "@/app/components/explore/DataDisplay";
-import { prisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { AssayPrepIcon, ProjectIcon } from "@/app/components/icons";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
@@ -10,6 +10,7 @@ import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
+import { cookies } from "next/headers";
 
 export async function generateMetadata({
 	params
@@ -48,7 +49,7 @@ export default async function Project_id_Assay_name({
 }) {
 	const { project_id, assay_name } = await decodeRouteParams(params);
 
-	const assayPrep = await prisma.assayPrep.findUnique({
+	const query = {
 		where: {
 			project_id_assay_name: {
 				project_id,
@@ -67,26 +68,20 @@ export default async function Project_id_Assay_name({
 					assay_name: true,
 					target_gene: true
 				}
-			},
-			_count: {
-				select: {
-					Libraries: {
-						where: {
-							Analyses: {
-								some: {
-									trusted: true
-								}
-							}
-						}
-					}
-				}
 			}
 		}
-	});
+	};
 
-	if (!assayPrep) notFound();
+	let assayPrep = await trustedPrisma.assayPrep.findUnique(query);
+	let showTrustedWarning = false;
+	if (!assayPrep) {
+		const cookieStore = await cookies();
+		if (cookieStore.get("trusted")?.value !== "false") assayPrep = await prisma.assayPrep.findUnique(query);
+		if (!assayPrep) notFound();
+		showTrustedWarning = true;
+	}
 
-	const { Project, Assay, _count, ...justAssayPrep } = assayPrep;
+	const { Project, Assay, ...justAssayPrep } = assayPrep;
 
 	return (
 		<div className="space-y-6 pb-8">
@@ -111,7 +106,7 @@ export default async function Project_id_Assay_name({
 						</h1>
 					</TitleHoverTooltip>
 
-					<UntrustedInTrustedMode trusted={!!_count.Libraries} />
+					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
 
 				<p className="text-lg text-base-content/70 max-w-4xl">
