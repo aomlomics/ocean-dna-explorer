@@ -23,8 +23,10 @@ import type useMapLocations from "../utils/useMapLocations";
 /**
  * {@link app/components/map/ActualMap.default | ActualMap} control that shows a list of unique values in the dataset
  * from a field controlled by a dropdown list of all fields on the table, alongside any field options from the dataset's
- * userDefined field. For scalar fields, a gradient is shown with a color scheme dropdown. For discreet fields, a list
- * of distinctly colored values is shown.
+ * userDefined field.
+ *
+ * For scalar fields, a gradient is shown with a color scheme dropdown. For discreet fields, a list of distinctly
+ * colored values is shown.
  *
  * **Components:**
  *
@@ -39,7 +41,7 @@ export default function LegendControl({
 	userDefinedOptions,
 	mapRef,
 	table,
-	reducedPoints,
+	filteredLocations,
 	titleTable,
 	defaultLegend
 }: {
@@ -59,11 +61,15 @@ export default function LegendControl({
 	mapRef: RefObject<Map | null>;
 	/** Table that the map is showing points for. */
 	table: Uncapitalize<ModelName>;
-	/** A flattened list of locations returned by {@link useMapLocations}. */
-	reducedPoints: ReturnType<typeof useMapLocations>["reducedPoints"];
 	/**
-	 * The database table that the points will always be grouped by in {@link ClusterGroup}s. When omitted, points will
-	 * cluster to any other nearby points.
+	 * A list of locations returned by {@link useMapLocations} that has been filtered to remove points without location
+	 * data.
+	 */
+	filteredLocations: ReturnType<typeof useMapLocations>["filteredLocations"];
+	/**
+	 * The database table that the points will always be grouped by in
+	 * {@link app/components/map/utils/ClusterGroup.default | ClusterGroup}s. When omitted, points will cluster to any
+	 * other nearby points.
 	 */
 	titleTable?: Uncapitalize<ModelName>;
 	/** The default legendInfo value that the reset button will reset to. */
@@ -123,7 +129,7 @@ export default function LegendControl({
 									//give control back to browser to display loading
 									setLoading(true);
 									await new Promise((resolve) => setTimeout(resolve, 1));
-									setLegendInfo(getMapLegendField({ field, userDefinedOptions, reducedPoints, table }));
+									setLegendInfo(getMapLegendField({ field, userDefinedOptions, filteredLocations, table }));
 								}}
 							>
 								<option disabled value="">

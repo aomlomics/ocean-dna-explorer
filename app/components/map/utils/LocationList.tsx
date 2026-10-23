@@ -1,7 +1,7 @@
 "use client";
 
 import type { MapLocation, MapLocationWithValues } from "@/types/globals";
-import { DEFAULT_COLOR, getLegendColor, getLegendValue, type LegendInfo, legendValueSort } from "../utils/mapUtils";
+import { DEFAULT_COLOR, getLegendColor, getLegendValue, type LegendInfo, legendValueSort } from "./mapUtils";
 import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
 import TableMetadata, { type ModelName } from "@/types/tableMetadata";
@@ -16,7 +16,12 @@ function compressIfNeeded(str: string) {
 	}
 }
 
-export default function PopupWithSearchBody({
+/**
+ * Base utility component for {@link app/components/map/ActualMap.default | ActualMap} that displays a location. If the
+ * location has a "values" property, then it will use that property to display a searchable list, grouped by distinct
+ * legend values.
+ */
+export default function LocationList({
 	table,
 	titleTable,
 	loc,
@@ -25,18 +30,29 @@ export default function PopupWithSearchBody({
 	href,
 	hideSearch
 }: {
+	/** Table that the map is showing points for. */
 	table: Uncapitalize<ModelName>;
+	/** The database table that the points will be grouped by. */
 	titleTable?: Uncapitalize<ModelName>;
+	/** The location point to be displayed on the map, which may contain a list of values. */
 	loc: MapLocationWithValues;
+	/** The object that stores information about the legend. */
 	legendInfo: LegendInfo;
+	/** A list of the legendOptions that come from the dataset's userDefined field. */
 	userDefinedOptions: Set<string>;
+	/**
+	 * The URL that links to the search page. If not provided, a search URL using the "in" mode will be automatically
+	 * constructed.
+	 */
 	href?: string;
+	/** Show or hide the button that links to the Search page. */
 	hideSearch?: true;
 }) {
 	const [filter, setFilter] = useState("");
 	const [filteredValues, setFilteredValues] = useState(loc.values ? loc.values : undefined);
 
 	const id = TableMetadata[table].titleField;
+	const titleId = titleTable && TableMetadata[titleTable].titleField;
 
 	useEffect(() => {
 		if (loc.values) {
@@ -89,18 +105,16 @@ export default function PopupWithSearchBody({
 
 	return (
 		<>
-			{titleTable && (
+			{titleId && (
 				<Link
 					href={`/explore/${titleTable}/${
-						typeof TableMetadata[titleTable].titleField === "string"
-							? encodeURIComponent(loc[TableMetadata[titleTable].titleField])
-							: TableMetadata[titleTable].titleField.map((f) => encodeURIComponent(loc[f])).join("/")
+						typeof titleId === "string"
+							? encodeURIComponent(loc[titleId])
+							: titleId.map((f) => encodeURIComponent(loc[f])).join("/")
 					}`}
 					className="w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xl! self-start text-nowrap"
 				>
-					{typeof TableMetadata[titleTable].titleField === "string"
-						? loc[TableMetadata[titleTable].titleField]
-						: TableMetadata[titleTable].titleField.map((f) => loc[f]).join(" / ")}
+					{typeof titleId === "string" ? loc[titleId] : titleId.map((f) => loc[f]).join(" / ")}
 				</Link>
 			)}
 			{loc.values ? (

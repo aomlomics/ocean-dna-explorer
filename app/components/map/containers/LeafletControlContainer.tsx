@@ -4,8 +4,8 @@ import { DomEvent } from "leaflet";
 import { type ReactNode, useEffect, useRef } from "react";
 
 /**
- * Base utility wrapper for custom {@link app/components/map/ActualMap.default | ActualMap} controls. Its main purpose is
- * to disable click and scroll propagation.
+ * Wrapper for custom {@link app/components/map/ActualMap.default | ActualMap} controls. Its main purpose is to disable
+ * click and scroll propagation.
  */
 export default function LeafletControlContainer({
 	click,

@@ -7,15 +7,26 @@ import ResetButtonMap from "../utils/ResetButtonMap";
 import { DEFAULT_POINT_SIZE, DEFAULT_POINT_SIZE_STEP } from "../utils/mapUtils";
 import InfoButton from "@/app/components/InfoButton";
 
+/**
+ * {@link app/components/map/ActualMap.default | ActualMap} control that manages the size of the points on the map.
+ * Includes both the base diameter and the amount the diameter will increase for every digit in the number of locations
+ * in the point or cluster.
+ *
+ * This control is hidden on mobile.
+ */
 export default function PointSizeControl({
 	pointSize,
 	setPointSize,
 	pointSizeStep,
 	setPointSizeStep
 }: {
+	/** The state value for the point size. */
 	pointSize: number | undefined;
+	/** The setState function for the point size. */
 	setPointSize: Dispatch<SetStateAction<number | undefined>>;
+	/** The state value for the step that the point size increases. */
 	pointSizeStep: number | undefined;
+	/** The setState for the point size step. */
 	setPointSizeStep: Dispatch<SetStateAction<number | undefined>>;
 }) {
 	return (

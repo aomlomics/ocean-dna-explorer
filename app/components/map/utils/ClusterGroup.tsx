@@ -43,6 +43,19 @@ function getMarkerHtml(count: number, valuesCount: number, combined: number, sty
 	}
 }
 
+/**
+ * {@link app/components/map/ActualMap.default | ActualMap} component that uses [React leaflet
+ * markercluster](https://www.npmjs.com/package/react-leaflet-markercluster) to automatically cluster its children into
+ * groups based on the cluster radius controlled by
+ * {@link app/components/map/controls/ClusterControl.default | ClusterControl}.
+ *
+ * It will give each point or cluster the correct legend color, or create a conic gradient if different legend values
+ * exist within the same point or cluster. If shapes are drawn, points or clusters outside of the shape will be colored
+ * black.
+ *
+ * The size of each point is determined by the number of locations and values contained within it, with clusters being
+ * slightly larger.
+ */
 export default function ClusterGroup({
 	table,
 	shapes,
@@ -54,14 +67,26 @@ export default function ClusterGroup({
 	radius,
 	children
 }: {
+	/** Table that the map is showing points for. */
 	table: Uncapitalize<ModelName>;
+	/**
+	 * A record that maps the drawn shapes to their internal ID managed by
+	 * [React-Leaflet-Draw](https://www.npmjs.com/package/react-leaflet-draw).
+	 */
 	shapes: Record<string, MapShape>;
+	/** List of locations that are in the drawn shapes. */
 	pointsInside: MapLocation[];
+	/** The object that stores information about the legend. */
 	legendInfo: LegendInfo;
+	/** The list of userDefined field names in the current dataset. */
 	userDefinedOptions: Set<string>;
+	/** The state value for the point size. */
 	pointSize: number | undefined;
+	/** The state value for the step that the point size increases. */
 	pointSizeStep: number | undefined;
+	/** The state value for the cluster radius. */
 	radius: number | undefined;
+	/** The map markers to be displayed in clusters. */
 	children: ReactNode;
 }) {
 	const [version, setVersion] = useState(0);

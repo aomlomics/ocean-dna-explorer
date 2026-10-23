@@ -77,6 +77,7 @@ function verbatimToArray(verbatim: string | undefined | null) {
 	return arr;
 }
 
+/** {@link app/components/map/ActualMap.default | ActualMap} hook that manages the information from the list of locations. */
 export default function useMapLocations({
 	locations,
 	omit,
@@ -84,10 +85,25 @@ export default function useMapLocations({
 	titleTable,
 	defaultLegendField
 }: {
+	/**
+	 * List of locations that will be parsed. Points without location data will be filtered out, and points that share
+	 * exact location data with one another will be grouped together into the values property of the first point with the
+	 * shared location data.
+	 */
 	locations: NullLocation[];
+	/** Fields to omit from the returned legendOptions array. */
 	omit: string[];
+	/** Table that the map is showing points for. */
 	table: Uncapitalize<ModelName>;
+	/**
+	 * The database table that the points will be grouped by. If provided, the returned pointsOrGroups object with be a
+	 * record. Will generate a default legend using the titleField of this table from {@link TableMetadata}.
+	 */
 	titleTable?: Uncapitalize<ModelName>;
+	/**
+	 * The default field that the legend should display. Will override the default legend generated from the titleField of
+	 * titleTable from {@link TableMetadata}.
+	 */
 	defaultLegendField?: string;
 }) {
 	//clump locations if they have identical latlng
@@ -255,7 +271,7 @@ export default function useMapLocations({
 	}
 	const defaultMapProps = { ...mapProps };
 
-	let defaultLegend = undefined as LegendInfo;
+	let defaultLegend;
 	let pointsOrGroups;
 	if (titleTable) {
 		const titleId = TableMetadata[titleTable].titleField;
@@ -264,7 +280,7 @@ export default function useMapLocations({
 		const optionsArray = Array.from(defaultOptions).sort(legendValueSort);
 		const colors = distinctColors({ count: optionsArray.length, chromaMin, lightMin });
 		const colorMap = optionsArray.reduce((acc, opt, i) => ({ ...acc, [opt]: colors[i]! }), {} as Record<string, Color>);
-		defaultLegend = { field: titleId, mode: "discreet", colorMap };
+		defaultLegend = { field: titleId, mode: "discreet", colorMap } as LegendInfo;
 
 		//assemble locations object with assigned color and list of locations
 		pointsOrGroups = {} as Record<string, MapLocationWithValues[]>;
@@ -279,9 +295,6 @@ export default function useMapLocations({
 	} else {
 		pointsOrGroups = filteredLocations;
 	}
-	const reducedPoints = (
-		titleTable ? Object.values(pointsOrGroups).reduce((acc, arr) => [...acc, ...arr], []) : pointsOrGroups
-	) as (MapLocation | MapLocationWithValues)[];
 
 	//make legend options follow fieldOrder
 	const legendOptions = [];
@@ -307,21 +320,45 @@ export default function useMapLocations({
 		defaultLegend = getMapLegendField({
 			field: defaultLegendField,
 			userDefinedOptions,
-			reducedPoints,
+			filteredLocations,
 			table,
 			legendInfo: defaultLegend
 		});
 	}
 
 	return {
+		/** The list of unique properties in the userDefined fields of every location. */
 		userDefinedOptions,
+		/**
+		 * The state that the legend should be reset back to when clicking the
+		 * {@link app/components/map/utils/ResetButtonMap.default | ResetButtonMap} in the
+		 * {@link app/components/map/controls/LegendControl.default | LegendControl}.
+		 */
 		defaultLegend,
+		/**
+		 * The list of points that have location data. Used to generate the list of points inside the drawn shapes and for
+		 * the {@link app/components/map/controls/LegendControl.default | LegendControl}. For all other cases, pointsOrGroups
+		 * is used.
+		 */
 		filteredLocations,
+		/** The props to pass to the map component that determines the position and zoom level of the map view. */
 		mapProps,
+		/**
+		 * The default props to reset back to when clicking the
+		 * {@link app/components/map/controls/RecenterControl.default | RecenterControl}.
+		 */
 		defaultMapProps,
+		/**
+		 * If titleTable is provided, this is a record that maps values of the titleField of titleTable from
+		 * {@link TableMetadata} to a list of locations with values. Otherwise, this is the same as filteredLocations.
+		 */
 		pointsOrGroups,
+		/** The list of points with no location data. */
 		noLocationPoints,
-		legendOptions,
-		reducedPoints
+		/**
+		 * The list of options for the legend dropdown. Contains both the fields for the table and all properties in the
+		 * userDefined fields of the data.
+		 */
+		legendOptions
 	};
 }

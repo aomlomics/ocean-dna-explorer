@@ -128,13 +128,13 @@ export function legendValueSort(a: string, b: string) {
 export function getMapLegendField({
 	field,
 	userDefinedOptions,
-	reducedPoints,
+	filteredLocations,
 	table,
 	legendInfo
 }: {
 	field: string;
 	userDefinedOptions: Set<string>;
-	reducedPoints: ReturnType<typeof useMapLocations>["reducedPoints"];
+	filteredLocations: ReturnType<typeof useMapLocations>["filteredLocations"];
 	table: Uncapitalize<ModelName>;
 	legendInfo?: LegendInfo;
 }): LegendInfo {
@@ -143,7 +143,7 @@ export function getMapLegendField({
 		const options = new Set() as Set<any>;
 		let someNoData = false;
 
-		for (const loc of reducedPoints) {
+		for (const loc of filteredLocations) {
 			if (loc.values) {
 				for (const val of loc.values) {
 					if (val.userDefined[field] != null && val.userDefined[field] !== "") {
@@ -191,7 +191,7 @@ export function getMapLegendField({
 			const options = new Set() as Set<any>;
 			let someNoData = false;
 
-			for (const loc of reducedPoints) {
+			for (const loc of filteredLocations) {
 				if (loc.values) {
 					for (const val of loc.values) {
 						if (val[field]) {
@@ -235,7 +235,7 @@ export function getMapLegendField({
 			const options = new Set() as Set<any>;
 			let someNoValue = false;
 
-			for (const loc of reducedPoints) {
+			for (const loc of filteredLocations) {
 				if (loc.values) {
 					for (const val of loc.values) {
 						if (val[field] != null && !DeadValueNumbers.includes(val[field])) {
@@ -274,7 +274,7 @@ export function getMapLegendField({
 			const options = new Set() as Set<any>;
 			let someNoValue = false;
 
-			for (const loc of reducedPoints) {
+			for (const loc of filteredLocations) {
 				if (loc.values) {
 					for (const val of loc.values) {
 						if (val[field]) {

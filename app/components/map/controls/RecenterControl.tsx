@@ -2,7 +2,16 @@
 
 import LeafletControlContainer from "../containers/LeafletControlContainer";
 
-export default function RecenterControl({ reset }: { reset: () => void }) {
+/**
+ * {@link app/components/map/ActualMap.default | ActualMap} control that resets the map to the default location and zoom
+ * level. Unlike other controls, this one is styled to match the base control styling for Leaflet.
+ */
+export default function RecenterControl({
+	reset
+}: {
+	/** The function to reset the map to its default state. */
+	reset: () => void;
+}) {
 	//TODO: make this button merge with other control instead of being on its own
 	return (
 		<LeafletControlContainer

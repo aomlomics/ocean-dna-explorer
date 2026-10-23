@@ -1,18 +1,29 @@
 "use client";
 
+/**
+ * A utility component for {@link app/components/map/ActualMap.default | ActualMap} that provides a singularly styled
+ * reset button.
+ */
 export default function ResetButtonMap({
 	disabled,
 	dataTip,
 	resetFunction,
 	dir = "tooltip-top"
 }: {
+	/** Whether the button should be able to be enabled or disabled. */
 	disabled: boolean;
+	/** The text to display in the tooltip when enabled. */
 	dataTip: string;
+	/** The function to run when the reset button is clicked. */
 	resetFunction: () => void;
+	/** The DaisyUI class that determines which direction the tooltip should open. Defaults to "tooltip-top". */
 	dir?: "tooltip-top" | "tooltip-bottom" | "tooltip-left" | "tooltip-right";
 }) {
 	return (
-		<div className={`tooltip tooltip-secondary before:text-primary-content ${dir}`} data-tip={disabled ? "" : dataTip}>
+		<div
+			className={`tooltip tooltip-secondary before:text-primary-content ${dir}`}
+			data-tip={disabled ? undefined : dataTip}
+		>
 			<svg
 				width="20px"
 				height="20px"

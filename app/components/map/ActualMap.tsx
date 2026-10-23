@@ -19,7 +19,7 @@ import LegendControl from "./controls/LegendControl";
 import PointSizeControl from "./controls/PointSizeControl";
 import ClusterControl from "./controls/ClusterControl";
 import DrawSelectControl from "./controls/DrawSelectControl";
-import PopupWithSearch from "./popups/PopupWithSearch";
+import PopupWrapper from "./utils/PopupWrapper";
 import { DEFAULT_CLUSTER_RADIUS, DEFAULT_POINT_SIZE, DEFAULT_POINT_SIZE_STEP } from "./utils/mapUtils";
 import RecenterControl from "./controls/RecenterControl";
 import NoLocationPointControl from "./controls/NoLocationPointControl";
@@ -64,7 +64,7 @@ function getShape(shape: any) {
  * - {@link PointSizeControl}
  * - {@link RecenterControl}
  * - {@link ClusterGroup}
- * - {@link PopupWithSearch}
+ * - {@link PopupWrapper}
  *
  * **Hooks:**
  *
@@ -91,7 +91,7 @@ export default function ActualMap({
 	locations: NullLocation[];
 	/**
 	 * Prisma-style filter for the buttons that link to the search page in {@link DrawSelectControl},
-	 * {@link NoLocationPointControl}, and {@link PopupWithSearch}.
+	 * {@link NoLocationPointControl}, and {@link PopupWrapper}.
 	 */
 	where?: Record<string, string>;
 	/** The database table that the map is displaying. Defaults to "sample". */
@@ -117,7 +117,7 @@ export default function ActualMap({
 	shapesToUrl?: true;
 	/**
 	 * Show or hide the button that links to the Search page in {@link DrawSelectControl}, {@link NoLocationPointControl},
-	 * and {@link PopupWithSearch}.
+	 * and {@link PopupWrapper}.
 	 */
 	hideSearch?: true;
 }) {
@@ -138,8 +138,7 @@ export default function ActualMap({
 		defaultMapProps,
 		pointsOrGroups,
 		noLocationPoints,
-		legendOptions,
-		reducedPoints
+		legendOptions
 	} = useMapLocations({
 		locations,
 		omit: [...legendOmit, ...GlobalOmit, "id", "userDefined"],
@@ -319,7 +318,7 @@ export default function ActualMap({
 						defaultLegend={defaultLegend}
 						table={table}
 						titleTable={titleTable}
-						reducedPoints={reducedPoints}
+						filteredLocations={filteredLocations}
 					/>
 				</div>
 
@@ -403,7 +402,7 @@ export default function ActualMap({
 							)) {
 								acc.push(
 									<Marker key={i} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
-										<PopupWithSearch
+										<PopupWrapper
 											table={table}
 											titleTable={titleTable}
 											where={where}
@@ -422,7 +421,7 @@ export default function ActualMap({
 								// 			positions={loc.polylines}
 								// 			pathOptions={{ color: getLegendColor(legendInfo, loc, userDefinedOptions).color.hex() }}
 								// 		>
-								// 			<PopupWithSearch
+								// 			<PopupWrapper
 								// 				table={table}
 								// 				titleTable={titleTable}
 								// 				where={where}
@@ -463,7 +462,7 @@ export default function ActualMap({
 									)) {
 										acc.push(
 											<Marker key={j} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
-												<PopupWithSearch
+												<PopupWrapper
 													table={table}
 													titleTable={titleTable}
 													where={where}
@@ -481,7 +480,7 @@ export default function ActualMap({
 										// 			positions={loc.polylines}
 										// 			pathOptions={{ color: getLegendColor(legendInfo, loc, userDefinedOptions).color.hex() }}
 										// 		>
-										// 			<PopupWithSearch
+										// 			<PopupWrapper
 										// 				table={table}
 										// 				titleTable={titleTable}
 										// 				where={where}

@@ -15,6 +15,7 @@ import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects"
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";
 
+//TODO: add Analyses list to TaxonomySpotlight, search for existing spotlights that have this project in the database, filter down to spotlights that have a taxonomy in this submission, add this analysis to that spotlight. should this be done in one query, or two with the filtering in code? unsure. this must also be done for analysis edits. make sure that creating a new spotlight doesnt copy this Analyses list
 async function doSubmit(
 	analysisChannel: Channel,
 	assignmentsChannel: Channel,

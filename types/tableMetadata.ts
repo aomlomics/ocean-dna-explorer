@@ -3983,4 +3983,5 @@ for (const table of TableNames) {
 	] = TableMetadata[table];
 }
 
+/** TODO: document this in generateTableMetadata */
 export default TableMetadata as Readonly<Record<Uncapitalize<ModelName> | ModelName, TableMetadataValue>>;

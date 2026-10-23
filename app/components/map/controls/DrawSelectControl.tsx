@@ -9,11 +9,11 @@ import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
 import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import ResizableMapContainer from "../containers/ResizableMapContainer";
 import { circleToString, polygonToString } from "@/app/helpers/utils";
-import PopupWithSearchBody from "../popups/PopupWithSearchBody";
+import LocationList from "../utils/LocationList";
 
 /**
- * {@link app/components/map/ActualMap.default | ActualMap} control that shows a list of locations selected by drawn
- * shapes.
+ * {@link app/components/map/ActualMap.default | ActualMap} control that shows a {@link LocationList} of points selected
+ * by drawn shapes.
  */
 export default function DrawSelectedControl({
 	pointsInside,
@@ -27,19 +27,22 @@ export default function DrawSelectedControl({
 }: {
 	/** List of locations that are in the drawn shapes. */
 	pointsInside: MapLocation[];
-	/** Table that the map is showing points for. Used to link to the search page and passed to {@link PopupWithSearchBody}. */
+	/** Table that the map is showing points for. */
 	table: Uncapitalize<ModelName>;
 	/** Prisma-style filter for linking to the search page. */
 	where?: Record<string, string>;
-	/** The object that stores information about the legend. Passed directly to {@link PopupWithSearchBody}. */
+	/** The object that stores information about the legend. */
 	legendInfo: LegendInfo;
-	/** The list of userDefined field names in the current dataset. Passed directly to {@link PopupWithSearchBody}. */
+	/** The list of userDefined field names in the current dataset. */
 	userDefinedOptions: Set<string>;
-	/** A useRef for the parent map component. Passed directly to {@link ResizableMapContainer}. */
+	/** A useRef for the parent map component. */
 	mapRef: RefObject<Map | null>;
-	/** A record that maps the drawn shapes to their internal ID managed by the the Leaflet draw library. */
+	/**
+	 * A record that maps the drawn shapes to their internal ID managed by
+	 * [React-Leaflet-Draw](https://www.npmjs.com/package/react-leaflet-draw).
+	 */
 	shapes: Record<string, MapShape>;
-	/** Show or hide the button that links to the Search page. Passed directly to {@link PopupWithSearchBody}. */
+	/** Show or hide the button that links to the Search page. */
 	hideSearch?: true;
 }) {
 	const [shown, setShown] = useState(true);
@@ -65,7 +68,7 @@ export default function DrawSelectedControl({
 				>
 					<div className="flex flex-col px-2">
 						<div className="text-primary text-lg text-nowrap">Selected With Shapes</div>
-						<PopupWithSearchBody
+						<LocationList
 							table={table}
 							legendInfo={legendInfo}
 							userDefinedOptions={userDefinedOptions}

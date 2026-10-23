@@ -8,8 +8,10 @@ import { DEFAULT_CLUSTER_RADIUS } from "../utils/mapUtils";
 import InfoButton from "@/app/components/InfoButton";
 
 /**
- * The {@link app/components/map/ActualMap.default | ActualMap} control that manages the radius that points will cluster
- * at. The state for the cluster radius is not managed by this component and must be passed into it.
+ * {@link app/components/map/ActualMap.default | ActualMap} control that manages the radius that points will cluster at.
+ * The state for the cluster radius is not managed by this component and must be passed into it.
+ *
+ * This control is hidden on mobile.
  */
 export default function ClusterControl({
 	cluster,

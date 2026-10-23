@@ -8,8 +8,14 @@ import LeafletControlContainer from "../containers/LeafletControlContainer";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
 import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import ResizableMapContainer from "../containers/ResizableMapContainer";
-import PopupWithSearchBody from "../popups/PopupWithSearchBody";
+import LocationList from "../utils/LocationList";
 
+/**
+ * {@link app/components/map/ActualMap.default | ActualMap} control that displays a {@link LocationList} of points without
+ * location data.
+ *
+ * This control is hidden on mobile
+ */
 export default function NoLocationPointsControl({
 	noLocationPoints,
 	table,
@@ -19,12 +25,19 @@ export default function NoLocationPointsControl({
 	mapRef,
 	hideSearch
 }: {
+	/** The list of points that do not have location data. */
 	noLocationPoints: NullLocation[];
+	/** Table that the map is showing points for. */
 	table: Uncapitalize<ModelName>;
+	/** Prisma-style filter for linking to the search page. */
 	where?: Record<string, string>;
+	/** The object that stores information about the legend. */
 	legendInfo: LegendInfo;
+	/** The list of userDefined field names in the current dataset. */
 	userDefinedOptions: Set<string>;
+	/** A useRef for the parent map component. */
 	mapRef: RefObject<Map | null>;
+	/** Show or hide the button that links to the Search page. */
 	hideSearch?: true;
 }) {
 	const [shown, setShown] = useState(false);
@@ -46,7 +59,7 @@ export default function NoLocationPointsControl({
 				>
 					<div className="flex flex-col px-2">
 						<div className="text-primary text-lg">No Location Data</div>
-						<PopupWithSearchBody
+						<LocationList
 							table={table}
 							legendInfo={legendInfo}
 							userDefinedOptions={userDefinedOptions}
