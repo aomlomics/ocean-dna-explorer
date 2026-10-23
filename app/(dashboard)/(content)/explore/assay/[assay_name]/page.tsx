@@ -1,9 +1,9 @@
 import DataDisplay from "@/app/components/explore/DataDisplay";
-import { trustedPrisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/table/Table";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import PrimerDiagram from "@/app/components/explore/PrimerDiagram";
 import GcDonut from "@/app/components/charts/GcDonut";
 import StatCard from "@/app/components/explore/StatCard";
@@ -13,11 +13,13 @@ import { decodeRouteParams } from "@/app/helpers/utils";
 import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
 import type { Metadata } from "next";
+import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
+import { cookies } from "next/headers";
 
 export async function generateMetadata({ params }: { params: Promise<{ assay_name: string }> }): Promise<Metadata> {
 	const { assay_name } = await decodeRouteParams(params);
 
-	const assay = await trustedPrisma.assay.findUnique({
+	const assay = await prisma.assay.findUnique({
 		where: {
 			assay_name
 		},
@@ -92,7 +94,7 @@ export default async function Assay_name({
 		redirect(exploreUrl({ table: "assay", assay_name }));
 	}
 
-	const assay = await trustedPrisma.assay.findUnique({
+	const query = {
 		where: {
 			assay_name
 		},
@@ -109,9 +111,17 @@ export default async function Assay_name({
 				}
 			}
 		}
-	});
+	};
 
-	if (!assay) return <>Assay not found</>;
+	let assay = await trustedPrisma.assay.findUnique(query);
+	let showTrustedWarning = false;
+	if (!assay) {
+		const cookieStore = await cookies();
+		if (cookieStore.get("trusted")?.value !== "false") assay = await prisma.assay.findUnique(query);
+		if (!assay) notFound();
+		showTrustedWarning = true;
+	}
+
 	const { Libraries, Analyses, ...justAssay } = assay;
 
 	const forwardGc = calculateGcContent(assay.pcr_primer_forward);
@@ -132,22 +142,27 @@ export default async function Assay_name({
 			</div>
 
 			<header>
-				<div className="flex gap-2 items-center">
-					<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
+					<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary">
 						<AssayIcon className="size-8! shrink-0" />
 						<span className="min-w-0 wrap-anywhere">{assay_name}</span>
 					</h1>
+
+					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
+
 				<div className="mt-1 w-full min-w-0 max-w-full text-sm text-base-content/80 space-y-1">
 					<div className="flex flex-wrap gap-x-6 gap-y-1">
 						<div>
 							<span className="font-medium text-base-content/70">Target: </span>
 							<span>{assay.target || "N/A"}</span>
 						</div>
+
 						<div>
 							<span className="font-medium text-base-content/70">Target Gene: </span>
 							<span>{assay.target_gene || "N/A"}</span>
 						</div>
+
 						<div>
 							<span className="font-medium text-base-content/70">AOML Omics Master Assay </span>
 							<Link href={ASSAY_MASTER_TSV_URL} target="_blank" rel="noopener noreferrer" className="link link-primary">
@@ -165,7 +180,7 @@ export default async function Assay_name({
 					<div className="lg:col-span-2">
 						<Map
 							query={() =>
-								trustedPrisma.sample.findMany({
+								prisma.sample.findMany({
 									where: {
 										Libraries: {
 											some: {

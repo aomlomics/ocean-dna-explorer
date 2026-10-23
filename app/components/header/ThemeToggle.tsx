@@ -4,7 +4,7 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
 export default function ThemeToggle() {
-	const { theme, setTheme } = useTheme();
+	const { resolvedTheme, setTheme } = useTheme();
 	const [mounted, setMounted] = useState(false);
 
 	useEffect(() => {
@@ -12,7 +12,7 @@ export default function ThemeToggle() {
 		setMounted(true);
 	}, []);
 
-	if (!mounted) {
+	if (!mounted || !resolvedTheme) {
 		return null;
 	}
 
@@ -20,9 +20,9 @@ export default function ThemeToggle() {
 		<label className="swap swap-rotate">
 			<input
 				type="checkbox"
-				checked={theme === "dark"}
-				onChange={() => setTheme(theme === "dark" ? "light" : "dark")}
-				aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+				checked={resolvedTheme === "dark"}
+				onChange={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+				aria-label={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} mode`}
 			/>
 
 			{/* sun icon */}

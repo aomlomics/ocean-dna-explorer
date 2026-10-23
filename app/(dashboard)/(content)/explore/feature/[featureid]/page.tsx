@@ -1,7 +1,7 @@
 import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
 import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
-import { trustedPrisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -16,11 +16,15 @@ import CopyButton from "@/app/components/CopyButton";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import type { Metadata } from "next";
+import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
+import type { Prisma } from "@/app/generated/prisma/client";
+import { cookies } from "next/headers";
+import type { AnalysisModel, AssayModel } from "@/app/generated/prisma/models";
 
 export async function generateMetadata({ params }: { params: Promise<{ featureid: string }> }): Promise<Metadata> {
 	const { featureid } = await decodeRouteParams(params);
 
-	const feature = await trustedPrisma.feature.findUnique({
+	const feature = await prisma.feature.findUnique({
 		where: {
 			featureid
 		},
@@ -105,7 +109,7 @@ export default async function Featureid({
 		redirect(exploreUrl({ table: "feature", featureid }));
 	}
 
-	const { feature, taxaCounts, assaySummaries } = await trustedPrisma.$transaction(async (tx) => {
+	const query = async (tx: Prisma.TransactionClient) => {
 		const feature = await tx.feature.findUnique({
 			where: {
 				featureid
@@ -114,7 +118,6 @@ export default async function Featureid({
 				Assignments: {
 					distinct: ["taxonomy"],
 					select: {
-						taxonomy: true,
 						Taxonomy: true
 					}
 				},
@@ -126,60 +129,72 @@ export default async function Featureid({
 			}
 		});
 
-		const taxaCounts = [] as { taxonomy: string; count: number }[];
 		if (feature) {
-			for (const { taxonomy } of feature.Assignments) {
+			const taxaCounts = [] as { taxonomy: TaxonomyModel["taxonomy"]; count: number }[];
+
+			for (const { Taxonomy } of feature.Assignments) {
 				taxaCounts.push({
-					taxonomy,
+					taxonomy: Taxonomy.taxonomy,
 					count: await tx.assignment.count({
 						where: {
-							taxonomy,
+							taxonomy: Taxonomy.taxonomy,
 							featureid
 						}
 					})
 				});
 			}
-		}
 
-		const assignmentAssays = await tx.assignment.findMany({
-			where: {
-				featureid
-			},
-			select: {
-				Analysis: {
-					select: {
-						assay_name: true,
-						Assay: {
-							select: {
-								target_gene: true
+			const assignmentAssays = await tx.assignment.findMany({
+				where: {
+					featureid
+				},
+				select: {
+					Analysis: {
+						select: {
+							assay_name: true,
+							Assay: {
+								select: {
+									target_gene: true
+								}
 							}
 						}
 					}
 				}
-			}
-		});
-		const uniqueAssays = assignmentAssays.reduce(
-			(acc, a) => ({
-				...acc,
-				[a.Analysis.assay_name]: {
-					target_gene: a.Analysis.Assay.target_gene
-				}
-			}),
-			{} as Record<string, { target_gene: string }>
-		);
-		const assaySummaries = Object.entries(uniqueAssays).map(([assay_name, assay]) => ({
-			assay_name,
-			target_gene: assay.target_gene
-		}));
+			});
 
-		return { feature, taxaCounts, assaySummaries };
-	});
+			const uniqueAssays = assignmentAssays.reduce(
+				(acc, a) => ({
+					...acc,
+					[a.Analysis.assay_name]: {
+						target_gene: a.Analysis.Assay.target_gene
+					}
+				}),
+				{} as Record<AnalysisModel["assay_name"], { target_gene: AssayModel["target_gene"] }>
+			);
 
-	if (!feature) notFound();
+			const assaySummaries = Object.entries(uniqueAssays).map(([assay_name, assay]) => ({
+				assay_name,
+				target_gene: assay.target_gene
+			}));
+
+			return { feature, taxaCounts, assaySummaries };
+		}
+	};
+
+	let result = await trustedPrisma.$transaction(query);
+	let showTrustedWarning = false;
+	if (!result) {
+		const cookieStore = await cookies();
+		if (cookieStore.get("trusted")?.value !== "false") result = await prisma.$transaction(query);
+		if (!result) notFound();
+		showTrustedWarning = true;
+	}
+
+	const { feature, taxaCounts, assaySummaries } = result;
 
 	taxaCounts.sort((a, b) => b.count - a.count);
 	const taxonomyById = new globalThis.Map(
-		feature.Assignments.map((assignment) => [assignment.taxonomy, assignment.Taxonomy as TaxonomyModel | null])
+		feature.Assignments.map((assignment) => [assignment.Taxonomy.taxonomy, assignment.Taxonomy as TaxonomyModel | null])
 	);
 	const topTaxonomies = taxaCounts.slice(0, 5).map(({ taxonomy, count }) => {
 		const details = taxonomyById.get(taxonomy) ?? null;
@@ -210,14 +225,17 @@ export default async function Featureid({
 			</div>
 
 			<header>
-				<div className="flex gap-2 items-center">
+				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
 					<TitleHoverTooltip tooltip={TableMetadata.feature.description}>
-						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary mb-2">
+						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary">
 							<FeatureIcon className="size-8! shrink-0" />
 							<span className="min-w-0 wrap-anywhere">{feature.featureid}</span>
 						</h1>
 					</TitleHoverTooltip>
+
+					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
+
 				<p className="text-lg text-base-content/70 max-w-3xl">
 					DNA sequence feature with {totalAssignments.toLocaleString()} {assignmentLabel}.
 				</p>
@@ -229,7 +247,7 @@ export default async function Featureid({
 					<div className="lg:col-span-5 flex flex-col gap-6">
 						<Map
 							query={() =>
-								trustedPrisma.sample.findMany({
+								prisma.sample.findMany({
 									where: {
 										Libraries: {
 											some: {
@@ -399,7 +417,7 @@ export default async function Featureid({
 }
 
 async function FeaturePrevalenceSection({ featureid }: { featureid: string }) {
-	const prevalenceData = await trustedPrisma.$transaction(async (tx) => {
+	const prevalenceData = await prisma.$transaction(async (tx) => {
 		const totalSamplesCount = await tx.sample.count();
 
 		const samplesWithFeature = await tx.sample.findMany({

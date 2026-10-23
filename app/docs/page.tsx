@@ -51,8 +51,7 @@ export default function DocsPage() {
 						.
 					</p>
 					<p>
-						Browsing and querying do not require a role. Submitting a dataset does. You need the Contributor role
-						first.{" "}
+						Browsing and querying do not require a role. Submitting a dataset does. You need the Contributor role first.{" "}
 						<Link href="/contribute" className="link link-primary">
 							Apply to contribute
 						</Link>
