@@ -450,7 +450,7 @@ function SelectedOrganismCard({
 			</div>
 
 			{/* Photo credit lives outside the card face because hover-3d blocks hovering inside it. */}
-			<div className="mt-4 flex w-full flex-wrap items-center justify-center gap-3">
+			<div className="mt-8 flex w-full flex-wrap items-center justify-center gap-3">
 				<Link href={taxonomyHref} className="btn btn-primary btn-sm">
 					View taxonomy
 				</Link>
