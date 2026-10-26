@@ -468,6 +468,9 @@ export function parseApiQuery(
 	const ignoreExtraOptions = newParams.get("ignoreExtraOptions")?.toLowerCase() === "true" ? true : false;
 	newParams.delete("ignoreExtraOptions");
 
+	const showFilterError = newParams.get("showFilterError")?.toLowerCase() === "true" ? true : false;
+	newParams.delete("showFilterError");
+
 	//blast query
 	const blast = parseBlastRequest(newParams);
 	if (blast && !options?.extras?.blast && !ignoreExtraOptions) {
@@ -864,8 +867,10 @@ export function parseApiQuery(
 	//searching
 	let sampleWhere;
 	const getSampleWhere = options?.extras?.shapes && (getSamples || (shapes && !hasLocationData));
+
 	const advanced = newParams.get("advanced");
 	newParams.delete("advanced");
+
 	if (advanced != null) {
 		//advanced search
 		if (options?.features && !options.features.advanced) {
@@ -873,7 +878,7 @@ export function parseApiQuery(
 				throw new AppError("The advanced option is not allowed on this route.");
 			}
 		} else {
-			if (Array.from(newParams).length) {
+			if (showFilterError && Array.from(newParams).length) {
 				throw new AppError("Advanced search may not include other filter parameters.");
 			}
 
@@ -904,7 +909,7 @@ export function parseApiQuery(
 					throw new AppError("The ids option is not allowed on this route.");
 				}
 			} else {
-				if (Array.from(newParams).length) {
+				if (showFilterError && Array.from(newParams).length) {
 					throw new AppError("Filtering with a list of ids may not include other filter parameters.");
 				}
 
@@ -932,7 +937,7 @@ export function parseApiQuery(
 					throw new AppError("The search option is not allowed on this route.");
 				}
 			} else {
-				if (Array.from(newParams).length) {
+				if (showFilterError && Array.from(newParams).length) {
 					throw new AppError("Search may not include other filter parameters.");
 				}
 
@@ -947,22 +952,34 @@ export function parseApiQuery(
 			newParams.delete("where");
 			if (where != null) {
 				for (const [field, value] of Object.entries(parseNestedJson(where) as Record<string, string>)) {
-					tempWhere = {
-						...tempWhere,
-						...parseToQuery(table, [field, value], { swapTo: options?.swapToTable ? table : undefined })
-					};
+					try {
+						tempWhere = {
+							...tempWhere,
+							...parseToQuery(table, [field, value], { swapTo: options?.swapToTable ? table : undefined })
+						};
+					} catch (err) {
+						if (showFilterError) {
+							throw err;
+						}
+					}
 				}
 			}
 
 			//rest of the fields
 			for (const [field, value] of newParams) {
-				tempWhere = {
-					...tempWhere,
-					...parseToQuery(table, [field, value], {
-						swapTo: options?.swapToTable ? table : undefined,
-						invalidFieldError: `Invalid option: "${field}".`
-					})
-				};
+				try {
+					tempWhere = {
+						...tempWhere,
+						...parseToQuery(table, [field, value], {
+							swapTo: options?.swapToTable ? table : undefined,
+							invalidFieldError: `Invalid option: "${field}".`
+						})
+					};
+				} catch (err) {
+					if (showFilterError) {
+						throw err;
+					}
+				}
 			}
 
 			if (Object.keys(tempWhere).length) {

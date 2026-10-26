@@ -65,7 +65,7 @@ export default function LaptopScreen({
 		<div className={`relative w-full h-full min-w-0 min-h-0 flex items-center justify-center ${className}`}>
 			<div className="relative w-full h-full max-w-full max-h-full min-h-0" style={{ aspectRatio: "1320 / 1080" }}>
 				<Image
-					src="/images/biorender/laptop.png"
+					src="/images/learn/edna101/biorender/laptop.png"
 					alt={alt}
 					fill
 					sizes="(max-width: 1024px) 100vw, 50vw"
@@ -73,7 +73,7 @@ export default function LaptopScreen({
 					priority
 				/>
 				<Image
-					src="/images/biorender/laptop_dark.png"
+					src="/images/learn/edna101/biorender/laptop_dark.png"
 					alt={alt}
 					fill
 					sizes="(max-width: 1024px) 100vw, 50vw"

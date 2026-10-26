@@ -1,5 +1,6 @@
 "use server";
 
+import type { AssignmentModel } from "@/app/generated/prisma/models";
 import type { OccurrenceModel } from "@/app/generated/prisma/models/Occurrence";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseOccurrencesFile } from "@/app/helpers/actions/analysis";
@@ -50,6 +51,11 @@ async function doEdit(
 					select: {
 						userIds: true
 					}
+				},
+				Assignments: {
+					select: {
+						featureid: true
+					}
 				}
 			}
 		});
@@ -68,6 +74,7 @@ async function doEdit(
 				channel: { stream, url },
 				project_id: dbAnalysis.project_id,
 				analysis_run_name,
+				features: dbAnalysis.Assignments,
 				oldChecksum: dbAnalysis.occurrenceFileChecksum_ODE || undefined
 			});
 			if (!parseResult) {
@@ -96,6 +103,12 @@ async function doEdit(
 						Project: {
 							select: {
 								userIds: true
+							}
+						},
+						Assignments: {
+							select: {
+								featureid: true,
+								taxonomy: true
 							}
 						},
 						assay_name: true,
@@ -169,25 +182,10 @@ async function doEdit(
 					}
 				});
 
-				//get assignments for features in the new occurrence file
-				const assignments = await tx.assignment.findMany({
-					where: {
-						project_id,
-						analysis_run_name,
-						featureid: {
-							in: featureids
-						}
-					},
-					select: {
-						featureid: true,
-						taxonomy: true
-					}
-				});
-
 				//map featureid -> taxonomy
 				const taxaByFeat = Object.fromEntries(
-					assignments.map((assign) => [assign.featureid, assign.taxonomy])
-				) as Record<OccurrenceModel["featureid"], string>;
+					dbAnalysis.Assignments.map((assign) => [assign.featureid, assign.taxonomy])
+				) as Record<AssignmentModel["featureid"], AssignmentModel["taxonomy"]>;
 
 				//create new
 				const newOccurrences = await tx.occurrence.createManyAndReturn({
@@ -248,12 +246,11 @@ async function doEdit(
 				});
 
 				const libIdSet = new Set(libIds);
-				const featureidSet = new Set(featureids);
 
 				const occsToDelete = [] as typeof currOccs;
 				const occIdsToDelete = [] as number[];
 				for (const occ of currOccs) {
-					if (!libIdSet.has(occ.lib_id) || !featureidSet.has(occ.featureid)) {
+					if (!libIdSet.has(occ.lib_id) || !featureids.has(occ.featureid)) {
 						occsToDelete.push(occ);
 						occIdsToDelete.push(occ.id);
 					}

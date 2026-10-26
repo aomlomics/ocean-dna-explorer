@@ -19,8 +19,8 @@ import AssaysCard from "@/app/components/assay/AssaysCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
 import { cookies } from "next/headers";
+import DisableTrustedMode from "@/app/components/explore/DisableTrustedMode";
 
 export async function generateMetadata({
 	params
@@ -71,7 +71,32 @@ export default async function OccurrencePage({
 }) {
 	const { project_id, analysis_run_name, lib_id, featureid } = await decodeRouteParams(params);
 
-	const query = {
+	const trustedCheck = await prisma.occurrence.findUnique({
+		where: {
+			project_id_analysis_run_name_lib_id_featureid: {
+				project_id,
+				analysis_run_name,
+				lib_id,
+				featureid
+			}
+		},
+		select: {
+			Analysis: {
+				select: {
+					trusted: true
+				}
+			}
+		}
+	});
+
+	if (!trustedCheck) notFound();
+
+	const cookieStore = await cookies();
+	if (!trustedCheck.Analysis.trusted && cookieStore.get("trusted")?.value !== "false") {
+		return <DisableTrustedMode />;
+	}
+
+	const occurrence = (await trustedPrisma.occurrence.findUnique({
 		where: {
 			project_id_analysis_run_name_lib_id_featureid: {
 				project_id,
@@ -107,16 +132,7 @@ export default async function OccurrencePage({
 				}
 			}
 		}
-	};
-
-	let occurrence = await trustedPrisma.occurrence.findUnique(query);
-	let showTrustedWarning = false;
-	if (!occurrence) {
-		const cookieStore = await cookies();
-		if (cookieStore.get("trusted")?.value !== "false") occurrence = await prisma.occurrence.findUnique(query);
-		if (!occurrence) notFound();
-		showTrustedWarning = true;
-	}
+	}))!;
 
 	const occurrenceTitle = `${featureid} in ${lib_id} (${analysis_run_name})`;
 	const occurrenceInfo = {
@@ -269,8 +285,6 @@ export default async function OccurrencePage({
 							</span>
 						</h1>
 					</TitleHoverTooltip>
-
-					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
 
 				<p className="mb-2 max-w-5xl text-sm text-base-content/65 wrap-anywhere">

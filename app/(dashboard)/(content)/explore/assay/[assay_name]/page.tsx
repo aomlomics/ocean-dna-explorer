@@ -13,8 +13,8 @@ import { decodeRouteParams } from "@/app/helpers/utils";
 import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
 import type { Metadata } from "next";
-import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
 import { cookies } from "next/headers";
+import DisableTrustedMode from "@/app/components/explore/DisableTrustedMode";
 
 export async function generateMetadata({ params }: { params: Promise<{ assay_name: string }> }): Promise<Metadata> {
 	const { assay_name } = await decodeRouteParams(params);
@@ -94,7 +94,31 @@ export default async function Assay_name({
 		redirect(exploreUrl({ table: "assay", assay_name }));
 	}
 
-	const query = {
+	const trustedCheck = await prisma.assay.findUnique({
+		where: {
+			assay_name
+		},
+		select: {
+			_count: {
+				select: {
+					Analyses: {
+						where: {
+							trusted: true
+						}
+					}
+				}
+			}
+		}
+	});
+
+	if (!trustedCheck) notFound();
+
+	const cookieStore = await cookies();
+	if (!trustedCheck._count.Analyses && cookieStore.get("trusted")?.value !== "false") {
+		return <DisableTrustedMode />;
+	}
+
+	const { Libraries, Analyses, ...assay } = (await trustedPrisma.assay.findUnique({
 		where: {
 			assay_name
 		},
@@ -111,18 +135,7 @@ export default async function Assay_name({
 				}
 			}
 		}
-	};
-
-	let assay = await trustedPrisma.assay.findUnique(query);
-	let showTrustedWarning = false;
-	if (!assay) {
-		const cookieStore = await cookies();
-		if (cookieStore.get("trusted")?.value !== "false") assay = await prisma.assay.findUnique(query);
-		if (!assay) notFound();
-		showTrustedWarning = true;
-	}
-
-	const { Libraries, Analyses, ...justAssay } = assay;
+	}))!;
 
 	const forwardGc = calculateGcContent(assay.pcr_primer_forward);
 	const reverseGc = calculateGcContent(assay.pcr_primer_reverse);
@@ -147,8 +160,6 @@ export default async function Assay_name({
 						<AssayIcon className="size-8! shrink-0" />
 						<span className="min-w-0 wrap-anywhere">{assay_name}</span>
 					</h1>
-
-					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
 
 				<div className="mt-1 w-full min-w-0 max-w-full text-sm text-base-content/80 space-y-1">
@@ -180,7 +191,7 @@ export default async function Assay_name({
 					<div className="lg:col-span-2">
 						<Map
 							query={() =>
-								prisma.sample.findMany({
+								trustedPrisma.sample.findMany({
 									where: {
 										Libraries: {
 											some: {
@@ -376,7 +387,7 @@ export default async function Assay_name({
 								/>
 								<StatCard
 									title="Taxonomies"
-									value={assay.Analyses.reduce((count, a) => count + a._count.Taxonomies, 0)}
+									value={Analyses.reduce((count, a) => count + a._count.Taxonomies, 0)}
 									icon={<TaxonomyIcon />}
 									link={`/search?table=taxonomy&advanced=[["analysis","assay_name","equals","${assay_name}"]]`}
 									tooltip="View as Search"
@@ -398,7 +409,7 @@ export default async function Assay_name({
 						<div className="bg-base-200 rounded-xl p-6">
 							<h2 className="text-xl font-medium text-base-content/90 mb-4">Assay Information</h2>
 							<div className="max-h-100 overflow-y-auto">
-								<DataDisplay table="assay" data={justAssay} omit={["assay_name"]} />
+								<DataDisplay table="assay" data={assay} omit={["assay_name"]} />
 							</div>
 						</div>
 					</div>

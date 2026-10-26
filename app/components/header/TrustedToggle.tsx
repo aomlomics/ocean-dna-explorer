@@ -3,13 +3,19 @@
 import { useTrusted } from "@/app/hooks/TrustedProvider";
 import { TrustedIcon, UntrustedIcon } from "../icons";
 
-export default function TrustedToggle({ className }: { className?: string }) {
+export default function TrustedToggle({
+	dir,
+	className
+}: {
+	dir?: "tooltip-top" | "tooltip-bottom" | "tooltip-left" | "tooltip-right";
+	className?: string;
+}) {
 	const { trusted, setTrusted } = useTrusted();
 	const actionLabel = trusted ? "Show all data" : "Show only trusted data";
 
 	return (
 		<div
-			className="tooltip tooltip-bottom before:text-base-content before:bg-base-200 before:border before:border-base-content/20"
+			className={`tooltip ${dir ?? ""} before:text-base-content before:bg-base-200 before:border before:border-base-content/20`}
 			data-tip={actionLabel}
 		>
 			<label className="swap swap-rotate">

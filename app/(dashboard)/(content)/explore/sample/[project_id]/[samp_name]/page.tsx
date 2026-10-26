@@ -21,8 +21,8 @@ import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
 import { cookies } from "next/headers";
+import DisableTrustedMode from "@/app/components/explore/DisableTrustedMode";
 
 export async function generateMetadata({
 	params
@@ -57,7 +57,38 @@ export async function generateMetadata({
 export default async function Samp_name({ params }: { params: Promise<{ project_id: string; samp_name: string }> }) {
 	const { project_id, samp_name } = await decodeRouteParams(params);
 
-	const query = {
+	const trustedCheck = await prisma.sample.findUnique({
+		where: {
+			project_id_samp_name: {
+				project_id,
+				samp_name
+			}
+		},
+		select: {
+			_count: {
+				select: {
+					Libraries: {
+						where: {
+							Analyses: {
+								some: {
+									trusted: true
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	});
+
+	if (!trustedCheck) notFound();
+
+	const cookieStore = await cookies();
+	if (!trustedCheck._count.Libraries && cookieStore.get("trusted")?.value !== "false") {
+		return <DisableTrustedMode />;
+	}
+
+	const { Taxonomies, Libraries, ...sample } = (await trustedPrisma.sample.findUnique({
 		where: {
 			project_id_samp_name: {
 				project_id,
@@ -92,18 +123,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 				}
 			}
 		}
-	};
-
-	let sample = await trustedPrisma.sample.findUnique(query);
-	let showTrustedWarning = false;
-	if (!sample) {
-		const cookieStore = await cookies();
-		if (cookieStore.get("trusted")?.value !== "false") sample = await prisma.sample.findUnique(query);
-		if (!sample) notFound();
-		showTrustedWarning = true;
-	}
-
-	const { Taxonomies, Libraries, ...justSample } = sample;
+	}))!;
 
 	const uniqueAssays = [] as { assay_name: AssayModel["assay_name"]; target_gene: AssayModel["target_gene"] }[];
 	for (const lib of Libraries) {
@@ -152,8 +172,6 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 							<span className="min-w-0 wrap-anywhere">{samp_name}</span>
 						</h1>
 					</TitleHoverTooltip>
-
-					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
 
 				<p className="text-lg text-base-content/70 max-w-4xl">
@@ -187,7 +205,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 							title="Occurrences"
 							value={Libraries.reduce((count, lib) => count + lib._count.Occurrences, 0)}
 							icon={<OccurrenceIcon />}
-							link={`/search?table=occurrence&advanced=[["sample","samp_name","equals","${samp_name}"]]`}
+							link={`/search?table=occurrence&advanced=[["sample","project_id","equals","${project_id}"],["sample","samp_name","equals","${samp_name}"]]`}
 							layout="horizontal"
 							tooltip="View as Search"
 						/>
@@ -210,7 +228,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 							title="Taxonomies"
 							value={Taxonomies.length}
 							icon={<TaxonomyIcon />}
-							link={`/search?table=taxonomy&advanced=[["sample","samp_name","equals","${samp_name}"]]`}
+							link={`/search?table=taxonomy&advanced=[["sample","project_id","equals","${project_id}"],["sample","samp_name","equals","${samp_name}"]]`}
 							layout="horizontal"
 							tooltip="View as Search"
 						/>
@@ -227,7 +245,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 					<div className="bg-base-200 rounded-xl p-6">
 						<h2 className="text-xl font-medium text-base-content/90 mb-4">Sample Information</h2>
 						<div className="h-75 overflow-y-auto">
-							<DataDisplay table="sample" data={justSample} omit={["project_id", "analysis_run_name", "assay_name"]} />
+							<DataDisplay table="sample" data={sample} omit={["project_id", "analysis_run_name", "assay_name"]} />
 						</div>
 					</div>
 				</div>

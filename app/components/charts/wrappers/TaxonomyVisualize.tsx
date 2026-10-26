@@ -485,21 +485,23 @@ export default function TaxonomyVisualize({
 				<></>
 			)}
 
-			{currentTab[0] === "darkTaxa" ? (
-				loading ? (
-					<LoadingDarkTaxaPlot />
-				) : (
-					<DarkTaxaPlot
-						assignsWithOccs={assignsWithOccs}
-						taxonomiesByName={taxonomiesByName}
-						libsWithSampleById={libsWithSampleById}
-						totalOrganismQuantity={totalOrganismQuantity}
-						taxaRanksWithData={taxaRanksWithData}
-					/>
-				)
-			) : (
-				<></>
-			)}
+			{
+				// currentTab[0] === "darkTaxa" ? (
+				// 	loading ? (
+				// 		<LoadingDarkTaxaPlot />
+				// 	) : (
+				// 		<DarkTaxaPlot
+				// 			assignsWithOccs={assignsWithOccs}
+				// 			taxonomiesByName={taxonomiesByName}
+				// 			libsWithSampleById={libsWithSampleById}
+				// 			totalOrganismQuantity={totalOrganismQuantity}
+				// 			taxaRanksWithData={taxaRanksWithData}
+				// 		/>
+				// 	)
+				// ) : (
+				// 	<></>
+				// )
+			}
 		</>
 	);
 }

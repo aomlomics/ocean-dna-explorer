@@ -9,8 +9,8 @@ import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
 import { cookies } from "next/headers";
+import DisableTrustedMode from "@/app/components/explore/DisableTrustedMode";
 
 export async function generateMetadata({
 	params
@@ -49,7 +49,38 @@ export default async function Project_id_Assay_name({
 }) {
 	const { project_id, assay_name } = await decodeRouteParams(params);
 
-	const query = {
+	const trustedCheck = await prisma.assayPrep.findUnique({
+		where: {
+			project_id_assay_name: {
+				project_id,
+				assay_name
+			}
+		},
+		select: {
+			_count: {
+				select: {
+					Libraries: {
+						where: {
+							Analyses: {
+								some: {
+									trusted: true
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	});
+
+	if (!trustedCheck) notFound();
+
+	const cookieStore = await cookies();
+	if (!trustedCheck._count.Libraries && cookieStore.get("trusted")?.value !== "false") {
+		return <DisableTrustedMode />;
+	}
+
+	const { Project, Assay, ...assayPrep } = (await trustedPrisma.assayPrep.findUnique({
 		where: {
 			project_id_assay_name: {
 				project_id,
@@ -70,18 +101,7 @@ export default async function Project_id_Assay_name({
 				}
 			}
 		}
-	};
-
-	let assayPrep = await trustedPrisma.assayPrep.findUnique(query);
-	let showTrustedWarning = false;
-	if (!assayPrep) {
-		const cookieStore = await cookies();
-		if (cookieStore.get("trusted")?.value !== "false") assayPrep = await prisma.assayPrep.findUnique(query);
-		if (!assayPrep) notFound();
-		showTrustedWarning = true;
-	}
-
-	const { Project, Assay, ...justAssayPrep } = assayPrep;
+	}))!;
 
 	return (
 		<div className="space-y-6 pb-8">
@@ -105,8 +125,6 @@ export default async function Project_id_Assay_name({
 							<span className="min-w-0 wrap-anywhere">{assayPrep.assay_name}</span>
 						</h1>
 					</TitleHoverTooltip>
-
-					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
 
 				<p className="text-lg text-base-content/70 max-w-4xl">
@@ -143,7 +161,7 @@ export default async function Project_id_Assay_name({
 						<div className="bg-base-200 rounded-xl p-6 h-full flex flex-col">
 							<h2 className="text-xl font-medium text-base-content/90 mb-4">Assay prep metadata</h2>
 							<div className="h-128 overflow-y-auto">
-								<DataDisplay table="assayPrep" data={justAssayPrep} omit={["project_id", "assay_name"]} />
+								<DataDisplay table="assayPrep" data={assayPrep} omit={["project_id", "assay_name"]} />
 							</div>
 						</div>
 					</div>

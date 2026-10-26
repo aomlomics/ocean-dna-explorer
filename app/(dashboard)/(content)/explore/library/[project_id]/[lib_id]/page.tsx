@@ -9,8 +9,8 @@ import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
 import { cookies } from "next/headers";
+import DisableTrustedMode from "@/app/components/explore/DisableTrustedMode";
 
 export async function generateMetadata({
 	params
@@ -45,7 +45,34 @@ export async function generateMetadata({
 export default async function Lib_id({ params }: { params: Promise<{ project_id: string; lib_id: string }> }) {
 	const { project_id, lib_id } = await decodeRouteParams(params);
 
-	const query = {
+	const trustedCheck = await prisma.library.findUnique({
+		where: {
+			project_id_lib_id: {
+				project_id,
+				lib_id
+			}
+		},
+		select: {
+			_count: {
+				select: {
+					Analyses: {
+						where: {
+							trusted: true
+						}
+					}
+				}
+			}
+		}
+	});
+
+	if (!trustedCheck) notFound();
+
+	const cookieStore = await cookies();
+	if (!trustedCheck._count.Analyses && cookieStore.get("trusted")?.value !== "false") {
+		return <DisableTrustedMode />;
+	}
+
+	const { Sample, Assay, ...library } = (await trustedPrisma.library.findUnique({
 		where: {
 			project_id_lib_id: {
 				project_id,
@@ -65,18 +92,7 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 				}
 			}
 		}
-	};
-
-	let library = await trustedPrisma.library.findUnique(query);
-	let showTrustedWarning = false;
-	if (!library) {
-		const cookieStore = await cookies();
-		if (cookieStore.get("trusted")?.value !== "false") library = await prisma.library.findUnique(query);
-		if (!library) notFound();
-		showTrustedWarning = true;
-	}
-
-	const { Sample, Assay, ...justLibrary } = library;
+	}))!;
 
 	return (
 		<div className="space-y-6 pb-8">
@@ -100,8 +116,6 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 							<span className="min-w-0 wrap-anywhere">{library.lib_id}</span>
 						</h1>
 					</TitleHoverTooltip>
-
-					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
 
 				<p className="text-lg text-base-content/70 max-w-4xl">
@@ -137,7 +151,7 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 						<div className="bg-base-200 rounded-xl p-6 h-full flex flex-col">
 							<h2 className="text-xl font-medium text-base-content/90 mb-4">Library metadata</h2>
 							<div className="h-80 overflow-y-auto">
-								<DataDisplay table="library" data={justLibrary} omit={["project_id", "samp_name", "assay_name"]} />
+								<DataDisplay table="library" data={library} omit={["project_id", "samp_name", "assay_name"]} />
 							</div>
 						</div>
 					</div>

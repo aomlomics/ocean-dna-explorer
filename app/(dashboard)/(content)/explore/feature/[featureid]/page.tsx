@@ -16,10 +16,10 @@ import CopyButton from "@/app/components/CopyButton";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import type { Metadata } from "next";
-import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
 import type { Prisma } from "@/app/generated/prisma/client";
 import { cookies } from "next/headers";
 import type { AnalysisModel, AssayModel } from "@/app/generated/prisma/models";
+import DisableTrustedMode from "@/app/components/explore/DisableTrustedMode";
 
 export async function generateMetadata({ params }: { params: Promise<{ featureid: string }> }): Promise<Metadata> {
 	const { featureid } = await decodeRouteParams(params);
@@ -109,8 +109,44 @@ export default async function Featureid({
 		redirect(exploreUrl({ table: "feature", featureid }));
 	}
 
-	const query = async (tx: Prisma.TransactionClient) => {
-		const feature = await tx.feature.findUnique({
+	const [exists, trustedCheck] = await prisma.$transaction([
+		prisma.feature.findUnique({
+			where: {
+				featureid
+			},
+			select: {
+				featureid: true
+			}
+		}),
+		//TODO: switch to assignment when analyses are updated to have matching features in occurrence/assignment files
+		prisma.occurrence.findFirst({
+			where: {
+				featureid,
+				Analysis: {
+					trusted: true
+				}
+			},
+			select: {
+				featureid: true,
+				Analysis: {
+					select: {
+						trusted: true,
+						analysis_run_name: true
+					}
+				}
+			}
+		})
+	]);
+
+	if (!exists) notFound();
+
+	const cookieStore = await cookies();
+	if (!trustedCheck && cookieStore.get("trusted")?.value !== "false") {
+		return <DisableTrustedMode />;
+	}
+
+	const { feature, taxaCounts, assaySummaries } = await trustedPrisma.$transaction(async (tx) => {
+		const feature = (await tx.feature.findUnique({
 			where: {
 				featureid
 			},
@@ -127,70 +163,57 @@ export default async function Featureid({
 					}
 				}
 			}
-		});
+		}))!;
 
-		if (feature) {
-			const taxaCounts = [] as { taxonomy: TaxonomyModel["taxonomy"]; count: number }[];
+		const taxaCounts = [] as { taxonomy: TaxonomyModel["taxonomy"]; count: number }[];
 
-			for (const { Taxonomy } of feature.Assignments) {
-				taxaCounts.push({
-					taxonomy: Taxonomy.taxonomy,
-					count: await tx.assignment.count({
-						where: {
-							taxonomy: Taxonomy.taxonomy,
-							featureid
-						}
-					})
-				});
-			}
+		for (const { Taxonomy } of feature.Assignments) {
+			taxaCounts.push({
+				taxonomy: Taxonomy.taxonomy,
+				count: await tx.assignment.count({
+					where: {
+						taxonomy: Taxonomy.taxonomy,
+						featureid
+					}
+				})
+			});
+		}
 
-			const assignmentAssays = await tx.assignment.findMany({
-				where: {
-					featureid
-				},
-				select: {
-					Analysis: {
-						select: {
-							assay_name: true,
-							Assay: {
-								select: {
-									target_gene: true
-								}
+		const assignmentAssays = await tx.assignment.findMany({
+			where: {
+				featureid
+			},
+			select: {
+				Analysis: {
+					select: {
+						assay_name: true,
+						Assay: {
+							select: {
+								target_gene: true
 							}
 						}
 					}
 				}
-			});
+			}
+		});
 
-			const uniqueAssays = assignmentAssays.reduce(
-				(acc, a) => ({
-					...acc,
-					[a.Analysis.assay_name]: {
-						target_gene: a.Analysis.Assay.target_gene
-					}
-				}),
-				{} as Record<AnalysisModel["assay_name"], { target_gene: AssayModel["target_gene"] }>
-			);
+		const uniqueAssays = assignmentAssays.reduce(
+			(acc, a) => ({
+				...acc,
+				[a.Analysis.assay_name]: {
+					target_gene: a.Analysis.Assay.target_gene
+				}
+			}),
+			{} as Record<AnalysisModel["assay_name"], { target_gene: AssayModel["target_gene"] }>
+		);
 
-			const assaySummaries = Object.entries(uniqueAssays).map(([assay_name, assay]) => ({
-				assay_name,
-				target_gene: assay.target_gene
-			}));
+		const assaySummaries = Object.entries(uniqueAssays).map(([assay_name, assay]) => ({
+			assay_name,
+			target_gene: assay.target_gene
+		}));
 
-			return { feature, taxaCounts, assaySummaries };
-		}
-	};
-
-	let result = await trustedPrisma.$transaction(query);
-	let showTrustedWarning = false;
-	if (!result) {
-		const cookieStore = await cookies();
-		if (cookieStore.get("trusted")?.value !== "false") result = await prisma.$transaction(query);
-		if (!result) notFound();
-		showTrustedWarning = true;
-	}
-
-	const { feature, taxaCounts, assaySummaries } = result;
+		return { feature, taxaCounts, assaySummaries };
+	});
 
 	taxaCounts.sort((a, b) => b.count - a.count);
 	const taxonomyById = new globalThis.Map(
@@ -232,8 +255,6 @@ export default async function Featureid({
 							<span className="min-w-0 wrap-anywhere">{feature.featureid}</span>
 						</h1>
 					</TitleHoverTooltip>
-
-					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
 
 				<p className="text-lg text-base-content/70 max-w-3xl">
@@ -247,7 +268,7 @@ export default async function Featureid({
 					<div className="lg:col-span-5 flex flex-col gap-6">
 						<Map
 							query={() =>
-								prisma.sample.findMany({
+								trustedPrisma.sample.findMany({
 									where: {
 										Libraries: {
 											some: {
@@ -417,7 +438,7 @@ export default async function Featureid({
 }
 
 async function FeaturePrevalenceSection({ featureid }: { featureid: string }) {
-	const prevalenceData = await prisma.$transaction(async (tx) => {
+	const prevalenceData = await trustedPrisma.$transaction(async (tx) => {
 		const totalSamplesCount = await tx.sample.count();
 
 		const samplesWithFeature = await tx.sample.findMany({

@@ -22,8 +22,8 @@ import { getBlobSizes } from "@/app/helpers/getBlobSizes";
 import { notFound } from "next/navigation";
 import type { AnalysisModel, AssayModel, TaxonomyModel } from "@/app/generated/prisma/models";
 import type { Metadata } from "next";
-import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
 import { cookies } from "next/headers";
+import DisableTrustedMode from "@/app/components/explore/DisableTrustedMode";
 
 export async function generateMetadata({ params }: { params: Promise<{ project_id: string }> }): Promise<Metadata> {
 	const { project_id } = await decodeRouteParams(params);
@@ -212,7 +212,31 @@ async function ProjectDownloadsBlock({
 export default async function Project_id({ params }: { params: Promise<{ project_id: string }> }) {
 	const { project_id } = await decodeRouteParams(params);
 
-	const query = {
+	const trustedCheck = await prisma.project.findUnique({
+		where: {
+			project_id
+		},
+		select: {
+			_count: {
+				select: {
+					Analyses: {
+						where: {
+							trusted: true
+						}
+					}
+				}
+			}
+		}
+	});
+
+	if (!trustedCheck) notFound();
+
+	const cookieStore = await cookies();
+	if (!trustedCheck._count.Analyses && cookieStore.get("trusted")?.value !== "false") {
+		return <DisableTrustedMode />;
+	}
+
+	const { Samples, Analyses, editHistory, ...project } = (await trustedPrisma.project.findUnique({
 		where: {
 			project_id
 		},
@@ -238,17 +262,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				}
 			}
 		}
-	};
-
-	let project = await trustedPrisma.project.findUnique(query);
-	let showTrustedWarning = false;
-	if (!project) {
-		const cookieStore = await cookies();
-		if (cookieStore.get("trusted")?.value !== "false") project = await prisma.project.findUnique(query);
-		if (!project) notFound();
-		showTrustedWarning = true;
-	}
-	const { Samples, Analyses, editHistory, ...justProject } = project;
+	}))!;
 
 	const uniqueAssays = Analyses.reduce(
 		(acc: Record<string, Record<string, string>>, a) => ({
@@ -375,7 +389,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 						Project Metadata
 					</h2>
 					<div className="max-h-124 overflow-y-auto">
-						<DataDisplay table="project" data={justProject} omit={["project_id", "imageFileUrl_ODE"]} />
+						<DataDisplay table="project" data={project} omit={["project_id", "imageFileUrl_ODE"]} />
 					</div>
 				</div>
 			</div>
@@ -426,8 +440,6 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					</TitleHoverTooltip>
 
 					<EditHistory editHistory={editHistory} />
-
-					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
 
 				{project.imageFileUrl_ODE ? (

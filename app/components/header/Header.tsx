@@ -54,7 +54,7 @@ export default function Header() {
 			{/* Right side - theme toggle, user, admin */}
 			<div className="navbar-end w-auto shrink-0 ml-auto pl-2 md:pl-3 xl:pl-6 flex items-center gap-2 sm:gap-3 xl:gap-4">
 				<AdminButton />
-				<TrustedToggle />
+				<TrustedToggle dir="tooltip-bottom" />
 				<ThemeToggle />
 				<div className="mr-2 sm:mr-5 flex items-center">
 					<User />

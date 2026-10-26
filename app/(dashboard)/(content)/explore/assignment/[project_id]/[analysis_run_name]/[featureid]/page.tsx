@@ -9,8 +9,8 @@ import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { RanksBySpecificity } from "@/types/objects";
-import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
 import { cookies } from "next/headers";
+import DisableTrustedMode from "@/app/components/explore/DisableTrustedMode";
 
 export async function generateMetadata({
 	params
@@ -50,7 +50,31 @@ export default async function AssignmentPage({
 }) {
 	const { project_id, analysis_run_name, featureid } = await decodeRouteParams(params);
 
-	const query = {
+	const trustedCheck = await prisma.assignment.findUnique({
+		where: {
+			project_id_analysis_run_name_featureid: {
+				project_id,
+				analysis_run_name,
+				featureid
+			}
+		},
+		select: {
+			Analysis: {
+				select: {
+					trusted: true
+				}
+			}
+		}
+	});
+
+	if (!trustedCheck) notFound();
+
+	const cookieStore = await cookies();
+	if (!trustedCheck.Analysis.trusted && cookieStore.get("trusted")?.value !== "false") {
+		return <DisableTrustedMode />;
+	}
+
+	const assignment = (await trustedPrisma.assignment.findUnique({
 		where: {
 			project_id_analysis_run_name_featureid: {
 				project_id,
@@ -58,16 +82,7 @@ export default async function AssignmentPage({
 				featureid
 			}
 		}
-	};
-
-	let assignment = await trustedPrisma.assignment.findUnique(query);
-	let showTrustedWarning = false;
-	if (!assignment) {
-		const cookieStore = await cookies();
-		if (cookieStore.get("trusted")?.value !== "false") assignment = await prisma.assignment.findUnique(query);
-		if (!assignment) notFound();
-		showTrustedWarning = true;
-	}
+	}))!;
 
 	const rawConfidence = assignment.Confidence ?? 0;
 	const confidencePercent = Math.max(0, Math.min(100, rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence));
@@ -117,8 +132,6 @@ export default async function AssignmentPage({
 							Assignment
 						</h1>
 					</TitleHoverTooltip>
-
-					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
 
 				<div className="mt-3 mb-4 inline-flex items-center gap-5 bg-base-200 rounded-xl px-5 py-4">

@@ -302,16 +302,19 @@ export async function parseOccurrencesFile({
 	channel,
 	project_id,
 	analysis_run_name,
+	features,
 	oldChecksum
 }: {
 	channel: Channel;
 	project_id: OccurrenceModel["project_id"];
 	analysis_run_name: OccurrenceModel["analysis_run_name"];
+	features: { featureid: FeatureModel["featureid"] }[];
 	oldChecksum?: string;
 }) {
 	try {
-		const featureids = [] as OccurrenceModel["featureid"][];
 		const occurrences = [] as Prisma.OccurrenceCreateManyInput[];
+		let libIds = [] as OccurrenceModel["lib_id"][];
+		const featureids = new Set() as Set<OccurrenceModel["featureid"]>;
 
 		//fetch from blob storage
 		await channel.stream.message("Downloading file", 10);
@@ -337,7 +340,7 @@ export async function parseOccurrencesFile({
 		const parser = parse(text, { delimiter: "\t", relax_quotes: true });
 		await channel.stream.message("File read into memory", 25);
 
-		let libIds = [] as OccurrenceModel["lib_id"][];
+		const assignFeatures = new Set(features.map((feat) => feat.featureid));
 		let i = 1;
 		for await (const record of parser) {
 			//get first row as headers
@@ -349,9 +352,17 @@ export async function parseOccurrencesFile({
 				if (!featureid) {
 					await channel.stream.error(`No "featureid" found for row ${i}.`);
 					return;
+				} else if (featureids.has(featureid)) {
+					await channel.stream.error(`Duplicate featureid "${featureid}".`);
+					return;
+				} else if (!assignFeatures.has(featureid)) {
+					await channel.stream.error(`Assignments file does not have the Feature with featureid "${featureid}".`);
+					return;
 				}
-				featureids.push(featureid);
+				assignFeatures.delete(featureid);
+				featureids.add(featureid);
 
+				let numOccs = 0;
 				let j = 1;
 				for (const lib_id of libIds) {
 					if (!lib_id) {
@@ -374,6 +385,7 @@ export async function parseOccurrencesFile({
 					}
 
 					if (organismQuantity !== 0) {
+						numOccs++;
 						//parse occurrence
 						const parsedOccurrence = OccurrenceOptionalDefaultsSchema.safeParse(
 							{
@@ -403,6 +415,13 @@ export async function parseOccurrencesFile({
 					j++;
 				}
 
+				if (!numOccs) {
+					await channel.stream.error(
+						`Assignments file does not have any Occurrences with an organismQuantity greater than zero for Feature with featureid "${featureid}".`
+					);
+					return;
+				}
+
 				i++;
 			}
 
@@ -413,6 +432,13 @@ export async function parseOccurrencesFile({
 					(i / parser.info.records) * 50 + 25
 				);
 			}
+		}
+
+		if (assignFeatures.size) {
+			channel.stream.error(
+				`${assignFeatures.size} Features from Assignments file are missing. The Features are: ${Array.from(assignFeatures)}`
+			);
+			return;
 		}
 
 		return { occurrences, occurrencesMd5, libIds, featureids };
@@ -469,12 +495,13 @@ export async function parseAnalysisFiles({
 		channel: occurrencesChannel,
 		project_id: analysis.project_id,
 		analysis_run_name: analysis.analysis_run_name,
+		features,
 		oldChecksum: oldChecksums?.occurrencesMd5
 	});
 	if (!occurrencesParseResult) {
 		return;
 	}
-	const { occurrences, occurrencesMd5, libIds, featureids } = occurrencesParseResult;
+	const { occurrences, occurrencesMd5, libIds } = occurrencesParseResult;
 
 	return {
 		analysis: {
@@ -487,7 +514,6 @@ export async function parseAnalysisFiles({
 		assignments,
 		occurrences,
 		libIds,
-		featureids,
 		checksums: {
 			analysisMd5,
 			assignmentsMd5,

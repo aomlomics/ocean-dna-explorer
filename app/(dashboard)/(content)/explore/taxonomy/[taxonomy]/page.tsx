@@ -18,9 +18,7 @@ import type { TaxonomicRank } from "@/types/globals";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import type { ImageWithRelations } from "@/prismaImages/generated/zod";
 import type { TaxonomySpotlightModel } from "@/app/generated/prisma/models";
-import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
 import { cookies } from "next/headers";
-import type { Prisma } from "@/app/generated/prisma/client";
 
 export async function generateMetadata({ params }: { params: Promise<{ taxonomy: string }> }): Promise<Metadata> {
 	const { taxonomy } = await decodeRouteParams(params);
@@ -105,30 +103,45 @@ async function resolveTaxonomyPageGbif(taxonomyObj: TaxonomyModel): Promise<{
 export default async function TaxonomyPage({ params }: { params: Promise<{ taxonomy: string }> }) {
 	const { taxonomy } = await decodeRouteParams(params);
 
-	const query = {
+	const trustedCheck = await prisma.taxonomy.findUnique({
+		where: {
+			taxonomy
+		},
+		select: {
+			_count: {
+				select: {
+					Analyses: {
+						where: {
+							trusted: true
+						}
+					}
+				}
+			}
+		}
+	});
+
+	if (!trustedCheck) notFound();
+
+	const cookieStore = await cookies();
+	if (!trustedCheck._count.Analyses && cookieStore.get("trusted")?.value !== "false") {
+		return <DisableTrustedMode />;
+	}
+
+	const dbTaxonomy = (await trustedPrisma.taxonomy.findUnique({
 		where: {
 			taxonomy
 		},
 		include: {
 			Samples: true,
 			Analyses: {
-				distinct: ["project_id"] as Prisma.AnalysisScalarFieldEnum[],
+				distinct: ["project_id"],
 				select: {
 					project_id: true
 				}
 			},
 			TaxonomySpotlights: true
 		}
-	};
-
-	let dbTaxonomy = await trustedPrisma.taxonomy.findUnique(query);
-	let showTrustedWarning = false;
-	if (!dbTaxonomy) {
-		const cookieStore = await cookies();
-		if (cookieStore.get("trusted")?.value !== "false") dbTaxonomy = await prisma.taxonomy.findUnique(query);
-		if (!dbTaxonomy) notFound();
-		showTrustedWarning = true;
-	}
+	}))!;
 
 	//get images and attributions for spotlights
 	const images = await prismaImages.image.findMany({
@@ -186,8 +199,6 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					<span className="-translate-y-2 shrink-0 rounded-md bg-base-300 px-2.5 py-1 text-sm font-medium leading-normal text-base-content mr-2">
 						{databaseRankLabel}
 					</span>
-
-					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 				</div>
 
 				<p className="text-lg text-base-content/70">

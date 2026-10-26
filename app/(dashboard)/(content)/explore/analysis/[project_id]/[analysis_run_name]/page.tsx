@@ -9,7 +9,7 @@ import AssaysCard from "@/app/components/assay/AssaysCard";
 import type { AnalysisModel } from "@/app/generated/prisma/models/Analysis";
 import AnalysisTag from "@/app/components/tags/AnalysisTag";
 import StatCard from "@/app/components/explore/StatCard";
-import { AnalysisIcon, OccurrenceIcon, AssignmentIcon, SampleIcon } from "@/app/components/icons";
+import { AnalysisIcon, OccurrenceIcon, LibraryIcon, FeatureIcon, TaxonomyIcon } from "@/app/components/icons";
 import TaxaGrid from "@/app/components/paginated/grid/TaxaGrid";
 import AlphaDiversityDisplay from "@/app/components/charts/wrappers/AlphaDiversityDisplay";
 import TaxonomyVisualize from "@/app/components/charts/wrappers/TaxonomyVisualize";
@@ -26,8 +26,8 @@ import { exploreUrl } from "@/app/helpers/utils";
 import type { Metadata } from "next";
 import type { TaxonomicRank } from "@/types/globals";
 import { FIRST_TAXONOMY_VISUALIZE_TAB, TAXONOMY_VISUALIZE_TABS } from "@/app/components/charts/taxonomy/tabs";
-import UntrustedInTrustedMode from "@/app/components/explore/UntrustedInTrustedMode";
 import { cookies } from "next/headers";
+import DisableTrustedMode from "@/app/components/explore/DisableTrustedMode";
 
 export async function generateMetadata({
 	params
@@ -100,7 +100,26 @@ export default async function Project_id_Analysis_run_name({
 		redirect(exploreUrl({ table: "analysis", project_id, analysis_run_name }));
 	}
 
-	const query = {
+	const trustedCheck = await prisma.analysis.findUnique({
+		where: {
+			project_id_analysis_run_name: {
+				project_id,
+				analysis_run_name
+			}
+		},
+		select: {
+			trusted: true
+		}
+	});
+
+	if (!trustedCheck) notFound();
+
+	const cookieStore = await cookies();
+	if (!trustedCheck.trusted && cookieStore.get("trusted")?.value !== "false") {
+		return <DisableTrustedMode />;
+	}
+
+	const { _count, editHistory, Assay, Tags, AlphaDiversities, ...analysis } = (await trustedPrisma.analysis.findUnique({
 		where: {
 			project_id_analysis_run_name: {
 				project_id,
@@ -111,7 +130,9 @@ export default async function Project_id_Analysis_run_name({
 			_count: {
 				select: {
 					Occurrences: true,
-					Assignments: true
+					// Assignments: true,
+					Libraries: true,
+					Taxonomies: true
 				}
 			},
 			Assay: {
@@ -135,18 +156,7 @@ export default async function Project_id_Analysis_run_name({
 				}
 			}
 		}
-	};
-
-	let analysis = await trustedPrisma.analysis.findUnique(query);
-	let showTrustedWarning = false;
-	if (!analysis) {
-		const cookieStore = await cookies();
-		if (cookieStore.get("trusted")?.value !== "false") analysis = await prisma.analysis.findUnique(query);
-		if (!analysis) notFound();
-		showTrustedWarning = true;
-	}
-
-	const { _count, editHistory, Assay, Tags, AlphaDiversities, ...justAnalysis } = analysis;
+	}))!;
 
 	const analysisFiles = [
 		{ label: "analysisMetadata", href: analysis.analysisMetadataFileUrl_ODE },
@@ -189,7 +199,6 @@ export default async function Project_id_Analysis_run_name({
 
 					<EditHistory editHistory={editHistory} />
 
-					{showTrustedWarning ? <UntrustedInTrustedMode /> : <></>}
 					{analysis.trusted && <div className="badge badge-primary text-neutral-content p-3 select-none">Trusted</div>}
 
 					{Tags.map((t) => (
@@ -215,7 +224,7 @@ export default async function Project_id_Analysis_run_name({
 				<div className="lg:col-span-2 space-y-6">
 					<MapComponent
 						query={async () =>
-							await prisma.sample.findMany({
+							await trustedPrisma.sample.findMany({
 								where: {
 									Libraries: {
 										some: {
@@ -243,11 +252,7 @@ export default async function Project_id_Analysis_run_name({
 					<div className="bg-base-200 rounded-xl p-6">
 						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Analysis Information</h2>
 						<div className="h-75 overflow-y-auto">
-							<DataDisplay
-								table="analysis"
-								data={justAnalysis}
-								omit={["project_id", "analysis_run_name", "assay_name"]}
-							/>
+							<DataDisplay table="analysis" data={analysis} omit={["project_id", "analysis_run_name", "assay_name"]} />
 						</div>
 					</div>
 				</div>
@@ -259,41 +264,55 @@ export default async function Project_id_Analysis_run_name({
 						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Analysis at a Glance</h2>
 						<div className="grid grid-cols-2 gap-4">
 							<StatCard
+								title="Libraries"
+								value={_count.Libraries}
+								icon={<LibraryIcon />}
+								link={`/search?table=library&advanced=[["analysis","project_id","equals","${project_id}"],["analysis","analysis_run_name","equals","${analysis_run_name}"]]`}
+								tooltip="View as Search"
+							/>
+
+							<StatCard
 								title="Occurrences"
 								value={_count.Occurrences}
 								icon={<OccurrenceIcon />}
-								link={`/search?table=occurrence&advanced=[["analysis_run_name","equals","${analysis_run_name}"]]`}
+								link={`/search?table=occurrence&advanced=[["project_id","equals","${project_id}"],["analysis_run_name","equals","${analysis_run_name}"]]`}
 								tooltip="View as Search"
 							/>
 
-							<StatCard
-								title="Assignments"
+							{/* TODO: re-enable when analyses are updated to have matching features in occurrence/assignment files */}
+							{/* <StatCard
+								title="Features"
 								value={_count.Assignments}
-								icon={<AssignmentIcon />}
-								link={`/search?table=assignment&advanced=[["analysis_run_name","equals","${analysis_run_name}"]]`}
+								icon={<FeatureIcon />}
+								link={`/search?table=feature&advanced=[["analysis","project_id","equals","${project_id}"],["analysis","analysis_run_name","equals","${analysis_run_name}"]]`}
 								tooltip="View as Search"
-							/>
-
+							/> */}
 							<StatCard
-								title="Samples"
+								title="Features"
 								query={async () =>
-									await prisma.sample.count({
+									await trustedPrisma.feature.count({
 										where: {
-											Libraries: {
+											Assignments: {
 												some: {
-													Analyses: {
-														some: {
-															project_id,
-															analysis_run_name
-														}
+													Analysis: {
+														project_id,
+														analysis_run_name
 													}
 												}
 											}
 										}
 									})
 								}
-								icon={<SampleIcon />}
-								link={`/search?table=sample&advanced=[["analysis","analysis_run_name","equals","${analysis_run_name}"]]`}
+								icon={<FeatureIcon />}
+								link={`/search?table=feature&advanced=[["analysis","project_id","equals","${project_id}"],["analysis","analysis_run_name","equals","${analysis_run_name}"]]`}
+								tooltip="View as Search"
+							/>
+
+							<StatCard
+								title="Taxonomies"
+								value={_count.Taxonomies}
+								icon={<TaxonomyIcon />}
+								link={`/search?table=taxonomy&advanced=[["analysis","project_id","equals","${project_id}"],["analysis","analysis_run_name","equals","${analysis_run_name}"]]`}
 								tooltip="View as Search"
 							/>
 						</div>
@@ -390,7 +409,7 @@ async function TaxonomyVisualizeSuspense({
 	project_id: AnalysisModel["project_id"];
 	analysis_run_name: AnalysisModel["analysis_run_name"];
 }) {
-	const analysis = await prisma.analysis.findUnique({
+	const analysis = await trustedPrisma.analysis.findUnique({
 		where: {
 			project_id_analysis_run_name: {
 				project_id,

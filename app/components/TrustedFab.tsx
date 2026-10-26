@@ -131,7 +131,7 @@ export default function TrustedFab() {
 						className={`z-49 ${fabChildrenStyles}`}
 						data-tip="Help Docs"
 						aria-label="Help Docs"
-						href="/docs/help/overview"
+						href="/docs/help/overview#trusted-vs-untrusted-data"
 					>
 						<DocsIcon />
 					</Link>
