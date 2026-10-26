@@ -101,25 +101,30 @@ export default async function AssayPhyloPic({ assay_name }: { assay_name: string
 			const gbifTaxonomy = gbifTaxa.filter(
 				(taxa: Record<string, any>) => taxa.rank?.toLowerCase() === candidate.rank
 			)[0];
-			if (!gbifTaxonomy) continue;
 
-			const objectIDs =
-				`${gbifTaxonomy.speciesKey ? gbifTaxonomy.speciesKey + "," : ""}` +
-				`${gbifTaxonomy.genusKey ? gbifTaxonomy.genusKey + "," : ""}` +
-				`${gbifTaxonomy.familyKey ? gbifTaxonomy.familyKey + "," : ""}` +
-				`${gbifTaxonomy.orderKey ? gbifTaxonomy.orderKey + "," : ""}` +
-				`${gbifTaxonomy.classKey ? gbifTaxonomy.classKey + "," : ""}` +
-				`${gbifTaxonomy.phylumKey ? gbifTaxonomy.phylumKey + "," : ""}` +
-				`${gbifTaxonomy.kingdomKey ? gbifTaxonomy.kingdomKey : ""}`;
+			if (gbifTaxonomy) {
+				const objectIDs =
+					`${gbifTaxonomy.speciesKey ? gbifTaxonomy.speciesKey + "," : ""}` +
+					`${gbifTaxonomy.genusKey ? gbifTaxonomy.genusKey + "," : ""}` +
+					`${gbifTaxonomy.familyKey ? gbifTaxonomy.familyKey + "," : ""}` +
+					`${gbifTaxonomy.orderKey ? gbifTaxonomy.orderKey + "," : ""}` +
+					`${gbifTaxonomy.classKey ? gbifTaxonomy.classKey + "," : ""}` +
+					`${gbifTaxonomy.phylumKey ? gbifTaxonomy.phylumKey + "," : ""}` +
+					`${gbifTaxonomy.kingdomKey ? gbifTaxonomy.kingdomKey : ""}`;
 
-			const phyloPicRes = await fetch(
-				`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${objectIDs}`
-			);
-			const phyloPic = await phyloPicRes.json();
-			if (phyloPic.errors || !phyloPic._embedded?.primaryImage?._links?.vectorFile?.href) continue;
-
-			const imageUrl = phyloPic._embedded.primaryImage._links.vectorFile.href as string;
-			return <AssayPhyloPicImage src={imageUrl} />;
+				const phyloPicRes = await fetch(
+					`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${objectIDs}`
+				);
+				if (phyloPicRes.ok) {
+					const phyloPic = await phyloPicRes.json();
+					if (!phyloPic.errors) {
+						const imageUrl = phyloPic._embedded?.primaryImage?._links?.vectorFile?.href as string;
+						if (imageUrl) {
+							return <AssayPhyloPicImage src={imageUrl} />;
+						}
+					}
+				}
+			}
 		}
 	}
 
