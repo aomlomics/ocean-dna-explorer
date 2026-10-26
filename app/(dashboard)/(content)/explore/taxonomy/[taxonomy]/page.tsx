@@ -19,6 +19,7 @@ import { prismaImages } from "@/app/helpers/prismaImages";
 import type { ImageWithRelations } from "@/prismaImages/generated/zod";
 import type { TaxonomySpotlightModel } from "@/app/generated/prisma/models";
 import { cookies } from "next/headers";
+import DisableTrustedMode from "@/app/components/explore/DisableTrustedMode";
 
 export async function generateMetadata({ params }: { params: Promise<{ taxonomy: string }> }): Promise<Metadata> {
 	const { taxonomy } = await decodeRouteParams(params);

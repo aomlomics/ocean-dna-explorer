@@ -16,7 +16,6 @@ import CopyButton from "@/app/components/CopyButton";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import type { Metadata } from "next";
-import type { Prisma } from "@/app/generated/prisma/client";
 import { cookies } from "next/headers";
 import type { AnalysisModel, AssayModel } from "@/app/generated/prisma/models";
 import DisableTrustedMode from "@/app/components/explore/DisableTrustedMode";
