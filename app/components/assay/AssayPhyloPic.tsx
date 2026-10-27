@@ -88,6 +88,8 @@ export default async function AssayPhyloPic({ assay_name }: { assay_name: string
 
 	const candidates = [...abundanceCandidates, ...prevalenceCandidates];
 
+	let imageUrl;
+
 	// Try candidates in order until one resolves to a PhyloPic image
 	const tried = new Set<string>();
 	for (const candidate of candidates) {
@@ -119,10 +121,7 @@ export default async function AssayPhyloPic({ assay_name }: { assay_name: string
 					if (phyloPicRes.ok) {
 						const phyloPic = await phyloPicRes.json();
 						if (!phyloPic.errors) {
-							const imageUrl = phyloPic._embedded?.primaryImage?._links?.vectorFile?.href as string;
-							if (imageUrl) {
-								return <AssayPhyloPicImage src={imageUrl} />;
-							}
+							imageUrl = phyloPic._embedded?.primaryImage?._links?.vectorFile?.href;
 						}
 					}
 				}
@@ -132,9 +131,12 @@ export default async function AssayPhyloPic({ assay_name }: { assay_name: string
 		}
 	}
 
-	return (
-		<div className="h-full w-full flex items-center justify-center text-center text-base-content/60 font-bold text-sm leading-none">
-			?
-		</div>
-	);
+	if (!imageUrl)
+		return (
+			<div className="h-full w-full flex items-center justify-center text-center text-base-content/60 font-bold text-sm leading-none">
+				?
+			</div>
+		);
+
+	return <AssayPhyloPicImage src={imageUrl} />;
 }

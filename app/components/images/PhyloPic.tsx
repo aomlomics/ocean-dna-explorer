@@ -3,6 +3,8 @@ import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 import { matchGbifForPhylopic } from "./matchGbifForPhylopic";
 
 export default async function PhyloPic({ taxonomy }: { taxonomy: TaxonomyModel }) {
+	let gbifResponse;
+
 	const matched = await matchGbifForPhylopic(taxonomy);
 	if (matched) {
 		try {
@@ -13,21 +15,13 @@ export default async function PhyloPic({ taxonomy }: { taxonomy: TaxonomyModel }
 				const phyloPic = await phyloPicRes.json();
 
 				if (!phyloPic.errors) {
-					const imageUrl = phyloPic._embedded.primaryImage._links.vectorFile.href;
-					const title = phyloPic._embedded.primaryImage._links.self.title ?? "";
 					const rank = matched.rankMatched;
-					const rankLabel = rank ? rank[0]!.toUpperCase() + rank.slice(1) : "Taxon";
 
-					return (
-						<div className="w-full h-full relative flex flex-col items-center justify-center">
-							<div
-								className="tooltip tooltip-bottom tooltip-primary w-full h-full before:bg-base-100 before:text-base-content before:border before:border-base-300"
-								data-tip={`Image of ${rankLabel}: ${title}`}
-							>
-								<ThemeAwarePhyloPic src={imageUrl} alt="Image of taxonomy" priority className="object-contain" />
-							</div>
-						</div>
-					);
+					gbifResponse = {
+						imageUrl: phyloPic._embedded.primaryImage._links.vectorFile.href,
+						title: phyloPic._embedded.primaryImage._links.self.title ?? "",
+						rankLabel: rank ? rank[0]!.toUpperCase() + rank.slice(1) : "Taxon"
+					};
 				}
 			}
 		} catch (err) {
@@ -35,5 +29,16 @@ export default async function PhyloPic({ taxonomy }: { taxonomy: TaxonomyModel }
 		}
 	}
 
-	return <>No Image</>;
+	if (!gbifResponse) return <>No Image</>;
+
+	return (
+		<div className="w-full h-full relative flex flex-col items-center justify-center">
+			<div
+				className="tooltip tooltip-bottom tooltip-primary w-full h-full before:bg-base-100 before:text-base-content before:border before:border-base-300"
+				data-tip={`Image of ${gbifResponse.rankLabel}: ${gbifResponse.title}`}
+			>
+				<ThemeAwarePhyloPic src={gbifResponse.imageUrl} alt="Image of taxonomy" priority className="object-contain" />
+			</div>
+		</div>
+	);
 }
