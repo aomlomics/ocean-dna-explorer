@@ -98,9 +98,9 @@
 		"tsx": "^4.23.15"
 	},
 	"allowScripts": {
-		"prisma@7.10.0": true,
-		"@prisma/engines@7.10.0": true,
 		"unrs-resolver@1.12.2": true,
-		"esbuild@0.28.1": true
+		"esbuild@0.28.1": true,
+		"@prisma/engines@7.10.1": true,
+		"prisma@7.10.1": true
 	}
 }
