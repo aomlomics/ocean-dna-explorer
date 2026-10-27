@@ -49,10 +49,12 @@ export default function SelectGroupFilter({
 			`/api/internal/${table}/fields/distinct?trusted=${trusted}&${where.length ? where + "&" : ""}${extraSelf ? `extraFields=${fieldName}` : ""}`,
 			{ cache: "force-cache" }
 		);
-		const json = (await response.json()) as NetworkPacket;
+		if (response.ok) {
+			const json = (await response.json()) as NetworkPacket;
 
-		if (json.statusMessage === "success") {
-			setOptions(json.result);
+			if (json.statusMessage === "success") {
+				setOptions(json.result);
+			}
 		}
 	}
 

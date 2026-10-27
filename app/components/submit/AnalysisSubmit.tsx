@@ -156,6 +156,13 @@ export default function AnalysisSubmit({ tags }: { tags: TagModel[] }) {
 							} else {
 								//get project from database
 								const response = await fetch(`/api/project?project_id=${value}&fields=project_id`);
+								if (!response.ok) {
+									setErrorMessage(response.statusText);
+									modalRef.current?.showModal();
+									event.target.value = "";
+									return;
+								}
+
 								const json = (await response.json()) as NetworkPacket;
 
 								//handle errors

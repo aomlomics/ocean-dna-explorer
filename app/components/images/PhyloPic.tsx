@@ -13,10 +13,10 @@ export default async function PhyloPic({ taxonomy }: { taxonomy: TaxonomyModel }
 	const phyloPicRes = await fetch(
 		`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${matched.objectIDs}`
 	);
+	if (!phyloPicRes.ok) return errorImg;
 	const phyloPic = await phyloPicRes.json();
-	if (phyloPic.errors) {
-		return errorImg;
-	}
+	if (phyloPic.errors) return errorImg;
+
 	const imageUrl = phyloPic._embedded.primaryImage._links.vectorFile.href;
 	const title = phyloPic._embedded.primaryImage._links.self.title ?? "";
 	const rank = matched.rankMatched;
