@@ -145,12 +145,20 @@ function categoryFromOtherDistributions(results: DistRow[]): CategoryId | null {
 
 async function resolveBackboneSpeciesKeyForGbif(initialKey: number | string, signal?: AbortSignal): Promise<number> {
 	const k = Number(initialKey);
-	if (!Number.isFinite(k)) return k;
-	const res = await fetch(`https://api.gbif.org/v1/species/${k}`, { signal });
-	if (!res.ok) return k;
-	const d = (await res.json()) as { nubKey?: number; key?: number };
-	if (d.nubKey != null) return Number(d.nubKey);
-	if (d.key != null) return Number(d.key);
+
+	if (Number.isFinite(k)) {
+		try {
+			const res = await fetch(`https://api.gbif.org/v1/species/${k}`, { signal });
+			if (res.ok) {
+				const d = (await res.json()) as { nubKey?: number; key?: number };
+				if (d.nubKey != null) return Number(d.nubKey);
+				if (d.key != null) return Number(d.key);
+			}
+		} catch (err) {
+			console.error(err);
+		}
+	}
+
 	return k;
 }
 

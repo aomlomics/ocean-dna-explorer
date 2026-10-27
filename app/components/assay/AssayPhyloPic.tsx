@@ -95,36 +95,40 @@ export default async function AssayPhyloPic({ assay_name }: { assay_name: string
 		if (tried.has(key)) continue;
 		tried.add(key);
 
-		const gbifTaxaRes = await fetch(`https://api.gbif.org/v1/species/suggest?q=${candidate.name}`);
-		if (gbifTaxaRes.ok) {
-			const gbifTaxa = await gbifTaxaRes.json();
-			const gbifTaxonomy = gbifTaxa.filter(
-				(taxa: Record<string, any>) => taxa.rank?.toLowerCase() === candidate.rank
-			)[0];
+		try {
+			const gbifTaxaRes = await fetch(`https://api.gbif.org/v1/species/suggest?q=${candidate.name}`);
+			if (gbifTaxaRes.ok) {
+				const gbifTaxa = await gbifTaxaRes.json();
+				const gbifTaxonomy = gbifTaxa.filter(
+					(taxa: Record<string, any>) => taxa.rank?.toLowerCase() === candidate.rank
+				)[0];
 
-			if (gbifTaxonomy) {
-				const objectIDs =
-					`${gbifTaxonomy.speciesKey ? gbifTaxonomy.speciesKey + "," : ""}` +
-					`${gbifTaxonomy.genusKey ? gbifTaxonomy.genusKey + "," : ""}` +
-					`${gbifTaxonomy.familyKey ? gbifTaxonomy.familyKey + "," : ""}` +
-					`${gbifTaxonomy.orderKey ? gbifTaxonomy.orderKey + "," : ""}` +
-					`${gbifTaxonomy.classKey ? gbifTaxonomy.classKey + "," : ""}` +
-					`${gbifTaxonomy.phylumKey ? gbifTaxonomy.phylumKey + "," : ""}` +
-					`${gbifTaxonomy.kingdomKey ? gbifTaxonomy.kingdomKey : ""}`;
+				if (gbifTaxonomy) {
+					const objectIDs =
+						`${gbifTaxonomy.speciesKey ? gbifTaxonomy.speciesKey + "," : ""}` +
+						`${gbifTaxonomy.genusKey ? gbifTaxonomy.genusKey + "," : ""}` +
+						`${gbifTaxonomy.familyKey ? gbifTaxonomy.familyKey + "," : ""}` +
+						`${gbifTaxonomy.orderKey ? gbifTaxonomy.orderKey + "," : ""}` +
+						`${gbifTaxonomy.classKey ? gbifTaxonomy.classKey + "," : ""}` +
+						`${gbifTaxonomy.phylumKey ? gbifTaxonomy.phylumKey + "," : ""}` +
+						`${gbifTaxonomy.kingdomKey ? gbifTaxonomy.kingdomKey : ""}`;
 
-				const phyloPicRes = await fetch(
-					`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${objectIDs}`
-				);
-				if (phyloPicRes.ok) {
-					const phyloPic = await phyloPicRes.json();
-					if (!phyloPic.errors) {
-						const imageUrl = phyloPic._embedded?.primaryImage?._links?.vectorFile?.href as string;
-						if (imageUrl) {
-							return <AssayPhyloPicImage src={imageUrl} />;
+					const phyloPicRes = await fetch(
+						`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${objectIDs}`
+					);
+					if (phyloPicRes.ok) {
+						const phyloPic = await phyloPicRes.json();
+						if (!phyloPic.errors) {
+							const imageUrl = phyloPic._embedded?.primaryImage?._links?.vectorFile?.href as string;
+							if (imageUrl) {
+								return <AssayPhyloPicImage src={imageUrl} />;
+							}
 						}
 					}
 				}
 			}
+		} catch (err) {
+			console.error(err);
 		}
 	}
 

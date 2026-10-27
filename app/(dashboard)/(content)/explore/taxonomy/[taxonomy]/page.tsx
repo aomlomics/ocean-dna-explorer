@@ -84,16 +84,20 @@ async function resolveTaxonomyPageGbif(taxonomyObj: TaxonomyModel): Promise<{
 	let imageUrl: string | null = null;
 	let title = "";
 
-	const phyloPicRes = await fetch(
-		`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${objectIDs}`
-	);
-	if (phyloPicRes.ok) {
-		const phyloPicJson = await phyloPicRes.json();
+	try {
+		const phyloPicRes = await fetch(
+			`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${objectIDs}`
+		);
+		if (phyloPicRes.ok) {
+			const phyloPicJson = await phyloPicRes.json();
 
-		if (!phyloPicJson.errors && phyloPicJson._embedded?.primaryImage?._links?.vectorFile?.href) {
-			imageUrl = phyloPicJson._embedded.primaryImage._links.vectorFile.href;
-			title = phyloPicJson._embedded.primaryImage._links.self.title ?? "";
+			if (!phyloPicJson.errors && phyloPicJson._embedded?.primaryImage?._links?.vectorFile?.href) {
+				imageUrl = phyloPicJson._embedded.primaryImage._links.vectorFile.href;
+				title = phyloPicJson._embedded.primaryImage._links.self.title ?? "";
+			}
 		}
+	} catch (err) {
+		console.error(err);
 	}
 
 	return {
