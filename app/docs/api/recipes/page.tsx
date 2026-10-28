@@ -96,8 +96,11 @@ export default function ApiRecipesPage() {
 					content: (
 						<>
 							<p className="mb-4">
-								A library has one sample. <code className="px-1 py-0.5 bg-base-300 rounded">relationsFields</code> picks
-								which sample fields come back.
+								A library has one sample. The{" "}
+								<Link href="/docs/api/queryParameters#relation-field-options" className="link link-primary">
+									relationsFields
+								</Link>{" "}
+								option picks which sample fields come back.
 							</p>
 
 							<div className="mb-4">

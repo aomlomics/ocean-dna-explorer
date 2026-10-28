@@ -106,15 +106,15 @@ export default async function ApiIntroductionPage() {
 								<div className="min-w-0">
 									<h4 className="mt-0! mb-2 text-xl! font-semibold!">Add Options</h4>
 									<p>
-										Options go after the ? and change the response.{" "}
+										Options go after the ? and change the response. The{" "}
 										<Link href="/docs/api/queryParameters#field-selection" className="link link-primary">
 											fields
 										</Link>{" "}
-										chooses which columns come back.{" "}
+										option chooses which columns come back. The{" "}
 										<Link href="/docs/api/queryParameters#result-limiting" className="link link-primary">
 											limit
 										</Link>{" "}
-										caps how many records you get. A query works without either one.
+										option caps how many records you get. A query works without either one.
 									</p>
 									<ApiQueryDiagram
 										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
@@ -143,7 +143,19 @@ export default async function ApiIntroductionPage() {
 									<h4 className="mt-0! mb-2 text-xl! font-semibold!">Filter the Records</h4>
 									<p>
 										A filter keeps records that match a value. It sits after the ? like an option, but the name is a
-										field on the table. fields and limit change what comes back. A filter changes which records match.
+										field on the table. The{" "}
+										<Link href="/docs/api/queryParameters#field-selection" className="link link-primary">
+											fields
+										</Link>{" "}
+										and{" "}
+										<Link href="/docs/api/queryParameters#result-limiting" className="link link-primary">
+											limit
+										</Link>{" "}
+										options change what comes back. A{" "}
+										<Link href="/docs/api/searching#direct-field-filtering" className="link link-primary">
+											filter
+										</Link>{" "}
+										changes which records match.
 									</p>
 									<ApiQueryDiagram
 										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
@@ -242,8 +254,7 @@ export default async function ApiIntroductionPage() {
 							<p className="mb-4">
 								Any request whose path starts with{" "}
 								<code className="mx-1 font-mono bg-transparent! rounded-none!">/api</code> counts toward a limit of{" "}
-								<strong>20 requests every 10 seconds</strong>, measured per IP address. Paths under{" "}
-								<code className="mx-1 font-mono bg-transparent! rounded-none!">/api/internal</code> are not counted.
+								<strong>20 requests every 10 seconds</strong>, measured per IP address.
 							</p>
 							<p className="mb-4">
 								Going over the limit returns{" "}

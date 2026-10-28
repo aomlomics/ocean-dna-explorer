@@ -31,10 +31,16 @@ export default function DocsSidebar() {
 	const section = splitPath[3] as DocsGenericSection<DocsPage>;
 
 	const hash = useHash();
-	const [currSection, setCurrSection] = useState(hash || section);
+	const [currSection, setCurrSection] = useState(hash || section || "");
 	const [disableAutoScroll, setDisableAutoScroll] = useState(false);
 
 	const ref = useRef<HTMLElement>(null);
+
+	//sync active section when the URL changes
+	useEffect(() => {
+		setCurrSection(hash || section || "");
+		setDisableAutoScroll(false);
+	}, [pathname, hash, section]);
 
 	//detect current section in docs body
 	useEffect(() => {

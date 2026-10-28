@@ -66,7 +66,7 @@ export default function ApiCodeBlock({ language, url }: { language: string; url:
 							e.stopPropagation();
 							handleCopy();
 						}}
-						className="p-2 rounded hover:bg-base-300 transition-colors"
+						className="p-2 rounded hover:bg-base-300 transition-colors cursor-pointer"
 						aria-label="Copy code"
 					>
 						{copied ? (

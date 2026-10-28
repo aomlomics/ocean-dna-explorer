@@ -161,16 +161,22 @@ export default function ApiQueryParametersPage() {
 							</p>
 
 							<p className="mb-4">
-								<code className="px-1 py-0.5 bg-base-300 rounded">limit</code> caps records from the table in the URL.
-								It does not cap the related rows nested inside them. One project can still come back with every sample
-								it has.
+								The{" "}
+								<Link href="#result-limiting" className="link link-primary">
+									limit
+								</Link>{" "}
+								option caps records from the table in the URL. It does not cap the related rows nested inside them. One
+								project can still come back with every sample it has.
 							</p>
 
 							<p className="mb-4">
 								Analysis and Sample are joined through Library.{" "}
 								<code className="px-1 py-0.5 bg-base-300 rounded">/api/analysis?relations=sample</code> returns each
 								analysis, then each library as an id, then each sample as an id. That can be a lot of rows, because{" "}
-								<code className="px-1 py-0.5 bg-base-300 rounded">limit</code> does not cap them.
+								<Link href="#result-limiting" className="link link-primary">
+									limit
+								</Link>{" "}
+								does not cap them.
 							</p>
 
 							<p className="mb-4">
@@ -215,17 +221,20 @@ export default function ApiQueryParametersPage() {
 								worksOn="Table and single record endpoints."
 								rules={
 									<>
-										Both require <code className="px-1 py-0.5 bg-base-300 rounded">relations</code>, and they cannot be
-										used together. Every table you name must also appear in{" "}
+										Both require{" "}
+										<Link href="#relations" className="link link-primary">
+											relations
+										</Link>
+										, and they cannot be used together. Every table you name must also appear in{" "}
 										<code className="px-1 py-0.5 bg-base-300 rounded">relations</code>.
 									</>
 								}
 							/>
 
 							<p className="mb-4">
-								<code className="px-1 py-0.5 bg-base-300 rounded">relationsFields</code> picks specific fields from one
-								related table. The first value is the table name and the rest are its fields. Repeat the whole option to
-								cover more than one table.
+								The <code className="px-1 py-0.5 bg-base-300 rounded">relationsFields</code> option picks specific
+								fields from one related table. The first value is the table name and the rest are its fields. Repeat the
+								whole option to cover more than one table.
 							</p>
 
 							<div className="mb-4">
@@ -242,9 +251,9 @@ export default function ApiQueryParametersPage() {
 							/>
 
 							<p className="mt-6 mb-4">
-								<code className="px-1 py-0.5 bg-base-300 rounded">relationsAllFields</code> is the shortcut for when you
-								want everything. Set it to <code className="px-1 py-0.5 bg-base-300 rounded">true</code> for all fields
-								on all requested relations, or give it a comma separated list of tables to limit it.
+								The <code className="px-1 py-0.5 bg-base-300 rounded">relationsAllFields</code> option is the shortcut
+								for when you want everything. Set it to <code className="px-1 py-0.5 bg-base-300 rounded">true</code>{" "}
+								for all fields on all requested relations, or give it a comma separated list of tables to limit it.
 							</p>
 
 							<p className="mb-4">
@@ -401,17 +410,18 @@ export default function ApiQueryParametersPage() {
 								worksOn="Table endpoint only."
 								rules={
 									<>
-										Both must be positive integers. <code className="px-1 py-0.5 bg-base-300 rounded">page</code>{" "}
-										requires <code className="px-1 py-0.5 bg-base-300 rounded">limit</code>.
+										Both must be positive integers. The <code className="px-1 py-0.5 bg-base-300 rounded">page</code>{" "}
+										option requires <code className="px-1 py-0.5 bg-base-300 rounded">limit</code>.
 									</>
 								}
 							/>
 
 							<p className="mb-4">
-								<code className="px-1 py-0.5 bg-base-300 rounded">limit</code> caps how many records come back.{" "}
-								<code className="px-1 py-0.5 bg-base-300 rounded">page</code> then steps through them in blocks of that
-								size, starting at <code className="px-1 py-0.5 bg-base-300 rounded">page=1</code>. With{" "}
-								<code className="px-1 py-0.5 bg-base-300 rounded">limit=5</code>, page 2 returns records 6 through 10.
+								The <code className="px-1 py-0.5 bg-base-300 rounded">limit</code> option caps how many records come
+								back. The <code className="px-1 py-0.5 bg-base-300 rounded">page</code> option then steps through them
+								in blocks of that size, starting at <code className="px-1 py-0.5 bg-base-300 rounded">page=1</code>.
+								With <code className="px-1 py-0.5 bg-base-300 rounded">limit=5</code>, page 2 returns records 6 through
+								10.
 							</p>
 
 							<p className="mb-4">
@@ -468,8 +478,11 @@ export default function ApiQueryParametersPage() {
 							</div>
 
 							<p className="mb-4">
-								The count endpoint does not accept <code className="px-1 py-0.5 bg-base-300 rounded">limit</code>.
-								Without the flag this returns an error, with it the count is returned as normal.
+								The count endpoint does not accept{" "}
+								<Link href="#result-limiting" className="link link-primary">
+									limit
+								</Link>
+								. Without the flag this returns an error, with it the count is returned as normal.
 							</p>
 							<ApiCodeBlock
 								language="json"

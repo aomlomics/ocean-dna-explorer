@@ -224,21 +224,21 @@ export default function ApiResponsesPage() {
 										<tr>
 											<td>Missing companion option</td>
 											<td>
-												<code className="px-1 py-0.5 bg-base-300 rounded">page</code> requires{" "}
-												<code className="px-1 py-0.5 bg-base-300 rounded">limit</code>.{" "}
+												The <code className="px-1 py-0.5 bg-base-300 rounded">page</code> option requires{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">limit</code>. The{" "}
 												<code className="px-1 py-0.5 bg-base-300 rounded">relationsFields</code> and{" "}
-												<code className="px-1 py-0.5 bg-base-300 rounded">relationsAllFields</code> require{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">relationsAllFields</code> options require{" "}
 												<code className="px-1 py-0.5 bg-base-300 rounded">relations</code>, and cannot be used together.
 											</td>
 										</tr>
 										<tr>
 											<td>Wrong value type</td>
 											<td>
-												<code className="px-1 py-0.5 bg-base-300 rounded">limit</code>,{" "}
+												The <code className="px-1 py-0.5 bg-base-300 rounded">limit</code>,{" "}
 												<code className="px-1 py-0.5 bg-base-300 rounded">page</code>, and{" "}
-												<code className="px-1 py-0.5 bg-base-300 rounded">ids</code> take integers.{" "}
-												<code className="px-1 py-0.5 bg-base-300 rounded">orderBy</code> takes a field and either asc or
-												desc.
+												<code className="px-1 py-0.5 bg-base-300 rounded">ids</code> options take integers. The{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">orderBy</code> option takes a field and either
+												asc or desc.
 											</td>
 										</tr>
 										<tr>

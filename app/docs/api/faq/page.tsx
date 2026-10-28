@@ -23,8 +23,8 @@ export default function ApiFaqPage() {
 						<div>
 							<h4 className="font-medium mb-2">Q: Are there rate limits for API usage?</h4>
 							<p>
-								A: 20 requests every 10 seconds, per IP address, on any path starting with /api. /api/internal is not
-								counted. Over the limit you get HTTP 429. Details are in{" "}
+								A: 20 requests every 10 seconds, per IP address, on any path starting with /api. Over the limit you get
+								HTTP 429. Details are in{" "}
 								<Link className="link link-primary font-semibold" href="/docs/api/introduction#rate-limits">
 									Rate Limits
 								</Link>

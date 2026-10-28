@@ -94,8 +94,9 @@ export default function ApiSchemaPage() {
 									<Link href="/mySubmissions" className="link link-primary link-hover">
 										My Submissions
 									</Link>{" "}
-									page, a record of the changes is stored in the `editHistory` field. This field contains a JSON array
-									of objects, where each object represents a set of edits made at a specific time.
+									page, a record of the changes is stored in the{" "}
+									<code className="px-1 py-0.5 bg-base-300 rounded">editHistory</code> field. This field contains a JSON
+									array of objects, where each object represents a set of edits made at a specific time.
 								</p>
 							</div>
 							<h4 className="font-medium mb-2">Structure of an Edit Record:</h4>

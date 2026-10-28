@@ -214,7 +214,11 @@ export default async function ApiEndpointsPage() {
 								<Link href="/docs/api/queryParameters#field-selection" className="link link-primary">
 									fields
 								</Link>{" "}
-								or a filter.
+								or a{" "}
+								<Link href="/docs/api/searching#direct-field-filtering" className="link link-primary">
+									filter
+								</Link>
+								.
 							</p>
 
 							<div className="mb-4">
@@ -316,8 +320,11 @@ export default async function ApiEndpointsPage() {
 
 							<p className="mb-4">
 								This is the main endpoint and the one most queries use. Without options it returns every record in the
-								table, so add <code className="px-1 py-0.5 bg-base-300 rounded">limit</code> while you are
-								experimenting.
+								table, so add{" "}
+								<Link href="/docs/api/queryParameters#result-limiting" className="link link-primary">
+									limit
+								</Link>{" "}
+								while you are experimenting.
 							</p>
 
 							<div className="mb-4">
@@ -366,11 +373,26 @@ export default async function ApiEndpointsPage() {
 
 							<p className="mb-4">
 								Options that shape records rather than select them are rejected here, including{" "}
-								<code className="px-1 py-0.5 bg-base-300 rounded">fields</code>,{" "}
-								<code className="px-1 py-0.5 bg-base-300 rounded">relations</code>,{" "}
-								<code className="px-1 py-0.5 bg-base-300 rounded">ids</code>,{" "}
-								<code className="px-1 py-0.5 bg-base-300 rounded">orderBy</code>, and{" "}
-								<code className="px-1 py-0.5 bg-base-300 rounded">limit</code>.
+								<Link href="/docs/api/queryParameters#field-selection" className="link link-primary">
+									fields
+								</Link>
+								,{" "}
+								<Link href="/docs/api/queryParameters#relations" className="link link-primary">
+									relations
+								</Link>
+								,{" "}
+								<Link href="/docs/api/searching#id-filtering" className="link link-primary">
+									ids
+								</Link>
+								,{" "}
+								<Link href="/docs/api/queryParameters#sorting-results" className="link link-primary">
+									orderBy
+								</Link>
+								, and{" "}
+								<Link href="/docs/api/queryParameters#result-limiting" className="link link-primary">
+									limit
+								</Link>
+								.
 							</p>
 
 							<div className="mb-4">

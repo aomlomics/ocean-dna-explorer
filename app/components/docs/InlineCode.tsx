@@ -20,7 +20,7 @@ export default function InlineCode({ code }: InlineCodeProps) {
 			<span className="break-all">{code}</span>
 			<button
 				onClick={handleCopy}
-				className="shrink-0 rounded p-1 hover:bg-base-300 transition-colors"
+				className="shrink-0 rounded p-1 hover:bg-base-300 transition-colors cursor-pointer"
 				aria-label="Copy code"
 			>
 				{copied ? (

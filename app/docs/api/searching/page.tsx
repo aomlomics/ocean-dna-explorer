@@ -77,10 +77,22 @@ export default async function ApiSearchPage() {
 
 					<Callout title="Pick one way to filter">
 						<p>
-							Field filters, <code className="px-1 py-0.5 bg-base-300 rounded">search</code>,{" "}
-							<code className="px-1 py-0.5 bg-base-300 rounded">ids</code>, and{" "}
-							<code className="px-1 py-0.5 bg-base-300 rounded">advanced</code> are mutually exclusive. Using more than
-							one of them in the same request returns an error.
+							<Link href="#direct-field-filtering" className="link link-primary">
+								Field filters
+							</Link>
+							,{" "}
+							<Link href="#standard-search" className="link link-primary">
+								search
+							</Link>
+							,{" "}
+							<Link href="#id-filtering" className="link link-primary">
+								ids
+							</Link>
+							, and{" "}
+							<Link href="#advanced-search" className="link link-primary">
+								advanced
+							</Link>{" "}
+							are mutually exclusive. Using more than one of them in the same request returns an error.
 						</p>
 						<p>
 							Spatial and BLAST options are not part of that group. You can add them to any of the four, and to each
@@ -236,7 +248,8 @@ export default async function ApiSearchPage() {
 									<Link href="/search" className="link link-primary font-semibold">
 										Search
 									</Link>{" "}
-									page to build a query by clicking, then copy the URL out of the address bar. No JSON by hand.
+									page to build a query by clicking, then copy the URL out of the address bar. No JSON by hand
+									necessary.
 								</p>
 							</Callout>
 
@@ -281,15 +294,16 @@ export default async function ApiSearchPage() {
 							</div>
 
 							<p className="mt-4 mb-4">
-								<code className="px-1 py-0.5 bg-base-300 rounded">range</code>,{" "}
+								The <code className="px-1 py-0.5 bg-base-300 rounded">range</code>,{" "}
 								<code className="px-1 py-0.5 bg-base-300 rounded">in</code>, and{" "}
-								<code className="px-1 py-0.5 bg-base-300 rounded">notIn</code> take an array as their value, for example{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">notIn</code> modes take an array as their value, for
+								example{" "}
 								<code className="px-1 py-0.5 bg-base-300 rounded">
 									[&quot;minimumDepthInMeters&quot;, &quot;range&quot;, [0, 50]]
 								</code>
-								. <code className="px-1 py-0.5 bg-base-300 rounded">null</code> and{" "}
-								<code className="px-1 py-0.5 bg-base-300 rounded">notNull</code> take no value at all, so the condition
-								is only two items long.
+								. The <code className="px-1 py-0.5 bg-base-300 rounded">null</code> and{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">notNull</code> modes take no value at all, so the
+								condition is only two items long.
 							</p>
 
 							<ApiQueryDiagram
@@ -346,12 +360,12 @@ export default async function ApiSearchPage() {
 								url={`${process.env.NEXT_PUBLIC_URL}/api/project?circle=27.0/-83.0,200000&fields=project_id&limit=5`}
 							/>
 
-							<Callout title="limit is ignored on tables that have their own coordinates">
+							<Callout title="The limit option is ignored on tables that have their own coordinates">
 								<p>
 									Sample carries latitude and longitude directly, so the API filters those results in memory after the
-									database query. <code className="px-1 py-0.5 bg-base-300 rounded">limit</code> is skipped in that
-									case. On tables reached through Sample, such as Project, the filter happens in the database and{" "}
-									<code className="px-1 py-0.5 bg-base-300 rounded">limit</code> works normally.
+									database query. The <code className="px-1 py-0.5 bg-base-300 rounded">limit</code> option is skipped
+									in that case. On tables reached through Sample, such as Project, the filter happens in the database
+									and <code className="px-1 py-0.5 bg-base-300 rounded">limit</code> works normally.
 								</p>
 							</Callout>
 
