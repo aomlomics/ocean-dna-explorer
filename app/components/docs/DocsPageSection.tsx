@@ -56,7 +56,14 @@ export default function DocsPageSection<P extends DocsPage>({
 
 			{subsections ? (
 				subsections.map((sect) => (
-					<DocsPageSubsection key={sect.id} id={sect.id} title={sect.title} icon={sect.icon}>
+					<DocsPageSubsection
+						key={sect.id}
+						page={page}
+						section={String(section)}
+						id={sect.id}
+						title={sect.title}
+						icon={sect.icon}
+					>
 						{sect.content}
 					</DocsPageSubsection>
 				))
@@ -64,10 +71,12 @@ export default function DocsPageSection<P extends DocsPage>({
 				<></>
 			)}
 
-			<div className="flex justify-center gap-50 w-full mt-10 pt-7 text-base-content/50">
+			<div
+				className={`grid ${prev && next ? "grid-cols-2" : "justify-items-center"} gap-50 w-full mt-10 pt-7 text-base-content/50`}
+			>
 				{prev ? (
 					<Link
-						className="grid grid-cols-[auto_1fr] grid-rows-[1fr_auto] items-center hover:text-base-content transition-colors"
+						className={`${next ? "justify-self-end" : ""} grid grid-cols-[auto_1fr] grid-rows-[1fr_auto] items-center hover:text-base-content transition-colors`}
 						href={`/docs/${prev.page}/${prev.section}`}
 					>
 						<div className="col-start-2">Previous</div>
@@ -88,9 +97,10 @@ export default function DocsPageSection<P extends DocsPage>({
 				) : (
 					<></>
 				)}
+
 				{next ? (
 					<Link
-						className="grid grid-cols-[auto_1fr] grid-rows-[1fr_auto] items-center hover:text-base-content transition-colors"
+						className={`${prev ? "justify-self-start" : ""} grid grid-cols-[auto_1fr] grid-rows-[1fr_auto] items-center hover:text-base-content transition-colors`}
 						href={`/docs/${next.page}/${next.section}`}
 					>
 						<div className="col-span-2">Next</div>
@@ -117,11 +127,15 @@ export default function DocsPageSection<P extends DocsPage>({
 }
 
 function DocsPageSubsection({
+	page,
+	section,
 	id,
 	title,
 	icon,
 	children
 }: {
+	page: string;
+	section: string;
 	id: string;
 	title: string;
 	icon?: ReactNode;
@@ -129,10 +143,24 @@ function DocsPageSubsection({
 }) {
 	return (
 		<div id={id} className="pt-16">
-			<h2 className="mb-2 flex items-center gap-3 text-3xl font-semibold tracking-tight text-base-content">
+			<Link
+				href={`/docs/${page}/${section}#${id}`}
+				className="group mb-2 flex items-center gap-3 text-3xl font-semibold tracking-tight text-base-content"
+			>
 				{icon}
 				{title}
-			</h2>
+				<svg
+					className="opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100"
+					aria-hidden
+					xmlns="http://www.w3.org/2000/svg"
+					width="18"
+					height="18"
+					viewBox="0 0 18 18"
+					fill="currentColor"
+				>
+					<path d="M8.47 1.47a4.29 4.29 0 1 1 6.06 6.06l-2.5 2.5-1.06-1.06 2.5-2.5a2.79 2.79 0 0 0-3.94-3.94l-2.5 2.5-1.06-1.06zm3.06 4.06-6 6-1.06-1.06 6-6zm-10.06 9a4.3 4.3 0 0 0 6.06 0l2.5-2.5-1.06-1.06-2.5 2.5a2.79 2.79 0 0 1-3.94-3.94l2.5-2.5-1.06-1.06-2.5 2.5a4.3 4.3 0 0 0 0 6.06" />
+				</svg>
+			</Link>
 			<div className={docContentProseClassName}>{children}</div>
 		</div>
 	);

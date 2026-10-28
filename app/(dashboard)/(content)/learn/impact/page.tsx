@@ -27,7 +27,7 @@ export default function ImpactPage() {
 					<div className="space-y-4">
 						<MediaFrame
 							label="Hero image (why eDNA matters)"
-							src="/images/impact/biodiversity.jpeg"
+							src="/images/learn/impact/biodiversity.jpeg"
 							alt="A diver or researcher collecting environmental DNA samples in the ocean"
 							priority
 						/>
@@ -46,7 +46,7 @@ export default function ImpactPage() {
 						<CompareCard
 							title="Traditional surveys"
 							mediaLabel="Photo placeholder (fish trawl, net tow, or ROV observation)"
-							mediaSrc="/images/impact/other_sampling_method_compare.jpeg"
+							mediaSrc="/images/learn/impact/other_sampling_method_compare.jpeg"
 							mediaAlt="Traditional sampling methods on a vessel deck"
 							pros={[
 								"Direct observations and physical samples",
@@ -64,7 +64,7 @@ export default function ImpactPage() {
 						<CompareCard
 							title="eDNA"
 							mediaLabel="Photo placeholder (water sampling bottle, filtration, or lab bench)"
-							mediaSrc="/images/impact/eDNA_sampling_method_compare.jpeg"
+							mediaSrc="/images/learn/impact/eDNA_sampling_method_compare.jpeg"
 							mediaAlt="Collecting water samples for environmental DNA analysis"
 							pros={[
 								"Low impact sampling",
@@ -92,7 +92,7 @@ export default function ImpactPage() {
 					<div className="rounded-3xl p-0 space-y-4">
 						<MediaFrame
 							label="Biodiversity monitoring"
-							src="/images/impact/why_we_care.jpeg"
+							src="/images/learn/impact/why_we_care.jpeg"
 							alt="Underwater ecosystem biodiversity"
 						/>
 						<h3 className="text-xl font-semibold text-base-content">Biodiversity</h3>
@@ -104,7 +104,7 @@ export default function ImpactPage() {
 					<div className="rounded-3xl p-0 space-y-4">
 						<MediaFrame
 							label="Invasive species detection"
-							src="/images/impact/invasive_species.jpeg"
+							src="/images/learn/impact/invasive_species.jpeg"
 							alt="Lionfish, an example of an invasive species in some regions"
 						/>
 						<h3 className="text-xl font-semibold text-base-content">Invasive species</h3>
@@ -116,7 +116,7 @@ export default function ImpactPage() {
 					<div className="rounded-3xl p-0 space-y-4">
 						<MediaFrame
 							label="Species mapping"
-							src="/images/impact/map_learn_page.png"
+							src="/images/learn/impact/map_learn_page.png"
 							alt="Map showing sampling locations"
 							fit="contain"
 						/>
@@ -144,7 +144,7 @@ export default function ImpactPage() {
 						<div className="lg:col-span-5">
 							<MediaFrame
 								label="Evidence for better decisions"
-								src="/images/impact/better_decisions.jpeg"
+								src="/images/learn/impact/better_decisions.jpeg"
 								alt="Environmental monitoring in an industrial or coastal setting"
 							/>
 						</div>
@@ -164,7 +164,7 @@ export default function ImpactPage() {
 							<div className="space-y-4">
 								<MediaFrame
 									label="Dark taxa"
-									src="/images/impact/dark_taxa.jpeg"
+									src="/images/learn/impact/dark_taxa.jpeg"
 									alt="A school of fish in open water"
 									aspect="video"
 									sizes="(max-width: 1024px) 100vw, 360px"
@@ -180,7 +180,7 @@ export default function ImpactPage() {
 							<div className="space-y-4">
 								<MediaFrame
 									label="Deep sea signals"
-									src="/images/impact/rov_deep_learn_page_dark.jpg"
+									src="/images/learn/impact/rov_deep_learn_page_dark.jpg"
 									alt="ROV exploring the deep sea"
 									aspect="video"
 									sizes="(max-width: 1024px) 100vw, 420px"
@@ -198,7 +198,7 @@ export default function ImpactPage() {
 								<div className="w-full">
 									<MediaFrame
 										label="More frequent monitoring"
-										src="/images/impact/more_eDNA_sampling.jpg"
+										src="/images/learn/impact/more_eDNA_sampling.jpg"
 										alt="Collecting water samples from a boat for environmental DNA monitoring"
 										aspect="16/10"
 										sizes="(max-width: 1024px) 100vw, 520px"
@@ -207,7 +207,7 @@ export default function ImpactPage() {
 								<div className="w-full sm:w-60">
 									<MediaFrame
 										label="More frequent monitoring (secondary)"
-										src="/images/impact/why_eDNA_matters.jpg"
+										src="/images/learn/impact/why_eDNA_matters.jpg"
 										alt="Environmental DNA sampling"
 										aspect="square"
 										sizes="(max-width: 1024px) 60vw, 240px"
