@@ -18,6 +18,7 @@ import { AppError } from "@/types/objects";
 //Prisma prepared statements have a limit of 32,767 parameters
 export const PRISMA_PARAM_LIMIT = 30000;
 
+//TODO: add P2010 foreign key constraint error handling
 export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): ErrorPacket | undefined {
 	if (err.constructor?.name === Prisma.PrismaClientKnownRequestError.name) {
 		try {

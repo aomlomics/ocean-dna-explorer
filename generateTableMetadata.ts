@@ -201,7 +201,7 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.AssignmentScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.AssignmentWithRelationsSchema,
 		titleField: ["project_id", "analysis_run_name", "featureid"],
-		subFields: ["Analysis", "taxonomy", "Confidence"]
+		subFields: ["Analysis", "TaxonomicHierarchy", "Confidence"]
 	},
 	taxonomy: {
 		plural: "Taxonomies",
@@ -210,7 +210,16 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.TaxonomyScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.TaxonomyWithRelationsSchema,
 		titleField: "taxonomy",
-		subFields: ["Analyses", "Samples", ...TaxonomicRanks]
+		subFields: ["Assignments", "TaxonomicHierarchies"]
+	},
+	taxonomicHierarchy: {
+		plural: "TaxonomicHierarchies",
+		description: "The way an individual Analysis has classified a taxonomy into the hierarchical ranks.",
+		schema: PrismaZodTypes.TaxonomicHierarchySchema,
+		enumSchema: PrismaZodTypes.TaxonomicHierarchyScalarFieldEnumSchema,
+		relationsSchema: PrismaZodTypes.TaxonomicHierarchyWithRelationsSchema,
+		titleField: ["project_id", "analysis_run_name", "taxonomy"],
+		subFields: ["Analysis", "Samples", ...TaxonomicRanks]
 	},
 	taxonomySpotlight: {
 		plural: "TaxonomySpotlights",
@@ -341,14 +350,27 @@ for (const table of TableNames) {
 }
 
 const pathPriorities = {
+	Project: {
+		Taxonomy: ["TaxonomicHierarchy"]
+	},
+	Analysis: {
+		Sample: ["Library"],
+		Taxonomy: ["TaxonomicHierarchy"],
+		TaxonomySpotlight: ["TaxonomicHierarchy"]
+	},
 	Feature: {
 		Taxonomy: ["Assignment", "Sample"]
 	},
-	Taxonomy: {
-		Feature: ["Assignment", "Sample"]
-	},
 	Occurrence: {
 		Assay: ["Analysis", "Library"]
+	},
+	Taxonomy: {
+		Project: ["TaxonomicHierarchy"],
+		Assay: ["TaxonomicHierarchy"],
+		Analysis: ["TaxonomicHierarchy"],
+		Tag: ["TaxonomicHierarchy"],
+		BlastQuery: ["TaxonomicHierarchy"],
+		BlastQueryResult: ["TaxonomicHierarchy"]
 	},
 	AlphaDiversityIndex: {
 		Analysis: ["AlphaDiversity", "Library"],
@@ -439,8 +461,9 @@ function getRelationPath(start: Uncapitalize<ModelName>, target: Uncapitalize<Mo
 						path.length === 1 || //starting at Taxonomy
 						rel.table === "TaxonomySpotlight" || //Taxonomy to TaxonomySpotlight
 						path[0] === "TaxonomySpotlight") && //starting at TaxonomySpotlight to Taxonomy
-					//disallow Sample -> Taxonomy -> Analysis
-					(rel.table !== "Analysis" || path[path.length - 2] !== "Sample" || path[path.length - 1] !== "Taxonomy")
+					(curr !== "TaxonomicHierarchy" || //base case
+						rel.table !== "Sample" || //disallow TaxonomicHierarchy to Sample
+						capsTarget === "Sample") //unless ending at Sample
 				) {
 					queue.push([rel.table, path]);
 				}
@@ -448,6 +471,8 @@ function getRelationPath(start: Uncapitalize<ModelName>, target: Uncapitalize<Mo
 		}
 		visited.add(curr);
 	}
+
+	throw new Error(`Could not find path from ${start} to ${target}.`);
 }
 
 for (const start of TableNames) {

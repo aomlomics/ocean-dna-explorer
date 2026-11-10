@@ -7,16 +7,16 @@ model Analysis {
     editHistory       Json?
 
     // Relations
-    project_id       String
-    Project          Project          @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
-    assay_name       String
-    Assay            Assay            @relation(fields: [assay_name], references: [assay_name], onDelete: Restrict)
-    Libraries        Library[]
-    Occurrences      Occurrence[]
-    Assignments      Assignment[]
-    Taxonomies       Taxonomy[]
-    Tags             Tag[]
-    AlphaDiversities AlphaDiversity[]
+    project_id           String
+    Project              Project              @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    assay_name           String
+    Assay                Assay                @relation(fields: [assay_name], references: [assay_name], onDelete: Restrict)
+    Libraries            Library[]
+    Occurrences          Occurrence[]
+    Assignments          Assignment[]
+    TaxonomicHierarchies TaxonomicHierarchy[]
+    Tags                 Tag[]
+    AlphaDiversities     AlphaDiversity[]
 
     // Submission File URLs
     analysisMetadataFileUrl_ODE      String
@@ -135,15 +135,16 @@ model Assignment {
     id Int @id @default(autoincrement())
 
     // Relations
-    project_id        String
-    Project           Project      @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
-    analysis_run_name String
-    Analysis          Analysis     @relation(fields: [project_id, analysis_run_name], references: [project_id, analysis_run_name], onDelete: Cascade)
-    featureid         String
-    Feature           Feature      @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
-    taxonomy          String
-    Taxonomy          Taxonomy     @relation(fields: [taxonomy], references: [taxonomy], onDelete: Cascade)
-    Occurrences       Occurrence[]
+    project_id         String
+    Project            Project            @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    analysis_run_name  String
+    Analysis           Analysis           @relation(fields: [project_id, analysis_run_name], references: [project_id, analysis_run_name], onDelete: Cascade)
+    featureid          String
+    Feature            Feature            @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
+    taxonomy           String
+    Taxonomy           Taxonomy           @relation(fields: [taxonomy], references: [taxonomy], onDelete: Cascade)
+    TaxonomicHierarchy TaxonomicHierarchy @relation(fields: [project_id, analysis_run_name, taxonomy], references: [project_id, analysis_run_name, taxonomy], onDelete: Cascade)
+    Occurrences        Occurrence[]
 
     // Data
     ///@zod.number.lte(1, { message: "Confidence must be less than or equal to one." })
@@ -152,6 +153,7 @@ model Assignment {
     consensus  Float?
 
     @@unique([project_id, analysis_run_name, featureid])
+    @@index([project_id, analysis_run_name, taxonomy])
     @@index([project_id, analysis_run_name])
 }
 
@@ -175,12 +177,25 @@ model Taxonomy {
     taxonomy String @unique
 
     // Relations
-    Analyses           Analysis[]
-    Samples            Sample[]
-    Assignments        Assignment[]
-    TaxonomySpotlights TaxonomySpotlight[]
+    Assignments          Assignment[]
+    TaxonomicHierarchies TaxonomicHierarchy[]
+    TaxonomySpotlights   TaxonomySpotlight[]
+}
 
-    // Data
+model TaxonomicHierarchy {
+    id Int @id @default(autoincrement())
+
+    // Relations
+    project_id        String
+    Project           Project      @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    analysis_run_name String
+    Analysis          Analysis     @relation(fields: [project_id, analysis_run_name], references: [project_id, analysis_run_name], onDelete: Cascade)
+    taxonomy          String
+    Taxonomy          Taxonomy     @relation(fields: [taxonomy], references: [taxonomy], onDelete: Cascade)
+    Samples           Sample[]
+    Assignments       Assignment[]
+
+    //Data
     verbatimIdentification String
     higherClassification   String?
     realm                  String?
@@ -218,6 +233,8 @@ model Taxonomy {
     group                  String?
     type                   String?
 
+    @@unique([project_id, analysis_run_name, taxonomy])
+    @@index([project_id, analysis_run_name])
     @@index([kingdom])
     @@index([family])
     @@index([genus])

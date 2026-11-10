@@ -15,6 +15,7 @@ model Project {
     Analyses              Analysis[]
     Occurrences           Occurrence[]
     Assignments           Assignment[]
+    TaxonomicHierarchies  TaxonomicHierarchy[]
     AlphaDiversities      AlphaDiversity[]
     AlphaDiversityIndexes AlphaDiversityIndex[]
     TaxonomySpotlights    TaxonomySpotlight[]
@@ -70,11 +71,11 @@ model Sample {
     userDefined         Json?
 
     // Relations
-    project_id String
-    Project    Project    @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
-    Libraries  Library[]
-    Features   Feature[]
-    Taxonomies Taxonomy[]
+    project_id           String
+    Project              Project              @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    Libraries            Library[]
+    Features             Feature[]
+    TaxonomicHierarchies TaxonomicHierarchy[]
 
     deleted_ODE Boolean?
 

@@ -1,7 +1,7 @@
 import type { AssayModel } from "@/app/generated/prisma/models/Assay";
 import type { BlastQueryPartial } from "@/prisma/generated/zod";
 import type { User } from "@clerk/nextjs/server";
-import type { TaxonomicRanks } from "./objects";
+import type { RankPlurals } from "./objects";
 
 export type Role = "admin" | "moderator" | "contributor";
 export type Permission = "contribute" | "manageUsers" | "manageDatabase";
@@ -151,7 +151,7 @@ export type UserObject = {
 	primaryEmailAddress?: User["emailAddresses"][number]["emailAddress"];
 };
 
-export type TaxonomicRank = (typeof TaxonomicRanks)[number];
+export type TaxonomicRank = keyof typeof RankPlurals;
 
 declare module "wordcloud";
 

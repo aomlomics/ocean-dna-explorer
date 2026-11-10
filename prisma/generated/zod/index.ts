@@ -66,7 +66,9 @@ export const AssignmentScalarFieldEnumSchema = z.enum(['id','project_id','analys
 
 export const FeatureScalarFieldEnumSchema = z.enum(['id','featureid','dna_sequence','sequenceLength_ODE']);
 
-export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimIdentification','higherClassification','realm','subrealm','domain','superkingdom','supergroup','kingdom','infrakingdom','subkingdom','phylum','division','subphylum','subdivision','class','subclass','section','subsection','order','suborder','family','subfamily','genus','subgenus','species','subspecies','varietas','forma','biovar','serovar','pathovar','strain','clade','lineage','group','type']);
+export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy']);
+
+export const TaxonomicHierarchyScalarFieldEnumSchema = z.enum(['id','project_id','analysis_run_name','taxonomy','verbatimIdentification','higherClassification','realm','subrealm','domain','superkingdom','supergroup','kingdom','infrakingdom','subkingdom','phylum','division','subphylum','subdivision','class','subclass','section','subsection','order','suborder','family','subfamily','genus','subgenus','species','subspecies','varietas','forma','biovar','serovar','pathovar','strain','clade','lineage','group','type']);
 
 export const TaxonomySpotlightScalarFieldEnumSchema = z.enum(['id','project_id','taxonomy','commonName','imageFileUrl_ODE','description']);
 
@@ -108,7 +110,9 @@ export const AssignmentOrderByRelevanceFieldEnumSchema = z.enum(['project_id','a
 
 export const FeatureOrderByRelevanceFieldEnumSchema = z.enum(['featureid','dna_sequence']);
 
-export const TaxonomyOrderByRelevanceFieldEnumSchema = z.enum(['taxonomy','verbatimIdentification','higherClassification','realm','subrealm','domain','superkingdom','supergroup','kingdom','infrakingdom','subkingdom','phylum','division','subphylum','subdivision','class','subclass','section','subsection','order','suborder','family','subfamily','genus','subgenus','species','subspecies','varietas','forma','biovar','serovar','pathovar','strain','clade','lineage','group','type']);
+export const TaxonomyOrderByRelevanceFieldEnumSchema = z.enum(['taxonomy']);
+
+export const TaxonomicHierarchyOrderByRelevanceFieldEnumSchema = z.enum(['project_id','analysis_run_name','taxonomy','verbatimIdentification','higherClassification','realm','subrealm','domain','superkingdom','supergroup','kingdom','infrakingdom','subkingdom','phylum','division','subphylum','subdivision','class','subclass','section','subsection','order','suborder','family','subfamily','genus','subgenus','species','subspecies','varietas','forma','biovar','serovar','pathovar','strain','clade','lineage','group','type']);
 
 export const TaxonomySpotlightOrderByRelevanceFieldEnumSchema = z.enum(['project_id','taxonomy','commonName','imageFileUrl_ODE','description']);
 
@@ -277,7 +281,7 @@ export type AnalysisRelations = {
   Libraries: LibraryWithRelations[];
   Occurrences: OccurrenceWithRelations[];
   Assignments: AssignmentWithRelations[];
-  Taxonomies: TaxonomyWithRelations[];
+  TaxonomicHierarchies: TaxonomicHierarchyWithRelations[];
   Tags: TagWithRelations[];
   AlphaDiversities: AlphaDiversityWithRelations[];
 };
@@ -292,7 +296,7 @@ export const AnalysisWithRelationsSchema: z.ZodType<AnalysisWithRelations> = Ana
   Libraries: z.lazy(() => LibraryWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrenceWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentWithRelationsSchema).array(),
-  Taxonomies: z.lazy(() => TaxonomyWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyWithRelationsSchema).array(),
   Tags: z.lazy(() => TagWithRelationsSchema).array(),
   AlphaDiversities: z.lazy(() => AlphaDiversityWithRelationsSchema).array(),
 }))
@@ -306,7 +310,7 @@ export type AnalysisOptionalDefaultsRelations = {
   Libraries: LibraryOptionalDefaultsWithRelations[];
   Occurrences: OccurrenceOptionalDefaultsWithRelations[];
   Assignments: AssignmentOptionalDefaultsWithRelations[];
-  Taxonomies: TaxonomyOptionalDefaultsWithRelations[];
+  TaxonomicHierarchies: TaxonomicHierarchyOptionalDefaultsWithRelations[];
   Tags: TagOptionalDefaultsWithRelations[];
   AlphaDiversities: AlphaDiversityOptionalDefaultsWithRelations[];
 };
@@ -321,7 +325,7 @@ export const AnalysisOptionalDefaultsWithRelationsSchema: z.ZodType<AnalysisOpti
   Libraries: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrenceOptionalDefaultsWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentOptionalDefaultsWithRelationsSchema).array(),
-  Taxonomies: z.lazy(() => TaxonomyOptionalDefaultsWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyOptionalDefaultsWithRelationsSchema).array(),
   Tags: z.lazy(() => TagOptionalDefaultsWithRelationsSchema).array(),
   AlphaDiversities: z.lazy(() => AlphaDiversityOptionalDefaultsWithRelationsSchema).array(),
 }))
@@ -335,7 +339,7 @@ export type AnalysisPartialRelations = {
   Libraries?: LibraryPartialWithRelations[];
   Occurrences?: OccurrencePartialWithRelations[];
   Assignments?: AssignmentPartialWithRelations[];
-  Taxonomies?: TaxonomyPartialWithRelations[];
+  TaxonomicHierarchies?: TaxonomicHierarchyPartialWithRelations[];
   Tags?: TagPartialWithRelations[];
   AlphaDiversities?: AlphaDiversityPartialWithRelations[];
 };
@@ -350,7 +354,7 @@ export const AnalysisPartialWithRelationsSchema: z.ZodType<AnalysisPartialWithRe
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
-  Taxonomies: z.lazy(() => TaxonomyPartialWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyPartialWithRelationsSchema).array(),
   Tags: z.lazy(() => TagPartialWithRelationsSchema).array(),
   AlphaDiversities: z.lazy(() => AlphaDiversityPartialWithRelationsSchema).array(),
 })).partial()
@@ -365,7 +369,7 @@ export const AnalysisOptionalDefaultsWithPartialRelationsSchema: z.ZodType<Analy
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
-  Taxonomies: z.lazy(() => TaxonomyPartialWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyPartialWithRelationsSchema).array(),
   Tags: z.lazy(() => TagPartialWithRelationsSchema).array(),
   AlphaDiversities: z.lazy(() => AlphaDiversityPartialWithRelationsSchema).array(),
 }).partial())
@@ -380,7 +384,7 @@ export const AnalysisWithPartialRelationsSchema: z.ZodType<AnalysisWithPartialRe
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
-  Taxonomies: z.lazy(() => TaxonomyPartialWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyPartialWithRelationsSchema).array(),
   Tags: z.lazy(() => TagPartialWithRelationsSchema).array(),
   AlphaDiversities: z.lazy(() => AlphaDiversityPartialWithRelationsSchema).array(),
 }).partial())
@@ -542,6 +546,7 @@ export type AssignmentRelations = {
   Analysis: AnalysisWithRelations;
   Feature: FeatureWithRelations;
   Taxonomy: TaxonomyWithRelations;
+  TaxonomicHierarchy: TaxonomicHierarchyWithRelations;
   Occurrences: OccurrenceWithRelations[];
 };
 
@@ -552,6 +557,7 @@ export const AssignmentWithRelationsSchema: z.ZodType<AssignmentWithRelations> =
   Analysis: z.lazy(() => AnalysisWithRelationsSchema),
   Feature: z.lazy(() => FeatureWithRelationsSchema),
   Taxonomy: z.lazy(() => TaxonomyWithRelationsSchema),
+  TaxonomicHierarchy: z.lazy(() => TaxonomicHierarchyWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrenceWithRelationsSchema).array(),
 }))
 
@@ -563,6 +569,7 @@ export type AssignmentOptionalDefaultsRelations = {
   Analysis: AnalysisOptionalDefaultsWithRelations;
   Feature: FeatureOptionalDefaultsWithRelations;
   Taxonomy: TaxonomyOptionalDefaultsWithRelations;
+  TaxonomicHierarchy: TaxonomicHierarchyOptionalDefaultsWithRelations;
   Occurrences: OccurrenceOptionalDefaultsWithRelations[];
 };
 
@@ -573,6 +580,7 @@ export const AssignmentOptionalDefaultsWithRelationsSchema: z.ZodType<Assignment
   Analysis: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema),
   Feature: z.lazy(() => FeatureOptionalDefaultsWithRelationsSchema),
   Taxonomy: z.lazy(() => TaxonomyOptionalDefaultsWithRelationsSchema),
+  TaxonomicHierarchy: z.lazy(() => TaxonomicHierarchyOptionalDefaultsWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrenceOptionalDefaultsWithRelationsSchema).array(),
 }))
 
@@ -584,6 +592,7 @@ export type AssignmentPartialRelations = {
   Analysis?: AnalysisPartialWithRelations;
   Feature?: FeaturePartialWithRelations;
   Taxonomy?: TaxonomyPartialWithRelations;
+  TaxonomicHierarchy?: TaxonomicHierarchyPartialWithRelations;
   Occurrences?: OccurrencePartialWithRelations[];
 };
 
@@ -594,6 +603,7 @@ export const AssignmentPartialWithRelationsSchema: z.ZodType<AssignmentPartialWi
   Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
   Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
   Taxonomy: z.lazy(() => TaxonomyPartialWithRelationsSchema),
+  TaxonomicHierarchy: z.lazy(() => TaxonomicHierarchyPartialWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
 })).partial()
 
@@ -604,6 +614,7 @@ export const AssignmentOptionalDefaultsWithPartialRelationsSchema: z.ZodType<Ass
   Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
   Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
   Taxonomy: z.lazy(() => TaxonomyPartialWithRelationsSchema),
+  TaxonomicHierarchy: z.lazy(() => TaxonomicHierarchyPartialWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
 }).partial())
 
@@ -614,6 +625,7 @@ export const AssignmentWithPartialRelationsSchema: z.ZodType<AssignmentWithParti
   Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
   Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
   Taxonomy: z.lazy(() => TaxonomyPartialWithRelationsSchema),
+  TaxonomicHierarchy: z.lazy(() => TaxonomicHierarchyPartialWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
 }).partial())
 
@@ -729,6 +741,103 @@ export const FeatureWithPartialRelationsSchema: z.ZodType<FeatureWithPartialRela
 export const TaxonomySchema = z.object({
   id: z.number().int(),
   taxonomy: z.string(),
+})
+
+export type Taxonomy = z.infer<typeof TaxonomySchema>
+
+/////////////////////////////////////////
+// TAXONOMY PARTIAL SCHEMA
+/////////////////////////////////////////
+
+export const TaxonomyPartialSchema = TaxonomySchema.partial()
+
+export type TaxonomyPartial = z.infer<typeof TaxonomyPartialSchema>
+
+// TAXONOMY OPTIONAL DEFAULTS SCHEMA
+//------------------------------------------------------
+
+export const TaxonomyOptionalDefaultsSchema = TaxonomySchema.merge(z.object({
+  id: z.number().int().optional(),
+}))
+
+export type TaxonomyOptionalDefaults = z.infer<typeof TaxonomyOptionalDefaultsSchema>
+
+// TAXONOMY RELATION SCHEMA
+//------------------------------------------------------
+
+export type TaxonomyRelations = {
+  Assignments: AssignmentWithRelations[];
+  TaxonomicHierarchies: TaxonomicHierarchyWithRelations[];
+  TaxonomySpotlights: TaxonomySpotlightWithRelations[];
+};
+
+export type TaxonomyWithRelations = z.infer<typeof TaxonomySchema> & TaxonomyRelations
+
+export const TaxonomyWithRelationsSchema: z.ZodType<TaxonomyWithRelations> = TaxonomySchema.merge(z.object({
+  Assignments: z.lazy(() => AssignmentWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyWithRelationsSchema).array(),
+  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightWithRelationsSchema).array(),
+}))
+
+// TAXONOMY OPTIONAL DEFAULTS RELATION SCHEMA
+//------------------------------------------------------
+
+export type TaxonomyOptionalDefaultsRelations = {
+  Assignments: AssignmentOptionalDefaultsWithRelations[];
+  TaxonomicHierarchies: TaxonomicHierarchyOptionalDefaultsWithRelations[];
+  TaxonomySpotlights: TaxonomySpotlightOptionalDefaultsWithRelations[];
+};
+
+export type TaxonomyOptionalDefaultsWithRelations = z.infer<typeof TaxonomyOptionalDefaultsSchema> & TaxonomyOptionalDefaultsRelations
+
+export const TaxonomyOptionalDefaultsWithRelationsSchema: z.ZodType<TaxonomyOptionalDefaultsWithRelations> = TaxonomyOptionalDefaultsSchema.merge(z.object({
+  Assignments: z.lazy(() => AssignmentOptionalDefaultsWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyOptionalDefaultsWithRelationsSchema).array(),
+  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightOptionalDefaultsWithRelationsSchema).array(),
+}))
+
+// TAXONOMY PARTIAL RELATION SCHEMA
+//------------------------------------------------------
+
+export type TaxonomyPartialRelations = {
+  Assignments?: AssignmentPartialWithRelations[];
+  TaxonomicHierarchies?: TaxonomicHierarchyPartialWithRelations[];
+  TaxonomySpotlights?: TaxonomySpotlightPartialWithRelations[];
+};
+
+export type TaxonomyPartialWithRelations = z.infer<typeof TaxonomyPartialSchema> & TaxonomyPartialRelations
+
+export const TaxonomyPartialWithRelationsSchema: z.ZodType<TaxonomyPartialWithRelations> = TaxonomyPartialSchema.merge(z.object({
+  Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyPartialWithRelationsSchema).array(),
+  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightPartialWithRelationsSchema).array(),
+})).partial()
+
+export type TaxonomyOptionalDefaultsWithPartialRelations = z.infer<typeof TaxonomyOptionalDefaultsSchema> & TaxonomyPartialRelations
+
+export const TaxonomyOptionalDefaultsWithPartialRelationsSchema: z.ZodType<TaxonomyOptionalDefaultsWithPartialRelations> = TaxonomyOptionalDefaultsSchema.merge(z.object({
+  Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyPartialWithRelationsSchema).array(),
+  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightPartialWithRelationsSchema).array(),
+}).partial())
+
+export type TaxonomyWithPartialRelations = z.infer<typeof TaxonomySchema> & TaxonomyPartialRelations
+
+export const TaxonomyWithPartialRelationsSchema: z.ZodType<TaxonomyWithPartialRelations> = TaxonomySchema.merge(z.object({
+  Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyPartialWithRelationsSchema).array(),
+  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightPartialWithRelationsSchema).array(),
+}).partial())
+
+/////////////////////////////////////////
+// TAXONOMIC HIERARCHY SCHEMA
+/////////////////////////////////////////
+
+export const TaxonomicHierarchySchema = z.object({
+  id: z.number().int(),
+  project_id: z.string(),
+  analysis_run_name: z.string(),
+  taxonomy: z.string(),
   verbatimIdentification: z.string(),
   higherClassification: z.string().nullish(),
   realm: z.string().nullish(),
@@ -767,98 +876,106 @@ export const TaxonomySchema = z.object({
   type: z.string().nullish(),
 })
 
-export type Taxonomy = z.infer<typeof TaxonomySchema>
+export type TaxonomicHierarchy = z.infer<typeof TaxonomicHierarchySchema>
 
 /////////////////////////////////////////
-// TAXONOMY PARTIAL SCHEMA
+// TAXONOMIC HIERARCHY PARTIAL SCHEMA
 /////////////////////////////////////////
 
-export const TaxonomyPartialSchema = TaxonomySchema.partial()
+export const TaxonomicHierarchyPartialSchema = TaxonomicHierarchySchema.partial()
 
-export type TaxonomyPartial = z.infer<typeof TaxonomyPartialSchema>
+export type TaxonomicHierarchyPartial = z.infer<typeof TaxonomicHierarchyPartialSchema>
 
-// TAXONOMY OPTIONAL DEFAULTS SCHEMA
+// TAXONOMIC HIERARCHY OPTIONAL DEFAULTS SCHEMA
 //------------------------------------------------------
 
-export const TaxonomyOptionalDefaultsSchema = TaxonomySchema.merge(z.object({
+export const TaxonomicHierarchyOptionalDefaultsSchema = TaxonomicHierarchySchema.merge(z.object({
   id: z.number().int().optional(),
 }))
 
-export type TaxonomyOptionalDefaults = z.infer<typeof TaxonomyOptionalDefaultsSchema>
+export type TaxonomicHierarchyOptionalDefaults = z.infer<typeof TaxonomicHierarchyOptionalDefaultsSchema>
 
-// TAXONOMY RELATION SCHEMA
+// TAXONOMIC HIERARCHY RELATION SCHEMA
 //------------------------------------------------------
 
-export type TaxonomyRelations = {
-  Analyses: AnalysisWithRelations[];
+export type TaxonomicHierarchyRelations = {
+  Project: ProjectWithRelations;
+  Analysis: AnalysisWithRelations;
+  Taxonomy: TaxonomyWithRelations;
   Samples: SampleWithRelations[];
   Assignments: AssignmentWithRelations[];
-  TaxonomySpotlights: TaxonomySpotlightWithRelations[];
 };
 
-export type TaxonomyWithRelations = z.infer<typeof TaxonomySchema> & TaxonomyRelations
+export type TaxonomicHierarchyWithRelations = z.infer<typeof TaxonomicHierarchySchema> & TaxonomicHierarchyRelations
 
-export const TaxonomyWithRelationsSchema: z.ZodType<TaxonomyWithRelations> = TaxonomySchema.merge(z.object({
-  Analyses: z.lazy(() => AnalysisWithRelationsSchema).array(),
+export const TaxonomicHierarchyWithRelationsSchema: z.ZodType<TaxonomicHierarchyWithRelations> = TaxonomicHierarchySchema.merge(z.object({
+  Project: z.lazy(() => ProjectWithRelationsSchema),
+  Analysis: z.lazy(() => AnalysisWithRelationsSchema),
+  Taxonomy: z.lazy(() => TaxonomyWithRelationsSchema),
   Samples: z.lazy(() => SampleWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentWithRelationsSchema).array(),
-  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightWithRelationsSchema).array(),
 }))
 
-// TAXONOMY OPTIONAL DEFAULTS RELATION SCHEMA
+// TAXONOMIC HIERARCHY OPTIONAL DEFAULTS RELATION SCHEMA
 //------------------------------------------------------
 
-export type TaxonomyOptionalDefaultsRelations = {
-  Analyses: AnalysisOptionalDefaultsWithRelations[];
+export type TaxonomicHierarchyOptionalDefaultsRelations = {
+  Project: ProjectOptionalDefaultsWithRelations;
+  Analysis: AnalysisOptionalDefaultsWithRelations;
+  Taxonomy: TaxonomyOptionalDefaultsWithRelations;
   Samples: SampleOptionalDefaultsWithRelations[];
   Assignments: AssignmentOptionalDefaultsWithRelations[];
-  TaxonomySpotlights: TaxonomySpotlightOptionalDefaultsWithRelations[];
 };
 
-export type TaxonomyOptionalDefaultsWithRelations = z.infer<typeof TaxonomyOptionalDefaultsSchema> & TaxonomyOptionalDefaultsRelations
+export type TaxonomicHierarchyOptionalDefaultsWithRelations = z.infer<typeof TaxonomicHierarchyOptionalDefaultsSchema> & TaxonomicHierarchyOptionalDefaultsRelations
 
-export const TaxonomyOptionalDefaultsWithRelationsSchema: z.ZodType<TaxonomyOptionalDefaultsWithRelations> = TaxonomyOptionalDefaultsSchema.merge(z.object({
-  Analyses: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema).array(),
+export const TaxonomicHierarchyOptionalDefaultsWithRelationsSchema: z.ZodType<TaxonomicHierarchyOptionalDefaultsWithRelations> = TaxonomicHierarchyOptionalDefaultsSchema.merge(z.object({
+  Project: z.lazy(() => ProjectOptionalDefaultsWithRelationsSchema),
+  Analysis: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema),
+  Taxonomy: z.lazy(() => TaxonomyOptionalDefaultsWithRelationsSchema),
   Samples: z.lazy(() => SampleOptionalDefaultsWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentOptionalDefaultsWithRelationsSchema).array(),
-  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightOptionalDefaultsWithRelationsSchema).array(),
 }))
 
-// TAXONOMY PARTIAL RELATION SCHEMA
+// TAXONOMIC HIERARCHY PARTIAL RELATION SCHEMA
 //------------------------------------------------------
 
-export type TaxonomyPartialRelations = {
-  Analyses?: AnalysisPartialWithRelations[];
+export type TaxonomicHierarchyPartialRelations = {
+  Project?: ProjectPartialWithRelations;
+  Analysis?: AnalysisPartialWithRelations;
+  Taxonomy?: TaxonomyPartialWithRelations;
   Samples?: SamplePartialWithRelations[];
   Assignments?: AssignmentPartialWithRelations[];
-  TaxonomySpotlights?: TaxonomySpotlightPartialWithRelations[];
 };
 
-export type TaxonomyPartialWithRelations = z.infer<typeof TaxonomyPartialSchema> & TaxonomyPartialRelations
+export type TaxonomicHierarchyPartialWithRelations = z.infer<typeof TaxonomicHierarchyPartialSchema> & TaxonomicHierarchyPartialRelations
 
-export const TaxonomyPartialWithRelationsSchema: z.ZodType<TaxonomyPartialWithRelations> = TaxonomyPartialSchema.merge(z.object({
-  Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
+export const TaxonomicHierarchyPartialWithRelationsSchema: z.ZodType<TaxonomicHierarchyPartialWithRelations> = TaxonomicHierarchyPartialSchema.merge(z.object({
+  Project: z.lazy(() => ProjectPartialWithRelationsSchema),
+  Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
+  Taxonomy: z.lazy(() => TaxonomyPartialWithRelationsSchema),
   Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
-  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightPartialWithRelationsSchema).array(),
 })).partial()
 
-export type TaxonomyOptionalDefaultsWithPartialRelations = z.infer<typeof TaxonomyOptionalDefaultsSchema> & TaxonomyPartialRelations
+export type TaxonomicHierarchyOptionalDefaultsWithPartialRelations = z.infer<typeof TaxonomicHierarchyOptionalDefaultsSchema> & TaxonomicHierarchyPartialRelations
 
-export const TaxonomyOptionalDefaultsWithPartialRelationsSchema: z.ZodType<TaxonomyOptionalDefaultsWithPartialRelations> = TaxonomyOptionalDefaultsSchema.merge(z.object({
-  Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
+export const TaxonomicHierarchyOptionalDefaultsWithPartialRelationsSchema: z.ZodType<TaxonomicHierarchyOptionalDefaultsWithPartialRelations> = TaxonomicHierarchyOptionalDefaultsSchema.merge(z.object({
+  Project: z.lazy(() => ProjectPartialWithRelationsSchema),
+  Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
+  Taxonomy: z.lazy(() => TaxonomyPartialWithRelationsSchema),
   Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
-  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightPartialWithRelationsSchema).array(),
 }).partial())
 
-export type TaxonomyWithPartialRelations = z.infer<typeof TaxonomySchema> & TaxonomyPartialRelations
+export type TaxonomicHierarchyWithPartialRelations = z.infer<typeof TaxonomicHierarchySchema> & TaxonomicHierarchyPartialRelations
 
-export const TaxonomyWithPartialRelationsSchema: z.ZodType<TaxonomyWithPartialRelations> = TaxonomySchema.merge(z.object({
-  Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
+export const TaxonomicHierarchyWithPartialRelationsSchema: z.ZodType<TaxonomicHierarchyWithPartialRelations> = TaxonomicHierarchySchema.merge(z.object({
+  Project: z.lazy(() => ProjectPartialWithRelationsSchema),
+  Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
+  Taxonomy: z.lazy(() => TaxonomyPartialWithRelationsSchema),
   Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
-  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightPartialWithRelationsSchema).array(),
 }).partial())
 
 /////////////////////////////////////////
@@ -1512,6 +1629,7 @@ export type ProjectRelations = {
   Analyses: AnalysisWithRelations[];
   Occurrences: OccurrenceWithRelations[];
   Assignments: AssignmentWithRelations[];
+  TaxonomicHierarchies: TaxonomicHierarchyWithRelations[];
   AlphaDiversities: AlphaDiversityWithRelations[];
   AlphaDiversityIndexes: AlphaDiversityIndexWithRelations[];
   TaxonomySpotlights: TaxonomySpotlightWithRelations[];
@@ -1529,6 +1647,7 @@ export const ProjectWithRelationsSchema: z.ZodType<ProjectWithRelations> = Proje
   Analyses: z.lazy(() => AnalysisWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrenceWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyWithRelationsSchema).array(),
   AlphaDiversities: z.lazy(() => AlphaDiversityWithRelationsSchema).array(),
   AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexWithRelationsSchema).array(),
   TaxonomySpotlights: z.lazy(() => TaxonomySpotlightWithRelationsSchema).array(),
@@ -1544,6 +1663,7 @@ export type ProjectOptionalDefaultsRelations = {
   Analyses: AnalysisOptionalDefaultsWithRelations[];
   Occurrences: OccurrenceOptionalDefaultsWithRelations[];
   Assignments: AssignmentOptionalDefaultsWithRelations[];
+  TaxonomicHierarchies: TaxonomicHierarchyOptionalDefaultsWithRelations[];
   AlphaDiversities: AlphaDiversityOptionalDefaultsWithRelations[];
   AlphaDiversityIndexes: AlphaDiversityIndexOptionalDefaultsWithRelations[];
   TaxonomySpotlights: TaxonomySpotlightOptionalDefaultsWithRelations[];
@@ -1561,6 +1681,7 @@ export const ProjectOptionalDefaultsWithRelationsSchema: z.ZodType<ProjectOption
   Analyses: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrenceOptionalDefaultsWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentOptionalDefaultsWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyOptionalDefaultsWithRelationsSchema).array(),
   AlphaDiversities: z.lazy(() => AlphaDiversityOptionalDefaultsWithRelationsSchema).array(),
   AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexOptionalDefaultsWithRelationsSchema).array(),
   TaxonomySpotlights: z.lazy(() => TaxonomySpotlightOptionalDefaultsWithRelationsSchema).array(),
@@ -1576,6 +1697,7 @@ export type ProjectPartialRelations = {
   Analyses?: AnalysisPartialWithRelations[];
   Occurrences?: OccurrencePartialWithRelations[];
   Assignments?: AssignmentPartialWithRelations[];
+  TaxonomicHierarchies?: TaxonomicHierarchyPartialWithRelations[];
   AlphaDiversities?: AlphaDiversityPartialWithRelations[];
   AlphaDiversityIndexes?: AlphaDiversityIndexPartialWithRelations[];
   TaxonomySpotlights?: TaxonomySpotlightPartialWithRelations[];
@@ -1593,6 +1715,7 @@ export const ProjectPartialWithRelationsSchema: z.ZodType<ProjectPartialWithRela
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyPartialWithRelationsSchema).array(),
   AlphaDiversities: z.lazy(() => AlphaDiversityPartialWithRelationsSchema).array(),
   AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexPartialWithRelationsSchema).array(),
   TaxonomySpotlights: z.lazy(() => TaxonomySpotlightPartialWithRelationsSchema).array(),
@@ -1610,6 +1733,7 @@ export const ProjectOptionalDefaultsWithPartialRelationsSchema: z.ZodType<Projec
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyPartialWithRelationsSchema).array(),
   AlphaDiversities: z.lazy(() => AlphaDiversityPartialWithRelationsSchema).array(),
   AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexPartialWithRelationsSchema).array(),
   TaxonomySpotlights: z.lazy(() => TaxonomySpotlightPartialWithRelationsSchema).array(),
@@ -1627,6 +1751,7 @@ export const ProjectWithPartialRelationsSchema: z.ZodType<ProjectWithPartialRela
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyPartialWithRelationsSchema).array(),
   AlphaDiversities: z.lazy(() => AlphaDiversityPartialWithRelationsSchema).array(),
   AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexPartialWithRelationsSchema).array(),
   TaxonomySpotlights: z.lazy(() => TaxonomySpotlightPartialWithRelationsSchema).array(),
@@ -1850,7 +1975,7 @@ export type SampleRelations = {
   Project: ProjectWithRelations;
   Libraries: LibraryWithRelations[];
   Features: FeatureWithRelations[];
-  Taxonomies: TaxonomyWithRelations[];
+  TaxonomicHierarchies: TaxonomicHierarchyWithRelations[];
 };
 
 export type SampleWithRelations = Omit<z.infer<typeof SampleSchema>, "userDefined"> & {
@@ -1861,7 +1986,7 @@ export const SampleWithRelationsSchema: z.ZodType<SampleWithRelations> = SampleS
   Project: z.lazy(() => ProjectWithRelationsSchema),
   Libraries: z.lazy(() => LibraryWithRelationsSchema).array(),
   Features: z.lazy(() => FeatureWithRelationsSchema).array(),
-  Taxonomies: z.lazy(() => TaxonomyWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyWithRelationsSchema).array(),
 }))
 
 // SAMPLE OPTIONAL DEFAULTS RELATION SCHEMA
@@ -1871,7 +1996,7 @@ export type SampleOptionalDefaultsRelations = {
   Project: ProjectOptionalDefaultsWithRelations;
   Libraries: LibraryOptionalDefaultsWithRelations[];
   Features: FeatureOptionalDefaultsWithRelations[];
-  Taxonomies: TaxonomyOptionalDefaultsWithRelations[];
+  TaxonomicHierarchies: TaxonomicHierarchyOptionalDefaultsWithRelations[];
 };
 
 export type SampleOptionalDefaultsWithRelations = Omit<z.infer<typeof SampleOptionalDefaultsSchema>, "userDefined"> & {
@@ -1882,7 +2007,7 @@ export const SampleOptionalDefaultsWithRelationsSchema: z.ZodType<SampleOptional
   Project: z.lazy(() => ProjectOptionalDefaultsWithRelationsSchema),
   Libraries: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema).array(),
   Features: z.lazy(() => FeatureOptionalDefaultsWithRelationsSchema).array(),
-  Taxonomies: z.lazy(() => TaxonomyOptionalDefaultsWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyOptionalDefaultsWithRelationsSchema).array(),
 }))
 
 // SAMPLE PARTIAL RELATION SCHEMA
@@ -1892,7 +2017,7 @@ export type SamplePartialRelations = {
   Project?: ProjectPartialWithRelations;
   Libraries?: LibraryPartialWithRelations[];
   Features?: FeaturePartialWithRelations[];
-  Taxonomies?: TaxonomyPartialWithRelations[];
+  TaxonomicHierarchies?: TaxonomicHierarchyPartialWithRelations[];
 };
 
 export type SamplePartialWithRelations = Omit<z.infer<typeof SamplePartialSchema>, "userDefined"> & {
@@ -1903,7 +2028,7 @@ export const SamplePartialWithRelationsSchema: z.ZodType<SamplePartialWithRelati
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Features: z.lazy(() => FeaturePartialWithRelationsSchema).array(),
-  Taxonomies: z.lazy(() => TaxonomyPartialWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyPartialWithRelationsSchema).array(),
 })).partial()
 
 export type SampleOptionalDefaultsWithPartialRelations = Omit<z.infer<typeof SampleOptionalDefaultsSchema>, "userDefined"> & {
@@ -1914,7 +2039,7 @@ export const SampleOptionalDefaultsWithPartialRelationsSchema: z.ZodType<SampleO
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Features: z.lazy(() => FeaturePartialWithRelationsSchema).array(),
-  Taxonomies: z.lazy(() => TaxonomyPartialWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyPartialWithRelationsSchema).array(),
 }).partial())
 
 export type SampleWithPartialRelations = Omit<z.infer<typeof SampleSchema>, "userDefined"> & {
@@ -1925,7 +2050,7 @@ export const SampleWithPartialRelationsSchema: z.ZodType<SampleWithPartialRelati
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Features: z.lazy(() => FeaturePartialWithRelationsSchema).array(),
-  Taxonomies: z.lazy(() => TaxonomyPartialWithRelationsSchema).array(),
+  TaxonomicHierarchies: z.lazy(() => TaxonomicHierarchyPartialWithRelationsSchema).array(),
 }).partial())
 
 /////////////////////////////////////////

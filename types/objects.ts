@@ -1,6 +1,5 @@
 import type { Permission, Role } from "./globals";
 import { z } from "zod";
-import { TaxonomyScalarFieldEnumSchema } from "@/prisma/generated/zod";
 
 export const Roles = ["admin", "moderator", "contributor"] as Role[];
 export const Permissions = ["contribute", "manageUsers", "manageDatabase"] as Permission[];
@@ -49,10 +48,6 @@ export const ZodBooleanSchema = z
 	.union([z.boolean(), z.literal("true"), z.literal("false"), z.literal("on")])
 	.transform((value) => value === true || value === "true" || value === "on");
 
-export const TaxonomicRanks = TaxonomyScalarFieldEnumSchema.options.filter(
-	(f) => f !== "id" && f !== "taxonomy" && f !== "verbatimIdentification" && f !== "higherClassification"
-);
-export const RanksBySpecificity = TaxonomicRanks.toReversed();
 export const RankPlurals = {
 	realm: "Realms",
 	subrealm: "Subrealms",
@@ -89,6 +84,8 @@ export const RankPlurals = {
 	group: "Groups",
 	type: "Types"
 };
+export const TaxonomicRanks = Object.keys(RankPlurals) as (keyof typeof RankPlurals)[];
+export const RanksBySpecificity = TaxonomicRanks.toReversed();
 
 export const GlobalOmit = ["userId", "userIds", "editHistory", "deleted_ODE"];
 

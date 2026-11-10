@@ -89,6 +89,11 @@ const TableMetadata = {
 				type: "one-to-many"
 			},
 			{
+				field: "TaxonomicHierarchies",
+				table: "TaxonomicHierarchy",
+				type: "one-to-many"
+			},
+			{
 				field: "AlphaDiversities",
 				table: "AlphaDiversity",
 				type: "one-to-many"
@@ -173,14 +178,21 @@ const TableMetadata = {
 			],
 			taxonomy: [
 				{
-					field: "Samples",
-					table: "Sample",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
 					type: "one-to-many"
 				},
 				{
-					field: "Taxonomies",
+					field: "Taxonomy",
 					table: "Taxonomy",
-					type: "many-to-many"
+					type: "many-to-one"
+				}
+			],
+			taxonomicHierarchy: [
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
 				}
 			],
 			taxonomySpotlight: [
@@ -308,8 +320,8 @@ const TableMetadata = {
 				type: "many-to-many"
 			},
 			{
-				field: "Taxonomies",
-				table: "Taxonomy",
+				field: "TaxonomicHierarchies",
+				table: "TaxonomicHierarchy",
 				type: "many-to-many"
 			}
 		],
@@ -385,33 +397,45 @@ const TableMetadata = {
 			],
 			assignment: [
 				{
-					field: "Libraries",
-					table: "Library",
-					type: "one-to-many"
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "many-to-many"
 				},
 				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Assignment",
+					field: "Assignments",
 					table: "Assignment",
-					type: "many-to-one"
+					type: "one-to-many"
 				}
 			],
 			taxonomy: [
 				{
-					field: "Taxonomies",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "many-to-many"
+				},
+				{
+					field: "Taxonomy",
 					table: "Taxonomy",
+					type: "many-to-one"
+				}
+			],
+			taxonomicHierarchy: [
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
 					type: "many-to-many"
 				}
 			],
 			taxonomySpotlight: [
 				{
-					field: "Taxonomies",
-					table: "Taxonomy",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
 					type: "many-to-many"
+				},
+				{
+					field: "Taxonomy",
+					table: "Taxonomy",
+					type: "many-to-one"
 				},
 				{
 					field: "TaxonomySpotlights",
@@ -636,9 +660,26 @@ const TableMetadata = {
 					type: "one-to-many"
 				},
 				{
-					field: "Taxonomies",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Taxonomy",
 					table: "Taxonomy",
-					type: "many-to-many"
+					type: "many-to-one"
+				}
+			],
+			taxonomicHierarchy: [
+				{
+					field: "Analyses",
+					table: "Analysis",
+					type: "one-to-many"
+				},
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
 				}
 			],
 			taxonomySpotlight: [
@@ -648,9 +689,14 @@ const TableMetadata = {
 					type: "one-to-many"
 				},
 				{
-					field: "Taxonomies",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Taxonomy",
 					table: "Taxonomy",
-					type: "many-to-many"
+					type: "many-to-one"
 				},
 				{
 					field: "TaxonomySpotlights",
@@ -863,8 +909,30 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Taxonomies",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "many-to-many"
+				},
+				{
+					field: "Taxonomy",
 					table: "Taxonomy",
+					type: "many-to-one"
+				}
+			],
+			taxonomicHierarchy: [
+				{
+					field: "Libraries",
+					table: "Library",
+					type: "one-to-many"
+				},
+				{
+					field: "Sample",
+					table: "Sample",
+					type: "many-to-one"
+				},
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
 					type: "many-to-many"
 				}
 			],
@@ -880,9 +948,14 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Taxonomies",
-					table: "Taxonomy",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
 					type: "many-to-many"
+				},
+				{
+					field: "Taxonomy",
+					table: "Taxonomy",
+					type: "many-to-one"
 				},
 				{
 					field: "TaxonomySpotlights",
@@ -1104,8 +1177,25 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Taxonomies",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "many-to-many"
+				},
+				{
+					field: "Taxonomy",
 					table: "Taxonomy",
+					type: "many-to-one"
+				}
+			],
+			taxonomicHierarchy: [
+				{
+					field: "Sample",
+					table: "Sample",
+					type: "many-to-one"
+				},
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
 					type: "many-to-many"
 				}
 			],
@@ -1116,9 +1206,14 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Taxonomies",
-					table: "Taxonomy",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
 					type: "many-to-many"
+				},
+				{
+					field: "Taxonomy",
+					table: "Taxonomy",
+					type: "many-to-one"
 				},
 				{
 					field: "TaxonomySpotlights",
@@ -1230,9 +1325,9 @@ const TableMetadata = {
 				type: "one-to-many"
 			},
 			{
-				field: "Taxonomies",
-				table: "Taxonomy",
-				type: "many-to-many"
+				field: "TaxonomicHierarchies",
+				table: "TaxonomicHierarchy",
+				type: "one-to-many"
 			},
 			{
 				field: "Tags",
@@ -1319,16 +1414,33 @@ const TableMetadata = {
 			],
 			taxonomy: [
 				{
-					field: "Taxonomies",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Taxonomy",
 					table: "Taxonomy",
-					type: "many-to-many"
+					type: "many-to-one"
+				}
+			],
+			taxonomicHierarchy: [
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
 				}
 			],
 			taxonomySpotlight: [
 				{
-					field: "Taxonomies",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Taxonomy",
 					table: "Taxonomy",
-					type: "many-to-many"
+					type: "many-to-one"
 				},
 				{
 					field: "TaxonomySpotlights",
@@ -1517,6 +1629,18 @@ const TableMetadata = {
 				{
 					field: "Taxonomy",
 					table: "Taxonomy",
+					type: "many-to-one"
+				}
+			],
+			taxonomicHierarchy: [
+				{
+					field: "Assignment",
+					table: "Assignment",
+					type: "many-to-one"
+				},
+				{
+					field: "TaxonomicHierarchy",
+					table: "TaxonomicHierarchy",
 					type: "many-to-one"
 				}
 			],
@@ -1756,6 +1880,18 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
+			taxonomicHierarchy: [
+				{
+					field: "Assignments",
+					table: "Assignment",
+					type: "one-to-many"
+				},
+				{
+					field: "TaxonomicHierarchy",
+					table: "TaxonomicHierarchy",
+					type: "many-to-one"
+				}
+			],
 			taxonomySpotlight: [
 				{
 					field: "Assignments",
@@ -1862,7 +1998,7 @@ const TableMetadata = {
 		],
 		subFields: [
 			"Analysis",
-			"taxonomy",
+			"TaxonomicHierarchy",
 			"Confidence"
 		],
 		relations: [
@@ -1887,6 +2023,11 @@ const TableMetadata = {
 				type: "many-to-one"
 			},
 			{
+				field: "TaxonomicHierarchy",
+				table: "TaxonomicHierarchy",
+				type: "many-to-one"
+			},
+			{
 				field: "Occurrences",
 				table: "Occurrence",
 				type: "one-to-many"
@@ -1902,19 +2043,14 @@ const TableMetadata = {
 			],
 			sample: [
 				{
-					field: "Occurrences",
-					table: "Occurrence",
-					type: "one-to-many"
-				},
-				{
-					field: "Library",
-					table: "Library",
+					field: "TaxonomicHierarchy",
+					table: "TaxonomicHierarchy",
 					type: "many-to-one"
 				},
 				{
-					field: "Sample",
+					field: "Samples",
 					table: "Sample",
-					type: "many-to-one"
+					type: "many-to-many"
 				}
 			],
 			assay: [
@@ -1983,6 +2119,13 @@ const TableMetadata = {
 				{
 					field: "Taxonomy",
 					table: "Taxonomy",
+					type: "many-to-one"
+				}
+			],
+			taxonomicHierarchy: [
+				{
+					field: "TaxonomicHierarchy",
+					table: "TaxonomicHierarchy",
 					type: "many-to-one"
 				}
 			],
@@ -2097,7 +2240,293 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.TaxonomyScalarFieldEnumSchema,
 		titleField: "taxonomy",
 		subFields: [
-			"Analyses",
+			"Assignments",
+			"TaxonomicHierarchies"
+		],
+		relations: [
+			{
+				field: "Assignments",
+				table: "Assignment",
+				type: "one-to-many"
+			},
+			{
+				field: "TaxonomicHierarchies",
+				table: "TaxonomicHierarchy",
+				type: "one-to-many"
+			},
+			{
+				field: "TaxonomySpotlights",
+				table: "TaxonomySpotlight",
+				type: "one-to-many"
+			}
+		],
+		relationPaths: {
+			project: [
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Project",
+					table: "Project",
+					type: "many-to-one"
+				}
+			],
+			sample: [
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Samples",
+					table: "Sample",
+					type: "many-to-many"
+				}
+			],
+			assay: [
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Analysis",
+					table: "Analysis",
+					type: "many-to-one"
+				},
+				{
+					field: "Assay",
+					table: "Assay",
+					type: "many-to-one"
+				}
+			],
+			assayPrep: [
+				{
+					field: "Assignments",
+					table: "Assignment",
+					type: "one-to-many"
+				},
+				{
+					field: "Occurrences",
+					table: "Occurrence",
+					type: "one-to-many"
+				},
+				{
+					field: "Library",
+					table: "Library",
+					type: "many-to-one"
+				},
+				{
+					field: "AssayPrep",
+					table: "AssayPrep",
+					type: "many-to-one"
+				}
+			],
+			library: [
+				{
+					field: "Assignments",
+					table: "Assignment",
+					type: "one-to-many"
+				},
+				{
+					field: "Occurrences",
+					table: "Occurrence",
+					type: "one-to-many"
+				},
+				{
+					field: "Library",
+					table: "Library",
+					type: "many-to-one"
+				}
+			],
+			analysis: [
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Analysis",
+					table: "Analysis",
+					type: "many-to-one"
+				}
+			],
+			occurrence: [
+				{
+					field: "Assignments",
+					table: "Assignment",
+					type: "one-to-many"
+				},
+				{
+					field: "Occurrences",
+					table: "Occurrence",
+					type: "one-to-many"
+				}
+			],
+			feature: [
+				{
+					field: "Assignments",
+					table: "Assignment",
+					type: "one-to-many"
+				},
+				{
+					field: "Feature",
+					table: "Feature",
+					type: "many-to-one"
+				}
+			],
+			assignment: [
+				{
+					field: "Assignments",
+					table: "Assignment",
+					type: "one-to-many"
+				}
+			],
+			taxonomicHierarchy: [
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				}
+			],
+			taxonomySpotlight: [
+				{
+					field: "TaxonomySpotlights",
+					table: "TaxonomySpotlight",
+					type: "one-to-many"
+				}
+			],
+			tag: [
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Analysis",
+					table: "Analysis",
+					type: "many-to-one"
+				},
+				{
+					field: "Tags",
+					table: "Tag",
+					type: "many-to-many"
+				}
+			],
+			alphaDiversity: [
+				{
+					field: "Assignments",
+					table: "Assignment",
+					type: "one-to-many"
+				},
+				{
+					field: "Occurrences",
+					table: "Occurrence",
+					type: "one-to-many"
+				},
+				{
+					field: "Library",
+					table: "Library",
+					type: "many-to-one"
+				},
+				{
+					field: "AlphaDiversityIndexes",
+					table: "AlphaDiversityIndex",
+					type: "one-to-many"
+				},
+				{
+					field: "AlphaDiversity",
+					table: "AlphaDiversity",
+					type: "many-to-one"
+				}
+			],
+			alphaDiversityIndex: [
+				{
+					field: "Assignments",
+					table: "Assignment",
+					type: "one-to-many"
+				},
+				{
+					field: "Occurrences",
+					table: "Occurrence",
+					type: "one-to-many"
+				},
+				{
+					field: "Library",
+					table: "Library",
+					type: "many-to-one"
+				},
+				{
+					field: "AlphaDiversityIndexes",
+					table: "AlphaDiversityIndex",
+					type: "one-to-many"
+				}
+			],
+			blastQuery: [
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Analysis",
+					table: "Analysis",
+					type: "many-to-one"
+				},
+				{
+					field: "Assay",
+					table: "Assay",
+					type: "many-to-one"
+				},
+				{
+					field: "BlastQueries",
+					table: "BlastQuery",
+					type: "one-to-many"
+				}
+			],
+			blastQueryResult: [
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Analysis",
+					table: "Analysis",
+					type: "many-to-one"
+				},
+				{
+					field: "Assay",
+					table: "Assay",
+					type: "many-to-one"
+				},
+				{
+					field: "BlastQueries",
+					table: "BlastQuery",
+					type: "one-to-many"
+				},
+				{
+					field: "BlastQueryResults",
+					table: "BlastQueryResult",
+					type: "one-to-many"
+				}
+			]
+		}
+	},
+	taxonomicHierarchy: {
+		plural: "TaxonomicHierarchies",
+		description: "The way an individual Analysis has classified a taxonomy into the hierarchical ranks.",
+		schema: PrismaZodTypes.TaxonomicHierarchySchema,
+		enumSchema: PrismaZodTypes.TaxonomicHierarchyScalarFieldEnumSchema,
+		titleField: [
+			"project_id",
+			"analysis_run_name",
+			"taxonomy"
+		],
+		subFields: [
+			"Analysis",
 			"Samples",
 			"realm",
 			"subrealm",
@@ -2136,9 +2565,19 @@ const TableMetadata = {
 		],
 		relations: [
 			{
-				field: "Analyses",
+				field: "Project",
+				table: "Project",
+				type: "many-to-one"
+			},
+			{
+				field: "Analysis",
 				table: "Analysis",
-				type: "many-to-many"
+				type: "many-to-one"
+			},
+			{
+				field: "Taxonomy",
+				table: "Taxonomy",
+				type: "many-to-one"
 			},
 			{
 				field: "Samples",
@@ -2149,20 +2588,10 @@ const TableMetadata = {
 				field: "Assignments",
 				table: "Assignment",
 				type: "one-to-many"
-			},
-			{
-				field: "TaxonomySpotlights",
-				table: "TaxonomySpotlight",
-				type: "one-to-many"
 			}
 		],
 		relationPaths: {
 			project: [
-				{
-					field: "Assignments",
-					table: "Assignment",
-					type: "one-to-many"
-				},
 				{
 					field: "Project",
 					table: "Project",
@@ -2178,9 +2607,9 @@ const TableMetadata = {
 			],
 			assay: [
 				{
-					field: "Analyses",
+					field: "Analysis",
 					table: "Analysis",
-					type: "many-to-many"
+					type: "many-to-one"
 				},
 				{
 					field: "Assay",
@@ -2190,14 +2619,19 @@ const TableMetadata = {
 			],
 			assayPrep: [
 				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
+					field: "Assignments",
+					table: "Assignment",
+					type: "one-to-many"
 				},
 				{
-					field: "Libraries",
-					table: "Library",
+					field: "Occurrences",
+					table: "Occurrence",
 					type: "one-to-many"
+				},
+				{
+					field: "Library",
+					table: "Library",
+					type: "many-to-one"
 				},
 				{
 					field: "AssayPrep",
@@ -2207,21 +2641,26 @@ const TableMetadata = {
 			],
 			library: [
 				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
+					field: "Assignments",
+					table: "Assignment",
+					type: "one-to-many"
 				},
 				{
-					field: "Libraries",
-					table: "Library",
+					field: "Occurrences",
+					table: "Occurrence",
 					type: "one-to-many"
+				},
+				{
+					field: "Library",
+					table: "Library",
+					type: "many-to-one"
 				}
 			],
 			analysis: [
 				{
-					field: "Analyses",
+					field: "Analysis",
 					table: "Analysis",
-					type: "many-to-many"
+					type: "many-to-one"
 				}
 			],
 			occurrence: [
@@ -2255,7 +2694,19 @@ const TableMetadata = {
 					type: "one-to-many"
 				}
 			],
+			taxonomy: [
+				{
+					field: "Taxonomy",
+					table: "Taxonomy",
+					type: "many-to-one"
+				}
+			],
 			taxonomySpotlight: [
+				{
+					field: "Taxonomy",
+					table: "Taxonomy",
+					type: "many-to-one"
+				},
 				{
 					field: "TaxonomySpotlights",
 					table: "TaxonomySpotlight",
@@ -2264,9 +2715,9 @@ const TableMetadata = {
 			],
 			tag: [
 				{
-					field: "Analyses",
+					field: "Analysis",
 					table: "Analysis",
-					type: "many-to-many"
+					type: "many-to-one"
 				},
 				{
 					field: "Tags",
@@ -2276,14 +2727,19 @@ const TableMetadata = {
 			],
 			alphaDiversity: [
 				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
+					field: "Assignments",
+					table: "Assignment",
+					type: "one-to-many"
 				},
 				{
-					field: "Libraries",
-					table: "Library",
+					field: "Occurrences",
+					table: "Occurrence",
 					type: "one-to-many"
+				},
+				{
+					field: "Library",
+					table: "Library",
+					type: "many-to-one"
 				},
 				{
 					field: "AlphaDiversityIndexes",
@@ -2298,14 +2754,19 @@ const TableMetadata = {
 			],
 			alphaDiversityIndex: [
 				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
+					field: "Assignments",
+					table: "Assignment",
+					type: "one-to-many"
 				},
 				{
-					field: "Libraries",
-					table: "Library",
+					field: "Occurrences",
+					table: "Occurrence",
 					type: "one-to-many"
+				},
+				{
+					field: "Library",
+					table: "Library",
+					type: "many-to-one"
 				},
 				{
 					field: "AlphaDiversityIndexes",
@@ -2315,9 +2776,9 @@ const TableMetadata = {
 			],
 			blastQuery: [
 				{
-					field: "Analyses",
+					field: "Analysis",
 					table: "Analysis",
-					type: "many-to-many"
+					type: "many-to-one"
 				},
 				{
 					field: "Assay",
@@ -2332,9 +2793,9 @@ const TableMetadata = {
 			],
 			blastQueryResult: [
 				{
-					field: "Analyses",
+					field: "Analysis",
 					table: "Analysis",
-					type: "many-to-many"
+					type: "many-to-one"
 				},
 				{
 					field: "Assay",
@@ -2390,6 +2851,11 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
 					field: "Samples",
 					table: "Sample",
 					type: "many-to-many"
@@ -2402,9 +2868,14 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Analyses",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Analysis",
 					table: "Analysis",
-					type: "many-to-many"
+					type: "many-to-one"
 				},
 				{
 					field: "Assay",
@@ -2419,14 +2890,19 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
+					field: "Assignments",
+					table: "Assignment",
+					type: "one-to-many"
 				},
 				{
-					field: "Libraries",
-					table: "Library",
+					field: "Occurrences",
+					table: "Occurrence",
 					type: "one-to-many"
+				},
+				{
+					field: "Library",
+					table: "Library",
+					type: "many-to-one"
 				},
 				{
 					field: "AssayPrep",
@@ -2441,14 +2917,19 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
+					field: "Assignments",
+					table: "Assignment",
+					type: "one-to-many"
 				},
 				{
-					field: "Libraries",
-					table: "Library",
+					field: "Occurrences",
+					table: "Occurrence",
 					type: "one-to-many"
+				},
+				{
+					field: "Library",
+					table: "Library",
+					type: "many-to-one"
 				}
 			],
 			analysis: [
@@ -2458,9 +2939,14 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Analyses",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Analysis",
 					table: "Analysis",
-					type: "many-to-many"
+					type: "many-to-one"
 				}
 			],
 			occurrence: [
@@ -2516,6 +3002,18 @@ const TableMetadata = {
 					type: "many-to-one"
 				}
 			],
+			taxonomicHierarchy: [
+				{
+					field: "Taxonomy",
+					table: "Taxonomy",
+					type: "many-to-one"
+				},
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				}
+			],
 			tag: [
 				{
 					field: "Taxonomy",
@@ -2523,9 +3021,14 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Analyses",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Analysis",
 					table: "Analysis",
-					type: "many-to-many"
+					type: "many-to-one"
 				},
 				{
 					field: "Tags",
@@ -2540,14 +3043,19 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
+					field: "Assignments",
+					table: "Assignment",
+					type: "one-to-many"
 				},
 				{
-					field: "Libraries",
-					table: "Library",
+					field: "Occurrences",
+					table: "Occurrence",
 					type: "one-to-many"
+				},
+				{
+					field: "Library",
+					table: "Library",
+					type: "many-to-one"
 				},
 				{
 					field: "AlphaDiversityIndexes",
@@ -2567,14 +3075,19 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Samples",
-					table: "Sample",
-					type: "many-to-many"
+					field: "Assignments",
+					table: "Assignment",
+					type: "one-to-many"
 				},
 				{
-					field: "Libraries",
-					table: "Library",
+					field: "Occurrences",
+					table: "Occurrence",
 					type: "one-to-many"
+				},
+				{
+					field: "Library",
+					table: "Library",
+					type: "many-to-one"
 				},
 				{
 					field: "AlphaDiversityIndexes",
@@ -2589,9 +3102,14 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Analyses",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Analysis",
 					table: "Analysis",
-					type: "many-to-many"
+					type: "many-to-one"
 				},
 				{
 					field: "Assay",
@@ -2611,9 +3129,14 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Analyses",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Analysis",
 					table: "Analysis",
-					type: "many-to-many"
+					type: "many-to-one"
 				},
 				{
 					field: "Assay",
@@ -2772,9 +3295,26 @@ const TableMetadata = {
 					type: "many-to-many"
 				},
 				{
-					field: "Taxonomies",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Taxonomy",
 					table: "Taxonomy",
+					type: "many-to-one"
+				}
+			],
+			taxonomicHierarchy: [
+				{
+					field: "Analyses",
+					table: "Analysis",
 					type: "many-to-many"
+				},
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
 				}
 			],
 			taxonomySpotlight: [
@@ -2784,9 +3324,14 @@ const TableMetadata = {
 					type: "many-to-many"
 				},
 				{
-					field: "Taxonomies",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "one-to-many"
+				},
+				{
+					field: "Taxonomy",
 					table: "Taxonomy",
-					type: "many-to-many"
+					type: "many-to-one"
 				},
 				{
 					field: "TaxonomySpotlights",
@@ -3038,8 +3583,35 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Taxonomies",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "many-to-many"
+				},
+				{
+					field: "Taxonomy",
 					table: "Taxonomy",
+					type: "many-to-one"
+				}
+			],
+			taxonomicHierarchy: [
+				{
+					field: "AlphaDiversityIndexes",
+					table: "AlphaDiversityIndex",
+					type: "one-to-many"
+				},
+				{
+					field: "Library",
+					table: "Library",
+					type: "many-to-one"
+				},
+				{
+					field: "Sample",
+					table: "Sample",
+					type: "many-to-one"
+				},
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
 					type: "many-to-many"
 				}
 			],
@@ -3060,9 +3632,14 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Taxonomies",
-					table: "Taxonomy",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
 					type: "many-to-many"
+				},
+				{
+					field: "Taxonomy",
+					table: "Taxonomy",
+					type: "many-to-one"
 				},
 				{
 					field: "TaxonomySpotlights",
@@ -3274,8 +3851,30 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Taxonomies",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "many-to-many"
+				},
+				{
+					field: "Taxonomy",
 					table: "Taxonomy",
+					type: "many-to-one"
+				}
+			],
+			taxonomicHierarchy: [
+				{
+					field: "Library",
+					table: "Library",
+					type: "many-to-one"
+				},
+				{
+					field: "Sample",
+					table: "Sample",
+					type: "many-to-one"
+				},
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
 					type: "many-to-many"
 				}
 			],
@@ -3291,9 +3890,14 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Taxonomies",
-					table: "Taxonomy",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
 					type: "many-to-many"
+				},
+				{
+					field: "Taxonomy",
+					table: "Taxonomy",
+					type: "many-to-one"
 				},
 				{
 					field: "TaxonomySpotlights",
@@ -3530,8 +4134,35 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Taxonomies",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "many-to-many"
+				},
+				{
+					field: "Taxonomy",
 					table: "Taxonomy",
+					type: "many-to-one"
+				}
+			],
+			taxonomicHierarchy: [
+				{
+					field: "Assay",
+					table: "Assay",
+					type: "many-to-one"
+				},
+				{
+					field: "Libraries",
+					table: "Library",
+					type: "one-to-many"
+				},
+				{
+					field: "Sample",
+					table: "Sample",
+					type: "many-to-one"
+				},
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
 					type: "many-to-many"
 				}
 			],
@@ -3552,9 +4183,14 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Taxonomies",
-					table: "Taxonomy",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
 					type: "many-to-many"
+				},
+				{
+					field: "Taxonomy",
+					table: "Taxonomy",
+					type: "many-to-one"
 				},
 				{
 					field: "TaxonomySpotlights",
@@ -3841,8 +4477,40 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Taxonomies",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
+					type: "many-to-many"
+				},
+				{
+					field: "Taxonomy",
 					table: "Taxonomy",
+					type: "many-to-one"
+				}
+			],
+			taxonomicHierarchy: [
+				{
+					field: "BlastQuery",
+					table: "BlastQuery",
+					type: "many-to-one"
+				},
+				{
+					field: "Assay",
+					table: "Assay",
+					type: "many-to-one"
+				},
+				{
+					field: "Libraries",
+					table: "Library",
+					type: "one-to-many"
+				},
+				{
+					field: "Sample",
+					table: "Sample",
+					type: "many-to-one"
+				},
+				{
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
 					type: "many-to-many"
 				}
 			],
@@ -3868,9 +4536,14 @@ const TableMetadata = {
 					type: "many-to-one"
 				},
 				{
-					field: "Taxonomies",
-					table: "Taxonomy",
+					field: "TaxonomicHierarchies",
+					table: "TaxonomicHierarchy",
 					type: "many-to-many"
+				},
+				{
+					field: "Taxonomy",
+					table: "Taxonomy",
+					type: "many-to-one"
 				},
 				{
 					field: "TaxonomySpotlights",
