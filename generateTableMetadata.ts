@@ -351,32 +351,19 @@ for (const table of TableNames) {
 
 const pathPriorities = {
 	Project: {
-		Taxonomy: ["TaxonomicHierarchy"]
+		default: ["TaxonomicHierarchy"]
 	},
 	Analysis: {
-		Sample: ["Library"],
-		Taxonomy: ["TaxonomicHierarchy"],
-		TaxonomySpotlight: ["TaxonomicHierarchy"]
-	},
-	Feature: {
-		Taxonomy: ["Assignment", "Sample"]
-	},
-	Occurrence: {
-		Assay: ["Analysis", "Library"]
+		default: ["TaxonomicHierarchy"],
+		Sample: ["Library"]
 	},
 	Taxonomy: {
-		Project: ["TaxonomicHierarchy"],
-		Assay: ["TaxonomicHierarchy"],
-		Analysis: ["TaxonomicHierarchy"],
-		Tag: ["TaxonomicHierarchy"],
-		BlastQuery: ["TaxonomicHierarchy"],
-		BlastQueryResult: ["TaxonomicHierarchy"]
+		default: ["TaxonomicHierarchy"]
 	},
 	AlphaDiversityIndex: {
-		Analysis: ["AlphaDiversity", "Library"],
-		Tag: ["AlphaDiversity", "Library"]
+		default: ["AlphaDiversity"]
 	}
-} as Record<ModelName, Record<ModelName, ModelName[]>>;
+} as Record<ModelName, Record<ModelName | "default", ModelName[]>>;
 
 //assemble relational path metadata
 function getRelationPath(start: Uncapitalize<ModelName>, target: Uncapitalize<ModelName>) {
@@ -413,7 +400,8 @@ function getRelationPath(start: Uncapitalize<ModelName>, target: Uncapitalize<Mo
 				path.length === 1) //starting at TaxonomySpotlight
 		) {
 			for (const rel of [...TableMetadata[uncapitalizeTable(curr)].relations!].sort((a, b) => {
-				const prio = pathPriorities[curr]?.[capsTarget];
+				const prio = pathPriorities[curr]?.[capsTarget] ?? pathPriorities[curr]?.default;
+
 				if (prio) {
 					const aIndex = prio.indexOf(a.table);
 					const bIndex = prio.indexOf(b.table);
