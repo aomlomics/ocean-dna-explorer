@@ -259,12 +259,12 @@ export default async function projectSubmitAction(
 	} catch (err) {
 		console.error(err);
 
-		globalStream.error(err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR);
+		await globalStream.error(err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR);
 
-		globalStream.close();
-		projectStream.close();
-		sampleStream.close();
-		libraryStream.close();
+		await globalStream.close();
+		await projectStream.close();
+		await sampleStream.close();
+		await libraryStream.close();
 
 		return {
 			global: globalStream.readable,
@@ -279,14 +279,14 @@ export default async function projectSubmitAction(
 		{ url: libraryFileUrl, stream: libraryStream },
 		userIds,
 		imageInfo
-	).then((success) => {
-		globalStream.close();
-		projectStream.close();
-		sampleStream.close();
-		libraryStream.close();
+	).then(async (success) => {
+		await globalStream.close();
+		await projectStream.close();
+		await sampleStream.close();
+		await libraryStream.close();
 
 		if (!success) {
-			del([projectFileUrl, sampleFileUrl, libraryFileUrl, imageInfo?.image.url].filter(Boolean) as string[]);
+			await del([projectFileUrl, sampleFileUrl, libraryFileUrl, imageInfo?.image.url].filter(Boolean) as string[]);
 		}
 	});
 

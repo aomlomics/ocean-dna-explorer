@@ -138,7 +138,7 @@ async function doEdit(
 						}
 					});
 					if (!dbAssay) {
-						stream.error(`The Assay with assay_name of "${parseResult.analysis.assay_name}" does not exist.`);
+						await stream.error(`The Assay with assay_name of "${parseResult.analysis.assay_name}" does not exist.`);
 						return;
 					}
 				}
@@ -166,7 +166,7 @@ async function doEdit(
 							if (invalidTagNames.length === 1) {
 								await stream.error(`A tag is invalid. The invalid tagName is "${invalidTagNames[0]}".`);
 							} else {
-								stream.error(
+								await stream.error(
 									`Some tags are invalid. The invalid tagNames are ${invalidTagNames
 										.map((tagName, i) => (i === invalidTagNames.length - 1 ? `and "${tagName}"` : `"${tagName}"`))
 										.join(", ")}.`
@@ -313,17 +313,17 @@ export default async function analysisEditAction(
 			await validateBlobs([url]);
 		} catch (err) {
 			console.error(err);
-			stream.error(err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR);
-			stream.close();
+			await stream.error(err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR);
+			await stream.close();
 			return stream.readable;
 		}
 	}
 
-	doEdit(stream, editId, project_id, analysis_run_name, { url, trusted, tagNames }).then((success) => {
-		stream.close();
+	doEdit(stream, editId, project_id, analysis_run_name, { url, trusted, tagNames }).then(async (success) => {
+		await stream.close();
 
 		if (url && !success) {
-			del(url);
+			await del(url);
 		}
 	});
 

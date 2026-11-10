@@ -444,12 +444,12 @@ export default async function projectEditAction({
 	} catch (err) {
 		console.error(err);
 
-		globalStream.error(err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR);
+		await globalStream.error(err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR);
 
-		globalStream.close();
-		projectStream.close();
-		sampleStream.close();
-		libraryStream.close();
+		await globalStream.close();
+		await projectStream.close();
+		await sampleStream.close();
+		await libraryStream.close();
 
 		return {
 			global: globalStream.readable,
@@ -463,14 +463,14 @@ export default async function projectEditAction({
 		{ url: sampleFileUrl || "", stream: sampleStream },
 		{ url: libraryFileUrl || "", stream: libraryStream },
 		project_id
-	).then((success) => {
-		globalStream.close();
-		projectStream.close();
-		sampleStream.close();
-		libraryStream.close();
+	).then(async (success) => {
+		await globalStream.close();
+		await projectStream.close();
+		await sampleStream.close();
+		await libraryStream.close();
 
 		if (!success) {
-			del([projectFileUrl, sampleFileUrl, libraryFileUrl].filter(Boolean) as string[]);
+			await del([projectFileUrl, sampleFileUrl, libraryFileUrl].filter(Boolean) as string[]);
 		}
 	});
 

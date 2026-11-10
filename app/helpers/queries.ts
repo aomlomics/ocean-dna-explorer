@@ -308,9 +308,10 @@ export async function disconnectFeatsFromSamples(
 	return rowsAffected;
 }
 
-export async function connectTaxaToSamples(
+export async function connectHierarchiesToSamples(
 	client: Prisma.TransactionClient,
 	project_id: ProjectModel["project_id"],
+	analysis_run_name: string,
 	taxaByLibId: Record<OccurrenceModel["lib_id"], Set<AssignmentModel["taxonomy"]>>
 ) {
 	const pairs = Object.entries(taxaByLibId).flatMap(([lib_id, taxa]) =>
@@ -318,18 +319,19 @@ export async function connectTaxaToSamples(
 	);
 	if (!pairs.length) return 0;
 
-	const join = await getImplicitJoinTable({ from: "sample", to: "taxonomy" });
+	const join = await getImplicitJoinTable({ from: "sample", to: "taxonomicHierarchy" });
 	let rowsAffected = 0;
-	//project_id contributes 1 parameter
+
+	//project_id + analysis_run_name contribute 2 parameters
 	//each pair contributes 2 parameters: lib_id + taxonomy
-	const CHUNK_SIZE = Math.floor((PRISMA_PARAM_LIMIT - 1) / 2);
+	const CHUNK_SIZE = Math.floor((PRISMA_PARAM_LIMIT - 2) / 2);
 	for (let i = 0; i < pairs.length; i += CHUNK_SIZE) {
 		rowsAffected += await client.$executeRaw`
 			INSERT INTO ${Prisma.raw(`"${join.table}"`)}
 				(${Prisma.raw(`"${join.from.joinColumn}"`)}, ${Prisma.raw(`"${join.to.joinColumn}"`)})
 			SELECT DISTINCT
 				s.id,
-				t.id
+				th.id
 			FROM (VALUES ${Prisma.join(
 				pairs.slice(i, i + CHUNK_SIZE).map(({ lib_id, taxonomy }) => Prisma.sql`(${lib_id}, ${taxonomy})`),
 				", "
@@ -340,8 +342,10 @@ export async function connectTaxaToSamples(
 			JOIN "Sample" s
 				ON s.project_id = l.project_id
 				AND s.samp_name = l.samp_name
-			JOIN "Taxonomy" t
-				ON t.taxonomy = v.taxonomy
+			JOIN "TaxonomicHierarchy" th
+				ON th.project_id = ${project_id}
+				AND th.analysis_run_name = ${analysis_run_name}
+				AND th.taxonomy = v.taxonomy
 			ON CONFLICT DO NOTHING
 		`;
 	}

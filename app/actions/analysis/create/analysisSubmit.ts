@@ -6,7 +6,7 @@ import { prisma } from "@/app/helpers/prisma";
 import { type Channel, createProgressStream } from "@/app/helpers/progress";
 import {
 	connectFeatsToSamples,
-	connectTaxaToSamples,
+	connectHierarchiesToSamples,
 	handlePrismaError,
 	PRISMA_PARAM_LIMIT
 } from "@/app/helpers/queries";
@@ -46,7 +46,7 @@ async function doSubmit(
 	}
 
 	try {
-		const { analysis, features, taxonomies, assignments, occurrences, libIds } = parseResult;
+		const { analysis, features, hierarchyByTaxonomy, assignments, occurrences, libIds } = parseResult;
 
 		await analysisChannel.stream.message(
 			"All files successfully parsed into database format. Parsing data into database.",
@@ -209,8 +209,6 @@ async function doSubmit(
 			{} as Record<OccurrenceModel["lib_id"], Set<AssignmentModel["taxonomy"]>>
 		);
 
-		const taxaNames = taxonomies.map((taxa) => taxa.taxonomy);
-
 		//submission
 		await prisma.$transaction(
 			async (tx) => {
@@ -220,7 +218,7 @@ async function doSubmit(
 				});
 
 				await tx.taxonomy.createMany({
-					data: taxonomies,
+					data: Object.keys(hierarchyByTaxonomy).map((taxonomy) => ({ taxonomy })),
 					skipDuplicates: true
 				});
 
@@ -254,27 +252,13 @@ async function doSubmit(
 					});
 				}
 
-				//connect taxonomies in chunks
-				const connectTaxa = taxaNames.map((taxonomy) => ({ taxonomy }));
-				for (let i = 0; i < connectTaxa.length; i += PRISMA_PARAM_LIMIT) {
-					await tx.analysis.update({
-						where: {
-							project_id_analysis_run_name: {
-								project_id: analysis.project_id,
-								analysis_run_name: analysis.analysis_run_name
-							}
-						},
-						data: {
-							Taxonomies: {
-								connect: connectTaxa.slice(i, i + PRISMA_PARAM_LIMIT)
-							}
-						}
-					});
-				}
-
 				await connectFeatsToSamples(tx, analysis.project_id, occurrences);
 
-				await connectTaxaToSamples(tx, analysis.project_id, taxaByLibId);
+				await tx.taxonomicHierarchy.createMany({
+					data: Object.values(hierarchyByTaxonomy)
+				});
+
+				await connectHierarchiesToSamples(tx, analysis.project_id, analysis.analysis_run_name, taxaByLibId);
 
 				await tx.assignment.createMany({
 					data: assignments
@@ -392,13 +376,13 @@ export default async function analysisSubmitAction(
 		console.error(err);
 
 		const message = err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR;
-		analysisStream.error(message);
-		assignmentsStream.error(message);
-		occurrencesStream.error(message);
+		await analysisStream.error(message);
+		await assignmentsStream.error(message);
+		await occurrencesStream.error(message);
 
-		analysisStream.close();
-		assignmentsStream.close();
-		occurrencesStream.close();
+		await analysisStream.close();
+		await assignmentsStream.close();
+		await occurrencesStream.close();
 
 		return [analysisStream.readable, assignmentsStream.readable, occurrencesStream.readable];
 	}
@@ -409,13 +393,13 @@ export default async function analysisSubmitAction(
 		{ url: occurrencesFileUrl, stream: occurrencesStream },
 		trusted,
 		tagNames
-	).then((success) => {
-		analysisStream.close();
-		assignmentsStream.close();
-		occurrencesStream.close();
+	).then(async (success) => {
+		await analysisStream.close();
+		await assignmentsStream.close();
+		await occurrencesStream.close();
 
 		if (!success) {
-			del([analysisFileUrl, assignmentsFileUrl, occurrencesFileUrl]);
+			await del([analysisFileUrl, assignmentsFileUrl, occurrencesFileUrl]);
 		}
 	});
 

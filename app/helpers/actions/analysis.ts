@@ -4,6 +4,7 @@ import type {
 	AssignmentModel,
 	FeatureModel,
 	OccurrenceModel,
+	TaxonomicHierarchyModel,
 	TaxonomyModel
 } from "@/app/generated/prisma/models";
 import { md5 } from "js-md5";
@@ -14,14 +15,14 @@ import {
 	AssignmentOptionalDefaultsSchema,
 	FeatureOptionalDefaultsSchema,
 	OccurrenceOptionalDefaultsSchema,
-	TaxonomyOptionalDefaultsSchema,
-	TaxonomyScalarFieldEnumSchema
+	TaxonomicHierarchyOptionalDefaultsSchema,
+	TaxonomicHierarchyScalarFieldEnumSchema
 } from "@/prisma/generated/zod";
 import { parseSchemaToObject } from "../schema";
 import type { Channel } from "../progress";
 import { get } from "@vercel/blob";
 import { getSchemaParseError, schemaParseErrorFunction } from "../queries";
-import { AppError, GLOBAL_SERVER_ERROR } from "@/types/objects";
+import { AppError, GLOBAL_SERVER_ERROR, TaxonomicRanks } from "@/types/objects";
 
 export async function parseAnalysisFile({
 	channel,
@@ -151,8 +152,10 @@ export async function parseAssignmentsFile({
 }) {
 	try {
 		const features = [] as Prisma.FeatureCreateManyInput[];
-		const uniqueTaxa = new Set() as Set<TaxonomyModel["taxonomy"]>;
-		const taxonomies = [] as Prisma.TaxonomyCreateWithoutAnalysesInput[];
+		const hierarchyByTaxonomy = {} as Record<
+			TaxonomicHierarchyModel["taxonomy"],
+			Prisma.TaxonomicHierarchyCreateManyInput
+		>;
 		const assignments = [] as Prisma.AssignmentCreateManyInput[];
 
 		//fetch file from blob storage
@@ -186,7 +189,7 @@ export async function parseAssignmentsFile({
 
 				const featureRow = {} as FeatureModel;
 				const assignmentRow = {} as AssignmentModel;
-				const taxonomyRow = {} as TaxonomyModel;
+				const hierarchyRow = {} as TaxonomicHierarchyModel;
 
 				//iterate over each column
 				for (const [field, v] of Object.entries(record)) {
@@ -198,7 +201,7 @@ export async function parseAssignmentsFile({
 					parseSchemaToObject(field, value, assignmentRow, "assignment");
 
 					//taxonomy table
-					parseSchemaToObject(field, value, taxonomyRow, "taxonomy");
+					parseSchemaToObject(field, value, hierarchyRow, "taxonomicHierarchy");
 				}
 
 				//parse assignment
@@ -248,29 +251,38 @@ export async function parseAssignmentsFile({
 				features.push(parsedFeature.data);
 
 				//parse taxonomy
-				if (!uniqueTaxa.has(taxonomyRow.taxonomy)) {
-					const parsedTaxonomy = TaxonomyOptionalDefaultsSchema.safeParse(taxonomyRow, {
-						error: schemaParseErrorFunction
-					});
+				const parsedHierarchy = TaxonomicHierarchyOptionalDefaultsSchema.safeParse(hierarchyRow, {
+					error: schemaParseErrorFunction
+				});
 
-					if (!parsedTaxonomy.success) {
-						await channel.stream.error(getSchemaParseError(parsedTaxonomy.error, "Taxonomy", [taxonomyRow.taxonomy]));
-						return;
+				if (!parsedHierarchy.success) {
+					await channel.stream.error(
+						getSchemaParseError(parsedHierarchy.error, "TaxonomicHierarchy", [hierarchyRow.taxonomy])
+					);
+					return;
+				}
+
+				//unset all optional fields that were not provided
+				for (const field of TaxonomicHierarchyScalarFieldEnumSchema.options) {
+					if (!(field in parsedHierarchy.data)) {
+						//@ts-expect-error overriding never with null
+						parsedHierarchy.data[field] = null;
 					}
+				}
+				delete parsedHierarchy.data.id;
 
-					//unset all optional fields that were not provided
-					for (const field of TaxonomyScalarFieldEnumSchema.options) {
-						if (!(field in parsedTaxonomy.data)) {
-							//@ts-expect-error overriding never with null
-							parsedTaxonomy.data[field] = null;
+				//check hierarchy against existing rank values
+				if (!hierarchyByTaxonomy[parsedHierarchy.data.taxonomy]) {
+					hierarchyByTaxonomy[parsedHierarchy.data.taxonomy] = parsedHierarchy.data;
+				} else {
+					for (const rank of TaxonomicRanks) {
+						if (hierarchyByTaxonomy[parsedHierarchy.data.taxonomy]![rank] !== parsedHierarchy.data[rank]) {
+							await channel.stream.error(
+								`The rank value ${rank}:${parsedHierarchy.data[rank]} on line ${i} does not match a ${parsedHierarchy.data.taxonomy} from a previous Assignment.`
+							);
+							return;
 						}
 					}
-					delete parsedTaxonomy.data.id;
-
-					//TODO: verify taxonomy.taxonomy matches all rank fields
-
-					taxonomies.push(parsedTaxonomy.data);
-					uniqueTaxa.add(parsedTaxonomy.data.taxonomy);
 				}
 
 				//add to progress bar every 10 percent
@@ -283,7 +295,7 @@ export async function parseAssignmentsFile({
 			}
 		}
 
-		return { features, taxonomies, assignments, assignmentsMd5 };
+		return { features, hierarchyByTaxonomy, assignments, assignmentsMd5 };
 	} catch (err) {
 		console.error(err);
 
@@ -489,7 +501,7 @@ export async function parseAnalysisFiles({
 	if (!assignmentsParseResult) {
 		return;
 	}
-	const { features, taxonomies, assignments, assignmentsMd5 } = assignmentsParseResult;
+	const { features, hierarchyByTaxonomy, assignments, assignmentsMd5 } = assignmentsParseResult;
 
 	const occurrencesParseResult = await parseOccurrencesFile({
 		channel: occurrencesChannel,
@@ -510,7 +522,7 @@ export async function parseAnalysisFiles({
 			occurrenceFileChecksum_ODE: occurrencesMd5
 		},
 		features,
-		taxonomies,
+		hierarchyByTaxonomy,
 		assignments,
 		occurrences,
 		libIds,

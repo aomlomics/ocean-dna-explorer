@@ -8,9 +8,8 @@ import { prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
 import {
 	connectFeatsToSamples,
-	connectTaxaToSamples,
+	connectHierarchiesToSamples,
 	disconnectFeatsFromSamples,
-	disconnectTaxaFromSamples,
 	handlePrismaError,
 	PRISMA_PARAM_LIMIT,
 	updateManyRaw
@@ -119,10 +118,10 @@ async function doEdit(
 				});
 
 				if (!dbAnalysis) {
-					stream.error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
+					await stream.error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
 					return;
 				} else if (!dbAnalysis.Project.userIds.includes(userId)) {
-					stream.error("Unauthorized action.");
+					await stream.error("Unauthorized action.");
 					return;
 				}
 
@@ -132,7 +131,7 @@ async function doEdit(
 						project_id,
 						assay_name: dbAnalysis.assay_name,
 						lib_id: {
-							in: Array.from(libIds)
+							in: libIds
 						}
 					},
 					select: {
@@ -151,9 +150,11 @@ async function doEdit(
 
 					if (invalidLibIds.length) {
 						if (invalidLibIds.length === 1) {
-							stream.error(`A library in occurrence file is invalid. The invalid lib_id is "${invalidLibIds[0]}".`);
+							await stream.error(
+								`A library in occurrence file is invalid. The invalid lib_id is "${invalidLibIds[0]}".`
+							);
 						} else {
-							stream.error(
+							await stream.error(
 								`Some libraries in occurrence file are invalid. The invalid lib_ids are ${invalidLibIds
 									.map((lib_id, i) => (i === invalidLibIds.length - 1 ? `and "${lib_id}"` : `"${lib_id}"`))
 									.join(", ")}.`
@@ -164,23 +165,6 @@ async function doEdit(
 				}
 
 				await stream.message("All checks passed.", 80);
-
-				//get existing occurrence -> assignment relationships before updating occurrences
-				const oldOccurrences = await tx.occurrence.findMany({
-					where: {
-						project_id,
-						analysis_run_name
-					},
-					select: {
-						lib_id: true,
-						featureid: true,
-						Assignment: {
-							select: {
-								taxonomy: true
-							}
-						}
-					}
-				});
 
 				//map featureid -> taxonomy
 				const taxaByFeat = Object.fromEntries(
@@ -196,26 +180,24 @@ async function doEdit(
 				await stream.message("New entries successfully added to database.", 85);
 
 				//update old
+				const insertedOccKeys = new Set(newOccurrences.map((occ) => getOccKey(occ.lib_id, occ.featureid)));
 				const getOccKey = (lib_id: OccurrenceModel["lib_id"], featureid: OccurrenceModel["featureid"]) =>
 					//using null character as separator for efficient set lookup
 					`${lib_id}\0${featureid}`;
 				await updateManyRaw(
 					tx,
 					"occurrence",
-					occurrences.filter(
-						(occ) =>
-							!new Set(newOccurrences.map((occ) => getOccKey(occ.lib_id, occ.featureid))).has(
-								getOccKey(occ.lib_id, occ.featureid)
-							)
-					)
+					occurrences.filter((occ) => !insertedOccKeys.has(getOccKey(occ.lib_id, occ.featureid)))
 				);
 
 				//map new lib_id -> taxonomy relationships
+				const taxonomies = new Set() as Set<AssignmentModel["taxonomy"]>;
 				const taxaByLibId = occurrences.reduce(
 					(acc, occ) => {
 						const taxonomy = taxaByFeat[occ.featureid];
 
 						if (taxonomy) {
+							taxonomies.add(taxonomy);
 							(acc[occ.lib_id] ??= new Set()).add(taxonomy);
 						}
 
@@ -227,65 +209,60 @@ async function doEdit(
 				//connect new Sample -> Feature relationships
 				await connectFeatsToSamples(tx, project_id, occurrences);
 
-				//connect new Sample -> Taxonomy relationships
-				await connectTaxaToSamples(tx, project_id, taxaByLibId);
+				//connect new Sample -> TaxonomicHierarchy relationships
+				await connectHierarchiesToSamples(tx, project_id, analysis_run_name, taxaByLibId);
 
 				await stream.message("Existing entries successfully updated in database.", 90);
 
 				//delete unused
-				const currOccs = await tx.occurrence.findMany({
+				const currHierarchies = await tx.taxonomicHierarchy.findMany({
 					where: {
 						project_id,
 						analysis_run_name
 					},
 					select: {
 						id: true,
-						lib_id: true,
-						featureid: true
+						taxonomy: true,
+						Assignments: {
+							select: {
+								Occurrences: {
+									select: {
+										lib_id: true,
+										featureid: true
+									}
+								}
+							}
+						}
 					}
 				});
 
-				const libIdSet = new Set(libIds);
-
-				const occsToDelete = [] as typeof currOccs;
-				const occIdsToDelete = [] as number[];
-				for (const occ of currOccs) {
-					if (!libIdSet.has(occ.lib_id) || !featureids.has(occ.featureid)) {
-						occsToDelete.push(occ);
-						occIdsToDelete.push(occ.id);
+				const hierarchyIdsToDelete = currHierarchies.reduce((acc, hier) => {
+					if (!taxonomies.has(hier.taxonomy)) {
+						acc.push(hier.id);
 					}
-				}
+					return acc;
+				}, [] as number[]);
 
-				await tx.occurrence.deleteMany({
+				await tx.taxonomicHierarchy.deleteMany({
 					where: {
 						project_id,
 						analysis_run_name,
 						id: {
-							in: occIdsToDelete
+							in: hierarchyIdsToDelete
 						}
 					}
 				});
 
-				//map old occurrence relationships that were removed
-				const occurrenceKeys = new Set(occurrences.map((occ) => `${occ.lib_id}\0${occ.featureid}`));
-				const removedTaxaByLibId = oldOccurrences.reduce(
-					(acc, occ) => {
-						const key = `${occ.lib_id}\0${occ.featureid}`;
-
-						if (!occurrenceKeys.has(key)) {
-							(acc[occ.lib_id] ??= new Set()).add(occ.Assignment.taxonomy);
-						}
-
-						return acc;
-					},
-					{} as Record<OccurrenceModel["lib_id"], Set<string>>
-				);
+				const libIdSet = new Set(libIds);
+				const occsToDelete = [] as (typeof currHierarchies)[number]["Assignments"][number]["Occurrences"];
+				for (const occ of currHierarchies.flatMap((hier) => hier.Assignments.flatMap((assign) => assign.Occurrences))) {
+					if (!libIdSet.has(occ.lib_id) || !featureids.has(occ.featureid)) {
+						occsToDelete.push(occ);
+					}
+				}
 
 				//remove Sample -> Feature relationships that don't exist in any analyses
 				await disconnectFeatsFromSamples(tx, project_id, analysis_run_name, occsToDelete);
-
-				//remove Sample -> Taxonomy relationships that don't exist in any analyses
-				await disconnectTaxaFromSamples(tx, project_id, analysis_run_name, removedTaxaByLibId);
 
 				await stream.message("Removed entries successfully deleted in database.", 95);
 
@@ -390,17 +367,17 @@ export default async function occEditAction(
 			await validateBlobs([url]);
 		} catch (err) {
 			console.error(err);
-			stream.error(err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR);
-			stream.close();
+			await stream.error(err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR);
+			await stream.close();
 			return stream.readable;
 		}
 	}
 
-	doEdit(stream, url, editId, project_id, analysis_run_name).then((success) => {
-		stream.close();
+	doEdit(stream, url, editId, project_id, analysis_run_name).then(async (success) => {
+		await stream.close();
 
 		if (url && !success) {
-			del(url);
+			await del(url);
 		}
 	});
 

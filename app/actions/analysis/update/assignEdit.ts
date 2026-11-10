@@ -6,13 +6,7 @@ import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseAssignmentsFile } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
-import {
-	connectTaxaToSamples,
-	disconnectTaxaFromSamples,
-	handlePrismaError,
-	PRISMA_PARAM_LIMIT,
-	updateManyRaw
-} from "@/app/helpers/queries";
+import { connectHierarchiesToSamples, handlePrismaError, updateManyRaw } from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
 import type { ProgressStream } from "@/types/globals";
 import { AppError, GLOBAL_SERVER_ERROR, RolePermissions } from "@/types/objects";
@@ -75,11 +69,12 @@ async function doEdit(
 			return;
 		}
 
-		const { features, taxonomies, assignments, assignmentsMd5 } = parseResult;
+		const { features, hierarchyByTaxonomy, assignments, assignmentsMd5 } = parseResult;
 
 		await stream.message("Assignments successfully parsed into database format. Parsing data into database.", 75);
 
-		const featureids = new Set(features.map((feat) => feat.featureid));
+		const hierarchies = Object.values(hierarchyByTaxonomy);
+		const taxonomies = new Set(Object.keys(hierarchyByTaxonomy));
 
 		const success = await prisma.$transaction(
 			async (tx) => {
@@ -105,13 +100,13 @@ async function doEdit(
 				});
 
 				if (!dbAnalysis) {
-					stream.error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
+					await stream.error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
 					return;
 				} else if (!dbAnalysis.Project.userIds.includes(userId)) {
-					stream.error("Unauthorized action.");
+					await stream.error("Unauthorized action.");
 					return;
 				} else if (!dbAnalysis.asvFileUrl_ODE || !dbAnalysis.asvFileChecksum_ODE) {
-					stream.error("Invalid Analysis. Missing file for ASVs.");
+					await stream.error("Invalid Analysis. Missing file for ASVs.");
 					return;
 				}
 
@@ -143,8 +138,8 @@ async function doEdit(
 					}
 				});
 
-				const newTaxonomies = await tx.taxonomy.createManyAndReturn({
-					data: taxonomies,
+				const newHierarchies = await tx.taxonomicHierarchy.createManyAndReturn({
+					data: hierarchies,
 					skipDuplicates: true,
 					select: {
 						taxonomy: true
@@ -171,8 +166,8 @@ async function doEdit(
 
 				await updateManyRaw(
 					tx,
-					"taxonomy",
-					taxonomies.filter((taxa) => !new Set(newTaxonomies.map((t) => t.taxonomy)).has(taxa.taxonomy))
+					"taxonomicHierarchy",
+					hierarchies.filter((hier) => !new Set(newHierarchies.map((t) => t.taxonomy)).has(hier.taxonomy))
 				);
 
 				await updateManyRaw(
@@ -202,58 +197,39 @@ async function doEdit(
 					{} as Record<OccurrenceModel["lib_id"], Set<AssignmentModel["taxonomy"]>>
 				);
 
-				//connect new Sample -> Taxonomy relationships
-				await connectTaxaToSamples(tx, project_id, taxaByLibId);
+				//connect new Sample -> TaxonomicHierarchy relationships
+				await connectHierarchiesToSamples(tx, project_id, analysis_run_name, taxaByLibId);
 
 				await stream.message("Existing entries successfully updated in database.", 90);
 
 				//delete unused
-				//rely on cron to delete unused features and taxonomies
-				const currAssigns = await tx.assignment.findMany({
+				const currHierarchies = await tx.taxonomicHierarchy.findMany({
 					where: {
 						project_id,
 						analysis_run_name
 					},
 					select: {
 						id: true,
-						featureid: true
+						taxonomy: true
 					}
 				});
 
-				const assignIdsToDelete = currAssigns.reduce((acc, assign) => {
-					if (!featureids.has(assign.featureid)) {
-						acc.push(assign.id);
+				const hierarchyIdsToDelete = currHierarchies.reduce((acc, hier) => {
+					if (!taxonomies.has(hier.taxonomy)) {
+						acc.push(hier.id);
 					}
 					return acc;
 				}, [] as number[]);
 
-				await tx.assignment.deleteMany({
+				await tx.taxonomicHierarchy.deleteMany({
 					where: {
 						project_id,
 						analysis_run_name,
 						id: {
-							in: assignIdsToDelete
+							in: hierarchyIdsToDelete
 						}
 					}
 				});
-
-				//map removed lib_id -> taxonomy relationships
-				const removedTaxaByLibId = oldOccurrences.reduce(
-					(acc, occ) => {
-						const oldTaxonomy = occ.Assignment.taxonomy;
-						const newTaxonomy = newTaxaByFeat[occ.featureid];
-
-						if (newTaxonomy !== oldTaxonomy) {
-							(acc[occ.lib_id] ??= new Set()).add(oldTaxonomy);
-						}
-
-						return acc;
-					},
-					{} as Record<OccurrenceModel["lib_id"], Set<AssignmentModel["taxonomy"]>>
-				);
-
-				//remove Sample -> Taxonomy relationships that are not in any other analyses
-				await disconnectTaxaFromSamples(tx, project_id, analysis_run_name, removedTaxaByLibId);
 
 				await stream.message("Removed entries successfully deleted in database.", 95);
 
@@ -281,30 +257,9 @@ async function doEdit(
 					data: {
 						editHistory,
 						asvFileUrl_ODE: url,
-						asvFileChecksum_ODE: assignmentsMd5,
-						Taxonomies: {
-							set: []
-						}
+						asvFileChecksum_ODE: assignmentsMd5
 					}
 				});
-
-				//connect taxonomies in chunks
-				const connect = taxonomies.map((taxa) => ({ taxonomy: taxa.taxonomy }));
-				for (let i = 0; i < connect.length; i += PRISMA_PARAM_LIMIT) {
-					await tx.analysis.update({
-						where: {
-							project_id_analysis_run_name: {
-								project_id,
-								analysis_run_name
-							}
-						},
-						data: {
-							Taxonomies: {
-								connect: connect.slice(i, i + PRISMA_PARAM_LIMIT)
-							}
-						}
-					});
-				}
 
 				await stream.success("Success");
 				return true;
@@ -353,17 +308,17 @@ export default async function assignEditAction(
 			await validateBlobs([url]);
 		} catch (err) {
 			console.error(err);
-			stream.error(err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR);
-			stream.close();
+			await stream.error(err instanceof AppError ? err.message : GLOBAL_SERVER_ERROR);
+			await stream.close();
 			return stream.readable;
 		}
 	}
 
-	doEdit(stream, url, editId, project_id, analysis_run_name).then((success) => {
-		stream.close();
+	doEdit(stream, url, editId, project_id, analysis_run_name).then(async (success) => {
+		await stream.close();
 
 		if (url && !success) {
-			del(url);
+			await del(url);
 		}
 	});
 
