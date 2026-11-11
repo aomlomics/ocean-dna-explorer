@@ -120,7 +120,7 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 
 			<header>
 				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
-					<TitleHoverTooltip tooltip={TableMetadata.library.description}>
+					<TitleHoverTooltip table="library">
 						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary">
 							<LibraryIcon className="size-8! shrink-0" />
 							<span className="min-w-0 wrap-anywhere">{library.lib_id}</span>

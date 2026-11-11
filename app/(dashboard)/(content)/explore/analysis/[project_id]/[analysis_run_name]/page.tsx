@@ -190,7 +190,7 @@ export default async function Project_id_Analysis_run_name({
 
 			<header>
 				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
-					<TitleHoverTooltip tooltip={TableMetadata.analysis.description}>
+					<TitleHoverTooltip table="analysis">
 						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary">
 							<AnalysisIcon className="size-8! shrink-0" />
 							<span className="min-w-0 wrap-anywhere">{analysis_run_name}</span>

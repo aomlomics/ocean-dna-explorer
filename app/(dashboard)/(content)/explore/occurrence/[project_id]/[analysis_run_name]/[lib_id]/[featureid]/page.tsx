@@ -288,7 +288,7 @@ export default async function OccurrencePage({
 
 			<header>
 				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
-					<TitleHoverTooltip tooltip={TableMetadata.occurrence.description}>
+					<TitleHoverTooltip table="occurrence">
 						<h1 className="flex items-center gap-2 text-2xl sm:text-3xl font-semibold text-base-content/55 wrap-anywhere">
 							<OccurrenceIcon className="size-8! shrink-0 text-primary" />
 							<span className="min-w-0">

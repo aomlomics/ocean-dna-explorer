@@ -135,9 +135,9 @@ export default async function Project_id_Analysis_run_name_Taxonomy({
 
 			<header>
 				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
-					<TitleHoverTooltip tooltip={TableMetadata.assignment.description}>
+					<TitleHoverTooltip table="taxonomicHierarchy">
 						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary">
-							TODO: TaxonomicHierarchyIcon Assignment
+							TODO: TaxonomicHierarchyIcon Taxonomic Hierarchy
 						</h1>
 					</TitleHoverTooltip>
 				</div>

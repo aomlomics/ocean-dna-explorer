@@ -136,7 +136,7 @@ export default async function AssignmentPage({
 
 			<header>
 				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
-					<TitleHoverTooltip tooltip={TableMetadata.assignment.description}>
+					<TitleHoverTooltip table="assignment">
 						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary">
 							<AssignmentIcon className="size-8! shrink-0" />
 							Assignment

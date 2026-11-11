@@ -166,7 +166,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 
 			<header>
 				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
-					<TitleHoverTooltip tooltip={TableMetadata.sample.description}>
+					<TitleHoverTooltip table="sample">
 						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary">
 							<SampleIcon className="size-8! shrink-0" />
 							<span className="min-w-0 wrap-anywhere">{samp_name}</span>

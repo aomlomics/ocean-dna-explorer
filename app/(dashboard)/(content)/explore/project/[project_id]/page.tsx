@@ -428,7 +428,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		>
 			<div className="flex flex-wrap gap-x-3 gap-y-2 items-center justify-between">
 				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
-					<TitleHoverTooltip tooltip={TableMetadata.project.description}>
+					<TitleHoverTooltip table="project">
 						<h1
 							className={`flex items-center gap-2 text-4xl font-semibold text-primary mb-0 ${
 								project.imageFileUrl_ODE ? "drop-shadow-sm [html[data-theme='light']_&]:drop-shadow-md" : ""

@@ -139,7 +139,7 @@ export default async function Project_id_Assay_name({
 
 			<header>
 				<div className="flex items-center mb-2 flex-col gap-1 lg:flex-row lg:gap-5">
-					<TitleHoverTooltip tooltip={TableMetadata.assayPrep.description}>
+					<TitleHoverTooltip table="assayPrep">
 						<h1 className="flex items-center gap-2 text-4xl font-semibold text-primary">
 							<AssayPrepIcon className="size-8! shrink-0" />
 							<span className="min-w-0 wrap-anywhere">{assayPrep.assay_name}</span>
