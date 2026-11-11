@@ -91,7 +91,7 @@ export default function TableDisplay({
 					ignoreParams={ignoreParams}
 					extraParams={extraParams}
 					setExtraResults={setExtraResults}
-					hideEmptyAtStart={table === "taxonomy"}
+					hideEmptyAtStart={table === "taxonomicHierarchy"}
 					hideFilters={hideFilters}
 					onClear={onClear}
 				/>
@@ -115,7 +115,7 @@ export default function TableDisplay({
 				Child={TaxaGridItem}
 				table={table}
 				ignoreParams={effectiveIgnoreParams}
-				extraQueryParams={{ relations: "TaxonomicHierarchies", relationsFields: "true" }}
+				extraQueryParams={{ relations: "TaxonomicHierarchies", relationsAllFields: "true" }}
 				childProps={{ showCommonName: showCommonNames }}
 				fillViewport={false}
 				take={30}

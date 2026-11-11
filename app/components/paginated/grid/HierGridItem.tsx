@@ -73,10 +73,7 @@ export default function HierGridItem({
 				</div>
 
 				<div className="grow min-h-0 border-t pt-2">
-					<PhyloPicClient
-						taxonomy={item}
-						tooltipClassName="tooltip before:text-base-content before:bg-base-200 before:border before:border-base-content/20"
-					/>
+					<PhyloPicClient taxonomy={item} />
 				</div>
 			</div>
 		</Link>

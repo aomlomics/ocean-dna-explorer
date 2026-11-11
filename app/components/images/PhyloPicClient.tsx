@@ -5,7 +5,6 @@ import { limitPhyloPic } from "@/app/helpers/limitedFetch";
 import { useEffect, useState } from "react";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 import { matchGbifForPhylopic } from "./matchGbifForPhylopic";
-import { TAXONOMY_GRID_TOOLTIP_CLASS } from "../paginated/grid/TaxonomyGridTooltip";
 
 const phyloPicCache = new Map<string, { imageUrl: string; imageDetails: string }>();
 
@@ -84,7 +83,7 @@ export default function PhyloPicClient({
 		<>
 			{!!imageUrl ? (
 				<div
-					className={`w-full h-full relative flex flex-col justify-center wrap-break-word ${tooltipClassName ?? TAXONOMY_GRID_TOOLTIP_CLASS}`}
+					className={`w-full h-full relative flex flex-col justify-center wrap-break-word ${tooltipClassName ?? "tooltip before:text-base-content before:bg-base-200 before:border before:border-base-content/20"}`}
 					data-tip={"PhyloPic nodes: " + imageDetails}
 				>
 					<div className="relative h-full w-full">

@@ -251,9 +251,16 @@ export async function parseAssignmentsFile({
 				features.push(parsedFeature.data);
 
 				//parse taxonomy
-				const parsedHierarchy = TaxonomicHierarchyOptionalDefaultsSchema.safeParse(hierarchyRow, {
-					error: schemaParseErrorFunction
-				});
+				const parsedHierarchy = TaxonomicHierarchyOptionalDefaultsSchema.safeParse(
+					{
+						...hierarchyRow,
+						project_id,
+						analysis_run_name
+					},
+					{
+						error: schemaParseErrorFunction
+					}
+				);
 
 				if (!parsedHierarchy.success) {
 					await channel.stream.error(
