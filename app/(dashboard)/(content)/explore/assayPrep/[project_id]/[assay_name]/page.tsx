@@ -109,11 +109,31 @@ export default async function Project_id_Assay_name({
 			<div className="text-base breadcrumbs">
 				<ul>
 					<li>
-						<Link href="/explore/assayPrep" className="text-primary hover:text-primary-focus">
-							Assay preps
+						<Link href="/explore/project" className="text-primary hover:text-primary-focus">
+							Projects
 						</Link>
 					</li>
-					<li>{assayPrep.assay_name}</li>
+					<li>
+						<Link href={exploreUrl({ table: "project", project_id })} className="text-primary hover:text-primary-focus">
+							{project_id}
+						</Link>
+					</li>
+					<li>
+						<Link href="/explore/assay" className="text-primary hover:text-primary-focus">
+							Assays
+						</Link>
+					</li>
+					<li>
+						<Link href={exploreUrl({ table: "assay", assay_name })} className="text-primary hover:text-primary-focus">
+							{assay_name}
+						</Link>
+					</li>
+					<li>
+						<Link href="/explore/assayPrep" className="text-primary hover:text-primary-focus">
+							Assay Preps
+						</Link>
+					</li>
+					<li>Assay Prep</li>
 				</ul>
 			</div>
 

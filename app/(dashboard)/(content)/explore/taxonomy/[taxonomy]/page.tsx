@@ -2,7 +2,6 @@ import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
 import Link from "next/link";
 import { RanksBySpecificity } from "@/types/objects";
-import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import TableMetadata from "@/types/tableMetadata";
 import { AnalysisIcon, FeatureIcon, ProjectIcon, SampleIcon, TaxonomyIcon } from "@/app/components/icons";
 import GbifIucnStatus from "@/app/components/images/GbifIucnStatus";
@@ -17,7 +16,7 @@ import type { Metadata } from "next";
 import type { TaxonomicRank } from "@/types/globals";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import type { ImageWithRelations } from "@/prismaImages/generated/zod";
-import type { TaxonomySpotlightModel } from "@/app/generated/prisma/models";
+import type { TaxonomySpotlightModel, TaxonomyModel } from "@/app/generated/prisma/models";
 import { cookies } from "next/headers";
 import DisableTrustedMode from "@/app/components/explore/DisableTrustedMode";
 

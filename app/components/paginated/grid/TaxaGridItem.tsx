@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import PhyloPicClient from "@/app/components/images/PhyloPicClient";
-import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { useEffect, useMemo, useState } from "react";
-import TaxonomyGridTooltip, { TAXONOMY_GRID_TOOLTIP_CLASS } from "./TaxonomyGridTooltip";
 import { exploreUrl } from "@/app/helpers/utils";
 import { asGbifName, getBestRank, resolveGbifCommonName } from "@/app/helpers/resolveGbifCommonName";
+import type { TaxonomicHierarchyModel, TaxonomyModel } from "@/app/generated/prisma/models";
 
 const commonNameCache = new Map<string, string | null>();
 const COMMON_NAME_CACHE_VERSION = "en-v2";
@@ -15,7 +14,7 @@ export default function TaxaGridItem({
 	item,
 	showCommonName = true
 }: {
-	item: TaxonomyModel;
+	item: TaxonomyModel & { TaxonomicHierarchies: TaxonomicHierarchyModel[] };
 	showCommonName?: boolean;
 }) {
 	const bestRank = useMemo(() => getBestRank(item), [item]);
@@ -44,12 +43,18 @@ export default function TaxaGridItem({
 
 	return (
 		<Link
-			href={exploreUrl({ table: "taxonomy", taxonomy: item.taxonomy })}
+			href={exploreUrl({
+				table: "taxonomy",
+				taxonomy: item.taxonomy
+			})}
 			key={item.taxonomy}
 			className="card relative z-0 hover:z-50 bg-base-200 hover:bg-base-300 transition-colors duration-200 aspect-square overflow-visible"
 		>
 			<div className="card-body p-2 lg:p-3 gap-0">
-				<TaxonomyGridTooltip tip={item.taxonomy} className="w-full mb-2">
+				<div
+					className="tooltip before:text-base-content before:bg-base-200 before:border before:border-base-content/20 tooltip-top before:max-w-[min(90vw,24rem)] before:whitespace-normal before:wrap-anywhere w-full mb-2"
+					data-tip={item.taxonomy}
+				>
 					{bestRank ? (
 						<div className="flex flex-col gap-0.5">
 							<p className="text-primary text-xs font-medium leading-4 h-4">{bestRank.label}:</p>
@@ -63,10 +68,13 @@ export default function TaxaGridItem({
 					) : (
 						<p className="text-sm text-error">Error: no taxonomy rank found</p>
 					)}
-				</TaxonomyGridTooltip>
+				</div>
 
 				<div className="grow min-h-0 border-t pt-2">
-					<PhyloPicClient taxonomy={item} tooltipClassName={TAXONOMY_GRID_TOOLTIP_CLASS} />
+					<PhyloPicClient
+						taxonomy={item}
+						tooltipClassName="tooltip before:text-base-content before:bg-base-200 before:border before:border-base-content/20"
+					/>
 				</div>
 			</div>
 		</Link>

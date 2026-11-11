@@ -1,6 +1,4 @@
 import ExplorePage from "@/app/components/explore/ExplorePage";
-import type { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
-import { TaxonomicRanks } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import type { Metadata } from "next";
 
@@ -12,19 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default async function Taxonomy() {
-	const tableConfig: FilterConfig[] = [
-		//TODO: integrate with new parseApiQuery
-		// {
-		// 	type: "select",
-		// 	field: "assignmentLevel",
-		// 	options: ["", ...RanksBySpecificity],
-		// 	optionsLabels: ["All levels", ...RanksBySpecificity.map((rank) => rank.charAt(0).toUpperCase() + rank.slice(1))]
-		// },
-		{
-			type: "selectGroup",
-			group: TaxonomicRanks,
-			table: "taxonomy"
-		}
-	];
-	return <ExplorePage table="taxonomy" tableConfig={tableConfig} displayMode="grid" toggle />;
+	return <ExplorePage table="taxonomy" tableConfig={[]} displayMode="grid" toggle />;
 }

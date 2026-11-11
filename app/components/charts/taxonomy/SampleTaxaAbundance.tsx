@@ -1,6 +1,5 @@
 "use client";
 
-import type { SampleModel } from "@/app/generated/prisma/models/Sample";
 import { useMemo, useRef, useState, useTransition } from "react";
 import { Scatter } from "react-chartjs-2";
 import {
@@ -28,7 +27,7 @@ import {
 } from "../wrappers/TaxonomyVisualize";
 import type { TaxonomicRank } from "@/types/globals";
 import { getZodType } from "@/app/helpers/schema";
-import type { LibraryModel } from "@/app/generated/prisma/models";
+import type { LibraryModel, SampleModel } from "@/app/generated/prisma/models";
 import { DeadValueEnum } from "@/types/enums";
 import distinctColors from "distinct-colors";
 

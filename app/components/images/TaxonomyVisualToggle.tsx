@@ -1,6 +1,5 @@
 "use client";
 
-import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import Link from "next/link";
 import { useCallback, useRef, useState, type ReactNode } from "react";
 import { TaxonomicRanks } from "@/types/objects";
@@ -11,7 +10,7 @@ import GbifImage from "./GbifImage";
 import PhyloPicClient from "./PhyloPicClient";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 import type { TaxonomicRank } from "@/types/globals";
-import type { TaxonomySpotlightModel } from "@/app/generated/prisma/models";
+import type { TaxonomySpotlightModel, TaxonomyModel } from "@/app/generated/prisma/models";
 import type { ImageWithRelations } from "@/prismaImages/generated/zod";
 import Image from "next/image";
 import Modal from "../Modal";

@@ -1,9 +1,11 @@
-import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { limitGbif } from "@/app/helpers/limitedFetch";
 import { RanksBySpecificity } from "@/types/objects";
+import type { TaxonomicHierarchyModel, TaxonomyModel } from "../generated/prisma/models";
+
+type Item = (TaxonomyModel & { TaxonomicHierarchies: TaxonomicHierarchyModel[] }) | TaxonomicHierarchyModel;
 
 export function getBestRank(
-	item: TaxonomyModel
+	item: Item
 ): { rank: (typeof RanksBySpecificity)[number]; label: string; value: string } | null {
 	for (const rank of RanksBySpecificity) {
 		const value = item[rank]?.toString().trim();
@@ -18,7 +20,7 @@ export function getBestRank(
 	return null;
 }
 
-export function asGbifName(item: TaxonomyModel): string {
+export function asGbifName(item: Item): string {
 	const best = getBestRank(item);
 	return best?.value || item.taxonomy.split(";").pop()?.replace(/_/g, " ") || item.taxonomy;
 }
@@ -48,7 +50,7 @@ function scoreEnglishVernacular(row: {
 const commonNameCache = new Map<string, Promise<string | null>>();
 
 /** Same English common name the explore taxonomy cards show. */
-export function resolveGbifCommonName(item: TaxonomyModel): Promise<string | null> {
+export function resolveGbifCommonName(item: Item): Promise<string | null> {
 	const key = item.taxonomy;
 	const cached = commonNameCache.get(key);
 	if (cached) return cached;
@@ -58,7 +60,7 @@ export function resolveGbifCommonName(item: TaxonomyModel): Promise<string | nul
 	return pending;
 }
 
-async function resolveGbifCommonNameUncached(item: TaxonomyModel): Promise<string | null> {
+async function resolveGbifCommonNameUncached(item: Item): Promise<string | null> {
 	const best = getBestRank(item);
 	const name = asGbifName(item);
 	if (!name) return null;

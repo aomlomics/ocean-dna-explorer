@@ -1,6 +1,5 @@
 import TableMetadata from "@/types/tableMetadata";
 import { exploreUrl } from "@/app/helpers/utils";
-import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { Suspense } from "react";
 import Link from "next/link";
@@ -17,7 +16,7 @@ import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import type { AnalysisModel, AssayModel } from "@/app/generated/prisma/models";
+import type { AnalysisModel, AssayModel, TaxonomyModel } from "@/app/generated/prisma/models";
 import DisableTrustedMode from "@/app/components/explore/DisableTrustedMode";
 
 export async function generateMetadata({ params }: { params: Promise<{ featureid: string }> }): Promise<Metadata> {

@@ -21,6 +21,7 @@ import type {
 	OccurrenceModel,
 	ProjectModel,
 	SampleModel,
+	TaxonomicHierarchyModel,
 	TaxonomyModel
 } from "@/app/generated/prisma/models";
 import { AppError } from "@/types/objects";
@@ -451,6 +452,12 @@ export function exploreUrl(
 		  }
 		| { table: "feature"; featureid: FeatureModel["featureid"] }
 		| { table: "taxonomy"; taxonomy: TaxonomyModel["taxonomy"] }
+		| {
+				table: "taxonomicHierarchy";
+				project_id: TaxonomicHierarchyModel["project_id"];
+				analysis_run_name: TaxonomicHierarchyModel["analysis_run_name"];
+				taxonomy: TaxonomicHierarchyModel["taxonomy"];
+		  }
 	)
 ) {
 	const { table, params, hash, ...titleFieldObj } = args;

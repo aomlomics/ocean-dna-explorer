@@ -116,6 +116,16 @@ export default async function AssignmentPage({
 						</Link>
 					</li>
 					<li>
+						<Link href="/explore/feature" className="text-primary hover:text-primary-focus">
+							Features
+						</Link>
+					</li>
+					<li>
+						<Link href={exploreUrl({ table: "feature", featureid })} className="text-primary hover:text-primary-focus">
+							{featureid}
+						</Link>
+					</li>
+					<li>
 						<Link href="/explore/assignment" className="text-primary hover:text-primary-focus">
 							Assignments
 						</Link>

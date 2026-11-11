@@ -34,6 +34,11 @@ export default async function sitemap({ id }: { id: Promise<number> }): Promise<
 	const skip = i * URL_LIMIT;
 
 	const taxonomies = await prisma.taxonomy.findMany({
+		where: {
+			Assignments: {
+				some: {}
+			}
+		},
 		select: {
 			taxonomy: true
 		},

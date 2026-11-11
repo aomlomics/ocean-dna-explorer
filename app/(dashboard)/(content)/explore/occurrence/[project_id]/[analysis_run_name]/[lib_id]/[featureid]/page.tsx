@@ -134,7 +134,6 @@ export default async function OccurrencePage({
 		}
 	}))!;
 
-	const occurrenceTitle = `${featureid} in ${lib_id} (${analysis_run_name})`;
 	const occurrenceInfo = {
 		description:
 			"This page shows where a specific feature was observed, the assigned taxonomy, and key sequence context for this single occurrence.",
@@ -250,10 +249,32 @@ export default async function OccurrencePage({
 					<li>
 						<Link
 							href={exploreUrl({ table: "analysis", project_id, analysis_run_name })}
-							className="inline-block max-w-[26ch] truncate align-bottom text-primary hover:text-primary-focus"
-							title={analysis_run_name}
+							className="text-primary hover:text-primary-focus"
 						>
 							{analysis_run_name}
+						</Link>
+					</li>
+					<li>
+						<Link href="/explore/library" className="text-primary hover:text-primary-focus">
+							Libraries
+						</Link>
+					</li>
+					<li>
+						<Link
+							href={exploreUrl({ table: "library", project_id, lib_id })}
+							className="text-primary hover:text-primary-focus"
+						>
+							{lib_id}
+						</Link>
+					</li>
+					<li>
+						<Link href="/explore/feature" className="text-primary hover:text-primary-focus whitespace-nowrap">
+							Features
+						</Link>
+					</li>
+					<li>
+						<Link href={exploreUrl({ table: "feature", featureid })} className="text-primary hover:text-primary-focus">
+							{featureid}
 						</Link>
 					</li>
 					<li>
@@ -261,14 +282,7 @@ export default async function OccurrencePage({
 							Occurrences
 						</Link>
 					</li>
-					<li>
-						<span
-							className="inline-block max-w-[32ch] truncate align-bottom text-base-content/75"
-							title={occurrenceTitle}
-						>
-							{occurrenceTitle}
-						</span>
-					</li>
+					<li>Occurrence</li>
 				</ul>
 			</div>
 

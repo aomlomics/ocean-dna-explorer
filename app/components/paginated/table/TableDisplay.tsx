@@ -10,6 +10,7 @@ import ProjectGridItem from "../grid/ProjectGridItem";
 import { useViewMode } from "../../explore/ViewModeContext";
 import InfoButton from "../../InfoButton";
 import type { ModelName } from "@/types/tableMetadata";
+import HierGridItem from "../grid/HierGridItem";
 
 const sw = 1.75;
 const stroke = "currentColor";
@@ -112,6 +113,19 @@ export default function TableDisplay({
 			<Grid
 				key={table}
 				Child={TaxaGridItem}
+				table={table}
+				ignoreParams={effectiveIgnoreParams}
+				extraQueryParams={{ relations: "TaxonomicHierarchies", relationsFields: "true" }}
+				childProps={{ showCommonName: showCommonNames }}
+				fillViewport={false}
+				take={30}
+				itemsGridClassName="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 lg:gap-4"
+				onClear={onClear}
+			/>
+		) : table === "taxonomicHierarchy" ? (
+			<Grid
+				key={table}
+				Child={HierGridItem}
 				table={table}
 				ignoreParams={effectiveIgnoreParams}
 				childProps={{ showCommonName: showCommonNames }}

@@ -100,6 +100,16 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 			<div className="text-base breadcrumbs">
 				<ul>
 					<li>
+						<Link href="/explore/project" className="link link-primary link-hover">
+							Projects
+						</Link>
+					</li>
+					<li>
+						<Link href={exploreUrl({ table: "project", project_id })} className="link link-primary link-hover">
+							{project_id}
+						</Link>
+					</li>
+					<li>
 						<Link href="/explore/library" className="text-primary hover:text-primary-focus">
 							Libraries
 						</Link>

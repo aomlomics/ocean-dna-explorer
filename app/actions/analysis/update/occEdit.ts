@@ -1,7 +1,6 @@
 "use server";
 
-import type { AssignmentModel } from "@/app/generated/prisma/models";
-import type { OccurrenceModel } from "@/app/generated/prisma/models/Occurrence";
+import type { AssignmentModel, OccurrenceModel } from "@/app/generated/prisma/models";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseOccurrencesFile } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
