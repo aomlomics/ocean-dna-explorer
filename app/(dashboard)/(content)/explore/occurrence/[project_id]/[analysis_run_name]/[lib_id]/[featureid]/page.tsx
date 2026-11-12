@@ -128,7 +128,7 @@ export default async function OccurrencePage({
 			},
 			Assignment: {
 				select: {
-					Taxonomy: true
+					TaxonomicHierarchy: true
 				}
 			}
 		}
@@ -141,9 +141,9 @@ export default async function OccurrencePage({
 	};
 
 	const taxonomyName =
-		occurrence.Assignment.Taxonomy.species ||
-		occurrence.Assignment.Taxonomy.genus ||
-		occurrence.Assignment.Taxonomy.taxonomy ||
+		occurrence.Assignment.TaxonomicHierarchy.species ||
+		occurrence.Assignment.TaxonomicHierarchy.genus ||
+		occurrence.Assignment.TaxonomicHierarchy.taxonomy ||
 		"Unknown taxonomy";
 	const assayCardTitle =
 		occurrence.Analysis.assay_name && occurrence.Analysis.Assay
@@ -348,15 +348,18 @@ export default async function OccurrencePage({
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
 								{/* Left: taxonomic image, name, and sequence quantity */}
 								<div className="flex flex-col items-center justify-center gap-4 text-center">
-									{occurrence.Assignment.Taxonomy && (
+									{occurrence.Assignment.TaxonomicHierarchy && (
 										<div className="w-32 h-32 md:w-40 md:h-40 relative">
-											<PhyloPic taxonomy={occurrence.Assignment.Taxonomy} />
+											<PhyloPic taxonomy={occurrence.Assignment.TaxonomicHierarchy} />
 										</div>
 									)}
 									<div className="space-y-2">
-										{occurrence.Assignment.Taxonomy ? (
+										{occurrence.Assignment.TaxonomicHierarchy ? (
 											<Link
-												href={exploreUrl({ table: "taxonomy", taxonomy: occurrence.Assignment.Taxonomy.taxonomy })}
+												href={exploreUrl({
+													table: "taxonomy",
+													taxonomy: occurrence.Assignment.TaxonomicHierarchy.taxonomy
+												})}
 												className="text-base md:text-lg font-semibold text-base-content hover:text-primary wrap-break-word"
 											>
 												{taxonomyName}
@@ -380,18 +383,20 @@ export default async function OccurrencePage({
 									<div className="space-y-2 border-b border-base-content/10 pb-4">
 										<p className="text-xs font-semibold text-base-content/65 uppercase tracking-wide">Full taxonomy</p>
 										<div className="max-h-40 overflow-y-auto pr-1">
-											{occurrence.Assignment.Taxonomy ? (
+											{occurrence.Assignment.TaxonomicHierarchy ? (
 												<div className="space-y-2">
-													{TaxonomicRanks.filter((rank) => occurrence.Assignment.Taxonomy[rank]).map((rank) => (
-														<div key={rank}>
-															<span className="text-base-content/70 font-semibold text-sm">
-																{rank.charAt(0).toUpperCase() + rank.slice(1)}:{" "}
-															</span>
-															<span className="text-base-content font-medium text-sm">
-																{occurrence.Assignment.Taxonomy[rank]?.replace("_", " ")}
-															</span>
-														</div>
-													))}
+													{TaxonomicRanks.filter((rank) => occurrence.Assignment.TaxonomicHierarchy[rank]).map(
+														(rank) => (
+															<div key={rank}>
+																<span className="text-base-content/70 font-semibold text-sm">
+																	{rank.charAt(0).toUpperCase() + rank.slice(1)}:{" "}
+																</span>
+																<span className="text-base-content font-medium text-sm">
+																	{occurrence.Assignment.TaxonomicHierarchy[rank]?.replace("_", " ")}
+																</span>
+															</div>
+														)
+													)}
 												</div>
 											) : (
 												<p className="text-sm text-base-content/70">No taxonomy assignment available.</p>

@@ -118,24 +118,33 @@ export default async function Assay_name({
 		return <DisableTrustedMode />;
 	}
 
-	const { Libraries, Analyses, ...assay } = (await trustedPrisma.assay.findUnique({
-		where: {
-			assay_name
-		},
-		include: {
-			Libraries: true,
-			Analyses: {
-				select: {
-					analysis_run_name: true,
-					_count: {
-						select: {
-							Taxonomies: true
+	const [dbAssay, uniqueTaxa] = await trustedPrisma.$transaction([
+		trustedPrisma.assay.findUnique({
+			where: {
+				assay_name
+			},
+			include: {
+				Libraries: true,
+				Analyses: {
+					select: {
+						analysis_run_name: true
+					}
+				}
+			}
+		}),
+		trustedPrisma.taxonomy.count({
+			where: {
+				TaxonomicHierarchies: {
+					some: {
+						Analysis: {
+							assay_name
 						}
 					}
 				}
 			}
-		}
-	}))!;
+		})
+	]);
+	const { Libraries, Analyses, ...assay } = dbAssay!;
 
 	const forwardGc = calculateGcContent(assay.pcr_primer_forward);
 	const reverseGc = calculateGcContent(assay.pcr_primer_reverse);
@@ -387,16 +396,12 @@ export default async function Assay_name({
 								/>
 								<StatCard
 									title="Taxonomies"
-									value={Analyses.reduce((count, a) => count + a._count.Taxonomies, 0)}
+									value={uniqueTaxa}
 									icon={<TaxonomyIcon />}
 									link={`/search?table=taxonomy&advanced=[["analysis","assay_name","equals","${assay_name}"]]`}
 									tooltip="View as Search"
 								/>
-								<StatCard
-									title="Target Gene"
-									value={assay.target_gene || "No target_gene provided"}
-									icon={<DnaIcon className="w-10 h-10" />}
-								/>
+								<StatCard title="Target Gene" value={assay.target_gene} icon={<DnaIcon className="w-10 h-10" />} />
 								<DropdownCard
 									table="analysis"
 									items={Analyses}

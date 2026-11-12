@@ -28,13 +28,13 @@ export async function generateMetadata({
 			}
 		},
 		select: {
-			Taxonomy: true
+			TaxonomicHierarchy: true
 		}
 	});
 
 	if (assignment) {
 		return {
-			title: `${featureid} assigned ${assignment.Taxonomy[RanksBySpecificity.find((rank) => assignment.Taxonomy[rank]) || "taxonomy"]} | ${TableMetadata.assignment.plural}`
+			title: `${featureid} assigned ${assignment.TaxonomicHierarchy[RanksBySpecificity.find((rank) => assignment.TaxonomicHierarchy[rank]) || "taxonomy"]} | ${TableMetadata.assignment.plural}`
 		};
 	} else {
 		return {

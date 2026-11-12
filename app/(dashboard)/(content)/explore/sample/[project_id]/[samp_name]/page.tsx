@@ -88,7 +88,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 		return <DisableTrustedMode />;
 	}
 
-	const { Taxonomies, Libraries, ...sample } = (await trustedPrisma.sample.findUnique({
+	const { TaxonomicHierarchies, Libraries, ...sample } = (await trustedPrisma.sample.findUnique({
 		where: {
 			project_id_samp_name: {
 				project_id,
@@ -96,12 +96,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 			}
 		},
 		include: {
-			Taxonomies: {
-				omit: {
-					id: true,
-					verbatimIdentification: true
-				}
-			},
+			TaxonomicHierarchies: true,
 			Libraries: {
 				select: {
 					_count: {
@@ -226,7 +221,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 
 						<StatCard
 							title="Taxonomies"
-							value={Taxonomies.length}
+							value={TaxonomicHierarchies.length}
 							icon={<TaxonomyIcon />}
 							link={`/search?table=taxonomy&advanced=[["sample","project_id","equals","${project_id}"],["sample","samp_name","equals","${samp_name}"]]`}
 							layout="horizontal"
@@ -259,7 +254,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 					</span>
 				</h2>
 				<div className="w-full">
-					<TaxonomyDonutChart taxonomies={Taxonomies} />
+					<TaxonomyDonutChart taxonomies={TaxonomicHierarchies} />
 				</div>
 			</div>
 		</div>
