@@ -6,7 +6,7 @@ import type {
 	LibraryModel,
 	OccurrenceModel,
 	SampleModel,
-	TaxonomyModel
+	TaxonomicHierarchyModel
 } from "@/app/generated/prisma/models";
 import { getZodType } from "@/app/helpers/schema";
 import { GlobalOmit, TaxonomicRanks } from "@/types/objects";
@@ -69,9 +69,9 @@ export type AssignsWithOccs = {
 }[];
 
 export type TaxonomiesByName = Record<
-	TaxonomyModel["taxonomy"],
+	TaxonomicHierarchyModel["taxonomy"],
 	Record<TaxonomicRank, string | null> & {
-		taxonomy: TaxonomyModel["taxonomy"];
+		taxonomy: TaxonomicHierarchyModel["taxonomy"];
 	}
 >;
 

@@ -434,7 +434,7 @@ async function TaxonomyVisualizeSuspense({
 					}
 				}
 			},
-			Taxonomies: {
+			TaxonomicHierarchies: {
 				select: TaxonomicRanks.reduce(
 					(acc, rank) => ({
 						...acc,
@@ -459,7 +459,7 @@ async function TaxonomyVisualizeSuspense({
 		return <></>;
 	}
 
-	const taxonomiesByName = Object.fromEntries(analysis.Taxonomies.map((taxonomy) => [taxonomy.taxonomy, taxonomy]));
+	const taxonomiesByName = Object.fromEntries(analysis.TaxonomicHierarchies.map((hier) => [hier.taxonomy, hier]));
 	const libsWithSampleById = new Map(analysis.Libraries.map((lib) => [lib.id, { ...lib, Sample: lib.Sample }]));
 
 	return (

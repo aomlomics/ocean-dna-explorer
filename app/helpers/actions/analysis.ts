@@ -455,7 +455,7 @@ export async function parseOccurrencesFile({
 
 		if (assignFeatures.size) {
 			channel.stream.error(
-				`${assignFeatures.size} Features from Assignments file are missing. The Features are: ${Array.from(assignFeatures)}`
+				`${assignFeatures.size} Features from Assignments file are missing. The Features are: ${Array.from(assignFeatures).join(", ")}`
 			);
 			return;
 		}

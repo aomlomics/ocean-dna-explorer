@@ -2,21 +2,21 @@ import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
 import Link from "next/link";
 import { RanksBySpecificity } from "@/types/objects";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import { AnalysisIcon, FeatureIcon, ProjectIcon, SampleIcon, TaxonomyIcon } from "@/app/components/icons";
 import GbifIucnStatus from "@/app/components/images/GbifIucnStatus";
 import { matchGbifForPhylopic } from "@/app/components/images/matchGbifForPhylopic";
 import TaxonomyVisualToggle from "@/app/components/images/TaxonomyVisualToggle";
 import CopyButton from "@/app/components/CopyButton";
 import TableInfo from "@/app/components/TableInfo";
-import { decodeRouteParams } from "@/app/helpers/utils";
+import { decodeRouteParams, groupHierarchiesByRanks } from "@/app/helpers/utils";
 import { resolveGbifCommonName } from "@/app/helpers/resolveGbifCommonName";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { TaxonomicRank } from "@/types/globals";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import type { ImageWithRelations } from "@/prismaImages/generated/zod";
-import type { TaxonomySpotlightModel, TaxonomyModel } from "@/app/generated/prisma/models";
+import type { TaxonomySpotlightModel, TaxonomyModel, TaxonomicHierarchyModel } from "@/app/generated/prisma/models";
 import { cookies } from "next/headers";
 import DisableTrustedMode from "@/app/components/explore/DisableTrustedMode";
 
@@ -26,40 +26,33 @@ export async function generateMetadata({ params }: { params: Promise<{ taxonomy:
 	const dbTaxonomy = await prisma.taxonomy.findUnique({
 		where: {
 			taxonomy
+		},
+		select: {
+			TaxonomicHierarchies: {
+				orderBy: {
+					Assignments: {
+						_count: "desc"
+					}
+				},
+				take: 1
+			}
 		}
 	});
 
 	if (dbTaxonomy) {
-		const mostSpecificRank = RanksBySpecificity.find((rank) => dbTaxonomy[rank]) || "taxonomy";
-		const gbifResult = await resolveTaxonomyPageGbif(dbTaxonomy);
+		const hierarchy = dbTaxonomy.TaxonomicHierarchies[0]!;
+		const mostSpecificRank = RanksBySpecificity.find((rank) => hierarchy[rank]) || "taxonomy";
+		const gbifResult = await resolveTaxonomyPageGbif(hierarchy);
 
 		return {
-			title: `${dbTaxonomy[mostSpecificRank]} | ${TableMetadata.taxonomy.plural}`,
-			description: `Explore the ${gbifResult?.commonName || dbTaxonomy[mostSpecificRank]} taxonomy, including its photos, Red List status, taxonomic classification, and the detected locations.`
+			title: `${hierarchy[mostSpecificRank]} | ${TableMetadata.taxonomy.plural}`,
+			description: `Explore the ${gbifResult?.commonName || hierarchy[mostSpecificRank]} taxonomy, including its photos, Red List status, taxonomic classification, and the detected locations.`
 		};
 	} else {
 		return {
 			title: "Taxonomy not found"
 		};
 	}
-}
-
-function finestDisplayedRank(db: TaxonomyModel): {
-	rankKey: TaxonomicRank;
-	rankLabel: string;
-	displayName: string;
-} | null {
-	for (const rank of RanksBySpecificity) {
-		const raw = db[rank as keyof TaxonomyModel]?.toString().trim();
-		if (raw) {
-			return {
-				rankKey: rank,
-				rankLabel: rank.charAt(0).toUpperCase() + rank.slice(1),
-				displayName: raw.replace(/_/g, " ")
-			};
-		}
-	}
-	return null;
 }
 
 /** PhyloPic URL for this page — GBIF backbone match is identical to PhyloPicClient (`matchGbifForPhylopic` only). Common name uses the explore-card resolver. */
@@ -117,9 +110,11 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 		select: {
 			_count: {
 				select: {
-					Analyses: {
+					TaxonomicHierarchies: {
 						where: {
-							trusted: true
+							Analysis: {
+								trusted: true
+							}
 						}
 					}
 				}
@@ -130,7 +125,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	if (!trustedCheck) notFound();
 
 	const cookieStore = await cookies();
-	if (!trustedCheck._count.Analyses && cookieStore.get("trusted")?.value !== "false") {
+	if (!trustedCheck._count.TaxonomicHierarchies && cookieStore.get("trusted")?.value !== "false") {
 		return <DisableTrustedMode />;
 	}
 
@@ -139,11 +134,9 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 			taxonomy
 		},
 		include: {
-			Samples: true,
-			Analyses: {
-				distinct: ["project_id"],
-				select: {
-					project_id: true
+			TaxonomicHierarchies: {
+				include: {
+					Samples: true
 				}
 			},
 			TaxonomySpotlights: true
@@ -166,14 +159,30 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 		Image: images.find((i) => sl.imageFileUrl_ODE === i.url)
 	})) as (TaxonomySpotlightModel & { Image: ImageWithRelations })[];
 
-	// Get unique project IDs for display
-	const uniqueProjects = dbTaxonomy.Analyses.map((a) => a.project_id);
+	const uniqueProjects = new Set(dbTaxonomy.TaxonomicHierarchies.map((hier) => hier.project_id));
+	const uniqueAnalyses = Object.values(
+		Object.fromEntries(
+			dbTaxonomy.TaxonomicHierarchies.map((hier) => [
+				hier.project_id + "|" + hier.analysis_run_name,
+				{ project_id: hier.project_id, analysis_run_name: hier.analysis_run_name }
+			])
+		)
+	);
+	const uniqueSamples = Object.values(
+		Object.fromEntries(
+			dbTaxonomy.TaxonomicHierarchies.flatMap((hier) =>
+				hier.Samples.map((samp) => [samp.project_id + "|" + samp.samp_name, samp])
+			)
+		)
+	);
+
 	const pageGbif = await resolveTaxonomyPageGbif(dbTaxonomy);
 	const phyloPic = pageGbif?.phyloPic ?? null;
-	const finestRank = finestDisplayedRank(dbTaxonomy);
-	const databaseScientificName = finestRank?.displayName ?? taxonomy.split(";").pop()?.replace(/_/g, " ") ?? taxonomy;
-	const databaseRankLabel = finestRank?.rankLabel ?? "Taxonomy";
-	const databaseRankKey = finestRank?.rankKey ?? null;
+
+	const groupedHierarchies = groupHierarchiesByRanks(dbTaxonomy.TaxonomicHierarchies);
+	const mostCommonHierarchy = groupedHierarchies[0]?.hierarchy;
+	const mostSpecificRank = RanksBySpecificity.find((rank) => mostCommonHierarchy?.[rank]) || "taxonomy";
+
 	const classificationRanks = [...RanksBySpecificity].reverse().filter((rank) => {
 		const raw = dbTaxonomy[rank]?.toString().trim();
 		return Boolean(raw);
@@ -197,20 +206,20 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					<h1 className="mb-0 flex items-center gap-2 text-4xl font-semibold leading-[1.05] text-primary">
 						<TaxonomyIcon className="size-8! shrink-0" />
 						<span className="min-w-0 wrap-anywhere">
-							{dbTaxonomy.species || dbTaxonomy.genus || taxonomy.split(";").pop()?.replace("_", " ")}
+							{mostCommonHierarchy?.[mostSpecificRank] || mostCommonHierarchy?.taxonomy}
 						</span>
 					</h1>
 
 					<TableInfo table="taxonomy" />
 
 					<span className="-translate-y-2 shrink-0 rounded-md bg-base-300 px-2.5 py-1 text-sm font-medium leading-normal text-base-content mr-2">
-						{databaseRankLabel}
+						{mostSpecificRank}
 					</span>
 				</div>
 
 				<p className="text-lg text-base-content/70">
-					Found in {dbTaxonomy.Samples.length === 1 ? "1 sample" : `${dbTaxonomy.Samples.length} samples`} across{" "}
-					{uniqueProjects.length === 1 ? "1 project" : `${uniqueProjects.length} projects`}
+					Found in {uniqueSamples.length === 1 ? "1 sample" : `${uniqueSamples.length} samples`} across{" "}
+					{uniqueProjects.size === 1 ? "1 project" : `${uniqueProjects.size} projects`}
 				</p>
 			</header>
 
@@ -268,7 +277,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 				</div>
 
 				<div className="space-y-4">
-					<Map locations={dbTaxonomy.Samples} where={{ taxonomy }} cluster className="lg:h-105 w-full rounded-lg" />
+					<Map locations={uniqueSamples} where={{ taxonomy }} cluster className="lg:h-105 w-full rounded-lg" />
 					{pageGbif?.mediaTaxonKey != null ? (
 						<div className="bg-base-200 rounded-lg p-6 shadow-sm">
 							<GbifIucnStatus taxonKey={pageGbif.mediaTaxonKey} />
@@ -287,7 +296,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 									<AnalysisIcon />
 								</div>
 								<div className="text-center mb-1">
-									<div className="text-3xl font-bold text-primary">{dbTaxonomy.Analyses.length}</div>
+									<div className="text-3xl font-bold text-primary">{uniqueAnalyses.length}</div>
 									<div className="text-sm font-medium text-base-content/70 uppercase">Analyses</div>
 								</div>
 							</div>
@@ -302,7 +311,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 									<ProjectIcon />
 								</div>
 								<div className="text-center mb-1">
-									<div className="text-3xl font-bold text-primary">{uniqueProjects.length}</div>
+									<div className="text-3xl font-bold text-primary">{uniqueProjects.size}</div>
 									<div className="text-sm font-medium text-base-content/70 uppercase">Projects</div>
 								</div>
 							</div>
@@ -317,7 +326,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 									<SampleIcon />
 								</div>
 								<div className="text-center mb-1">
-									<div className="text-3xl font-bold text-primary">{dbTaxonomy.Samples.length}</div>
+									<div className="text-3xl font-bold text-primary">{uniqueSamples.length}</div>
 									<div className="text-sm font-medium text-base-content/70 uppercase">Samples</div>
 								</div>
 							</div>

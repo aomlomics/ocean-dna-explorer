@@ -1,5 +1,5 @@
 import TableMetadata from "@/types/tableMetadata";
-import { exploreUrl } from "@/app/helpers/utils";
+import { exploreUrl, groupHierarchiesByRanks } from "@/app/helpers/utils";
 import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { Suspense } from "react";
 import Link from "next/link";
@@ -16,8 +16,10 @@ import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import type { AnalysisModel, AssayModel, TaxonomyModel } from "@/app/generated/prisma/models";
+import type { AnalysisModel, AssayModel, TaxonomicHierarchyModel } from "@/app/generated/prisma/models";
 import DisableTrustedMode from "@/app/components/explore/DisableTrustedMode";
+import { TaxonomicRanks } from "@/types/objects";
+import type { TaxonomicRank } from "@/types/globals";
 
 export async function generateMetadata({ params }: { params: Promise<{ featureid: string }> }): Promise<Metadata> {
 	const { featureid } = await decodeRouteParams(params);
@@ -143,16 +145,15 @@ export default async function Featureid({
 		return <DisableTrustedMode />;
 	}
 
-	const { feature, taxaCounts, assaySummaries } = await trustedPrisma.$transaction(async (tx) => {
-		const feature = (await tx.feature.findUnique({
+	const [dbFeature, assignmentAssays] = await trustedPrisma.$transaction([
+		trustedPrisma.feature.findUnique({
 			where: {
 				featureid
 			},
 			include: {
 				Assignments: {
-					distinct: ["taxonomy"],
 					select: {
-						Taxonomy: true
+						TaxonomicHierarchy: true
 					}
 				},
 				_count: {
@@ -161,23 +162,8 @@ export default async function Featureid({
 					}
 				}
 			}
-		}))!;
-
-		const taxaCounts = [] as { taxonomy: TaxonomyModel["taxonomy"]; count: number }[];
-
-		for (const { Taxonomy } of feature.Assignments) {
-			taxaCounts.push({
-				taxonomy: Taxonomy.taxonomy,
-				count: await tx.assignment.count({
-					where: {
-						taxonomy: Taxonomy.taxonomy,
-						featureid
-					}
-				})
-			});
-		}
-
-		const assignmentAssays = await tx.assignment.findMany({
+		}),
+		trustedPrisma.assignment.findMany({
 			where: {
 				featureid
 			},
@@ -193,40 +179,27 @@ export default async function Featureid({
 					}
 				}
 			}
-		});
+		})
+	]);
+	const feature = dbFeature!;
 
-		const uniqueAssays = assignmentAssays.reduce(
-			(acc, a) => ({
-				...acc,
-				[a.Analysis.assay_name]: {
-					target_gene: a.Analysis.Assay.target_gene
-				}
-			}),
-			{} as Record<AnalysisModel["assay_name"], { target_gene: AssayModel["target_gene"] }>
-		);
+	const hierCounts = groupHierarchiesByRanks(feature.Assignments.map((a) => a.TaxonomicHierarchy));
 
-		const assaySummaries = Object.entries(uniqueAssays).map(([assay_name, assay]) => ({
-			assay_name,
-			target_gene: assay.target_gene
-		}));
-
-		return { feature, taxaCounts, assaySummaries };
-	});
-
-	taxaCounts.sort((a, b) => b.count - a.count);
-	const taxonomyById = new globalThis.Map(
-		feature.Assignments.map((assignment) => [assignment.Taxonomy.taxonomy, assignment.Taxonomy as TaxonomyModel | null])
+	//assays
+	const uniqueAssays = assignmentAssays.reduce(
+		(acc, a) => ({
+			...acc,
+			[a.Analysis.assay_name]: {
+				target_gene: a.Analysis.Assay.target_gene
+			}
+		}),
+		{} as Record<AnalysisModel["assay_name"], { target_gene: AssayModel["target_gene"] }>
 	);
-	const topTaxonomies = taxaCounts.slice(0, 5).map(({ taxonomy, count }) => {
-		const details = taxonomyById.get(taxonomy) ?? null;
-		return {
-			taxonomy,
-			count,
-			details,
-			displayName: details?.species || details?.genus || details?.taxonomy || taxonomy,
-			hierarchy: details?.taxonomy || taxonomy
-		};
-	});
+	const assaySummaries = Object.entries(uniqueAssays).map(([assay_name, assay]) => ({
+		assay_name,
+		target_gene: assay.target_gene
+	}));
+
 	const gcPercent = calculateGcContent(feature.dna_sequence);
 	const totalAssignments = feature._count.Assignments || 0;
 	const assignmentLabel = totalAssignments === 1 ? "assignment" : "assignments";
@@ -326,29 +299,29 @@ export default async function Featureid({
 								<h2 className={cardHeading}>Top Taxonomy by Assignments</h2>
 								<DashCardInfoButton info={taxonomyCardInfo} />
 							</div>
-							{topTaxonomies.length > 0 ? (
+
+							{hierCounts.length > 0 ? (
 								<div className="divide-y divide-base-content/10">
-									{topTaxonomies.map((taxa) => (
+									{hierCounts.slice(0, 5).map(({ hierarchy, analyses }) => (
 										<Link
-											key={taxa.taxonomy}
-											href={exploreUrl({ table: "taxonomy", taxonomy: taxa.taxonomy })}
+											key={hierarchy.taxonomy}
+											href={exploreUrl({ table: "taxonomy", taxonomy: hierarchy.taxonomy })}
 											className="flex items-center gap-4 p-4 hover:bg-base-300/30 cursor-pointer transition-colors duration-150 group"
 										>
 											<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 group-hover:from-base-300 group-hover:to-base-200 flex items-center justify-center shadow-sm overflow-hidden transition-colors duration-150">
 												<div className="relative w-12 h-12 flex items-center justify-center">
-													{taxa.details ? (
-														<PhyloPic taxonomy={taxa.details} />
-													) : (
-														<span className="text-xs text-base-content/55">No image</span>
-													)}
+													<PhyloPic taxonomy={hierarchy} />
 												</div>
 											</div>
+
 											<div className="flex-1 min-w-0">
 												<h3 className="font-medium text-lg text-base-content leading-snug break-all">
-													{taxa.displayName}
+													{hierarchy.species ?? hierarchy.genus ?? hierarchy.taxonomy} ({analyses.length} Assignment
+													{analyses.length === 1 ? "" : "s"})
 												</h3>
-												<p className="text-xs text-base-content/60 break-all leading-snug">{taxa.hierarchy}</p>
+												<p className="text-xs text-base-content/60 break-all leading-snug">{hierarchy.taxonomy}</p>
 											</div>
+
 											<svg
 												className="w-4 h-4 text-base-content/45 group-hover:text-base-content/75 transition-colors duration-150 shrink-0"
 												fill="none"
@@ -377,6 +350,7 @@ export default async function Featureid({
 								<h2 className={cardHeading}>Feature Prevalence</h2>
 								<DashCardInfoButton info={prevalenceCardInfo} />
 							</div>
+
 							<Suspense
 								fallback={
 									<div className="flex items-center justify-center gap-3 py-6">

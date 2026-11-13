@@ -15,7 +15,7 @@ export default async function AssayPhyloPic({ assay_name }: { assay_name: string
 		select: {
 			analysis_run_name: true,
 			featureid: true,
-			Taxonomy: { select: { family: true, order: true, class: true } }
+			TaxonomicHierarchy: { select: { family: true, order: true, class: true } }
 		}
 	});
 	if (!assignments.length) {
@@ -29,9 +29,9 @@ export default async function AssayPhyloPic({ assay_name }: { assay_name: string
 	const assignByKey = new Map<string, { family: string | null; order: string | null; class: string | null }>();
 	for (const a of assignments) {
 		assignByKey.set(`${a.analysis_run_name}|${a.featureid}`, {
-			family: a.Taxonomy.family || null,
-			order: a.Taxonomy.order || null,
-			class: a.Taxonomy.class || null
+			family: a.TaxonomicHierarchy.family || null,
+			order: a.TaxonomicHierarchy.order || null,
+			class: a.TaxonomicHierarchy.class || null
 		});
 	}
 
@@ -58,7 +58,7 @@ export default async function AssayPhyloPic({ assay_name }: { assay_name: string
 	const orderCounts = new Map<string, number>();
 	const classCounts = new Map<string, number>();
 	for (const a of assignments) {
-		const tax = a.Taxonomy;
+		const tax = a.TaxonomicHierarchy;
 		if (tax.family) {
 			familyCounts.set(tax.family, (familyCounts.get(tax.family) || 0) + 1);
 		} else if (tax.order) {

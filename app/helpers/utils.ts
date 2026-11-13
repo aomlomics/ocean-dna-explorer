@@ -6,7 +6,8 @@ import type {
 	NetworkPacket,
 	NullLocation,
 	Point,
-	Polygon
+	Polygon,
+	TaxonomicRank
 } from "@/types/globals";
 import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import { DeadValueEnum } from "@/types/enums";
@@ -24,7 +25,7 @@ import type {
 	TaxonomicHierarchyModel,
 	TaxonomyModel
 } from "@/app/generated/prisma/models";
-import { AppError } from "@/types/objects";
+import { AppError, TaxonomicRanks } from "@/types/objects";
 
 export async function fetcher(url: string): Promise<NetworkPacket> {
 	const res = await fetch(url);
@@ -474,4 +475,32 @@ export function exploreUrl(
 			.map((f) => encodeURIComponent(titleFieldObj[f as keyof typeof titleFieldObj]))
 			.join("/")}${extra}`;
 	}
+}
+
+export function groupHierarchiesByRanks(hierarchies: TaxonomicHierarchyModel[]) {
+	//taxonomic counts
+	const hierGroups = {} as Record<
+		string,
+		{
+			hierarchy: Record<TaxonomicRank, string | null> & { taxonomy: string };
+			analyses: {
+				project_id: TaxonomicHierarchyModel["project_id"];
+				analysis_run_name: TaxonomicHierarchyModel["analysis_run_name"];
+			}[];
+		}
+	>;
+
+	for (const hier of hierarchies) {
+		(hierGroups[TaxonomicRanks.map((rank) => hier[rank]).join("|")] ??= {
+			hierarchy: TaxonomicRanks.reduce((acc, rank) => ({ ...acc, [rank]: hier[rank] }), {
+				taxonomy: hier.taxonomy
+			} as (typeof hierGroups)[string]["hierarchy"]),
+			analyses: []
+		}).analyses.push({
+			project_id: hier.project_id,
+			analysis_run_name: hier.analysis_run_name
+		});
+	}
+
+	return Object.values(hierGroups).sort((a, b) => b.analyses.length - a.analyses.length);
 }
